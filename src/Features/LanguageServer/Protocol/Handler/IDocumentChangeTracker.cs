@@ -16,7 +16,7 @@ namespace Microsoft.CodeAnalysis.LanguageServer.Handler;
 /// Associates LSP document URIs with the roslyn source text containing the LSP document text.
 /// Called via <see cref="DidOpenHandler"/>, <see cref="DidChangeHandler"/> and <see cref="DidCloseHandler"/>
 /// </summary>
-internal interface IDocumentChangeTracker
+public interface IDocumentChangeTracker
 {
     ValueTask StartTrackingAsync(Uri documentUri, SourceText initialText, string languageId, CancellationToken cancellationToken);
     void UpdateTrackedDocument(Uri documentUri, SourceText text);

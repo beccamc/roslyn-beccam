@@ -10,7 +10,7 @@ namespace Microsoft.CodeAnalysis.LanguageServer.Handler;
 /// <summary>
 /// Handler for a workspace request with parameters <typeparamref name="TRequest"/> and result <typeparamref name="TResponse"/>.
 /// </summary>
-internal interface ILspServiceRequestHandler<TRequest, TResponse> :
+public interface ILspServiceRequestHandler<TRequest, TResponse> :
     ILspService,
     IRequestHandler<TRequest, TResponse, RequestContext>,
     ISolutionRequiredHandler
@@ -20,7 +20,7 @@ internal interface ILspServiceRequestHandler<TRequest, TResponse> :
 /// <summary>
 /// Handler for a workspace parameter-less request with result <typeparamref name="TResponse"/>.
 /// </summary>
-internal interface ILspServiceRequestHandler<TResponse> :
+public interface ILspServiceRequestHandler<TResponse> :
     ILspService,
     IRequestHandler<TResponse, RequestContext>,
     ISolutionRequiredHandler

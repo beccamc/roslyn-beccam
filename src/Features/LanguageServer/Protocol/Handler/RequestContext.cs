@@ -19,7 +19,7 @@ namespace Microsoft.CodeAnalysis.LanguageServer.Handler;
 /// <summary>
 /// Context for requests handled by <see cref="IMethodHandler"/>
 /// </summary>
-internal readonly struct RequestContext
+public readonly struct RequestContext
 {
     /// <summary>
     /// This will be the <see cref="NonMutatingDocumentChangeTracker"/> for non-mutating requests because they're not allowed to change documents

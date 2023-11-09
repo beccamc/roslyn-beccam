@@ -1,4 +1,4 @@
-[*.cs]
+[ "*.cs" ]
 
 # CA2007: Consider calling ConfigureAwait on the awaited task
 dotnet_diagnostic.CA2007.severity = none
@@ -8,3 +8,6 @@ dotnet_diagnostic.CA2007.severity = none
 
 # VSTHRD003: Avoid awaiting foreign Tasks
 dotnet_diagnostic.VSTHRD003.severity = none
+
+# Default severity for analyzer diagnostics with category 'ApiDesign'
+dotnet_analyzer_diagnostic.category-ApiDesign.severity = none

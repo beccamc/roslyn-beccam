@@ -26,6 +26,9 @@ internal sealed class ExportProviderBuilder
         var assemblyPaths = Directory.EnumerateFiles(baseDirectory, "Microsoft.CodeAnalysis*.dll");
         assemblyPaths = assemblyPaths.Concat(Directory.EnumerateFiles(baseDirectory, "Microsoft.ServiceHub*.dll"));
 
+        // SPIKE 
+        assemblyPaths = assemblyPaths.Concat(new List<string>() { @"C:\Users\beccam\source\repos\ExtensionTesting\ExtensionTesting\bin\Debug\net7.0\ExtensionTesting.dll" });
+
         // Temporarily explicitly load the dlls we want to add to the MEF composition.  This is due to a runtime bug
         // in the 7.0.4 runtime where the APIs MEF uses to load assemblies break with R2R assemblies.
         // See https://github.com/dotnet/runtime/issues/83526

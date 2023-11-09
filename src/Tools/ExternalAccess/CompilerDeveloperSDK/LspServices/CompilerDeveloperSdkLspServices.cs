@@ -5,7 +5,7 @@
 using Microsoft.CodeAnalysis.LanguageServer;
 
 namespace Microsoft.CodeAnalysis.ExternalAccess.CompilerDeveloperSdk;
-
+// BECCAM
 internal readonly struct CompilerDeveloperSdkLspServices(LspServices lspServices)
 {
     public T GetRequiredService<T>() where T : notnull

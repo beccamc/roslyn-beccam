@@ -1,0 +1,4 @@
+Microsoft.CodeAnalysis.LanguageServer.ExportStatelessLspServiceAttribute
+Microsoft.CodeAnalysis.LanguageServer.ExportStatelessLspServiceAttribute.Type.get -> System.Type
+Microsoft.CodeAnalysis.LanguageServer.Handler.ExportCSharpVisualBasicStatelessLspServiceAttribute
+Microsoft.CodeAnalysis.LanguageServer.WellKnownLspServerKinds

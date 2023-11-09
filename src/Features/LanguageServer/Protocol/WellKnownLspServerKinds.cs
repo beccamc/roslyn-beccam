@@ -6,7 +6,7 @@ using Roslyn.Utilities;
 
 namespace Microsoft.CodeAnalysis.LanguageServer;
 
-internal enum WellKnownLspServerKinds
+public enum WellKnownLspServerKinds
 {
     /// <summary>
     /// Roslyn LSP server for razor c# requests.
