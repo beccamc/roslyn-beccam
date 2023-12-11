@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using Microsoft.CodeAnalysis.Syntax.InternalSyntax;
 using Roslyn.Utilities;
+using CoreSyntax = Microsoft.CodeAnalysis.Syntax.InternalSyntax;
 
 namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 {
@@ -24,11 +25,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
           : base(kind)
         {
         }
-
-        protected NameSyntax(ObjectReader reader)
-          : base(reader)
-        {
-        }
     }
 
     /// <summary>Provides the base class from which the classes that represent simple name syntax nodes are derived. This is an abstract class.</summary>
@@ -41,11 +37,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal SimpleNameSyntax(SyntaxKind kind)
           : base(kind)
-        {
-        }
-
-        protected SimpleNameSyntax(ObjectReader reader)
-          : base(reader)
         {
         }
 
@@ -116,26 +107,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new IdentifierNameSyntax(this.Kind, this.identifier, GetDiagnostics(), annotations);
-
-        internal IdentifierNameSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 1;
-            var identifier = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(identifier);
-            this.identifier = identifier;
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.identifier);
-        }
-
-        static IdentifierNameSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(IdentifierNameSyntax), r => new IdentifierNameSyntax(r));
-        }
     }
 
     /// <summary>Class which represents the syntax node for qualified name.</summary>
@@ -225,34 +196,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new QualifiedNameSyntax(this.Kind, this.left, this.dotToken, this.right, GetDiagnostics(), annotations);
-
-        internal QualifiedNameSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 3;
-            var left = (NameSyntax)reader.ReadValue();
-            AdjustFlagsAndWidth(left);
-            this.left = left;
-            var dotToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(dotToken);
-            this.dotToken = dotToken;
-            var right = (SimpleNameSyntax)reader.ReadValue();
-            AdjustFlagsAndWidth(right);
-            this.right = right;
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.left);
-            writer.WriteValue(this.dotToken);
-            writer.WriteValue(this.right);
-        }
-
-        static QualifiedNameSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(QualifiedNameSyntax), r => new QualifiedNameSyntax(r));
-        }
     }
 
     /// <summary>Class which represents the syntax node for generic name.</summary>
@@ -332,30 +275,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new GenericNameSyntax(this.Kind, this.identifier, this.typeArgumentList, GetDiagnostics(), annotations);
-
-        internal GenericNameSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 2;
-            var identifier = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(identifier);
-            this.identifier = identifier;
-            var typeArgumentList = (TypeArgumentListSyntax)reader.ReadValue();
-            AdjustFlagsAndWidth(typeArgumentList);
-            this.typeArgumentList = typeArgumentList;
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.identifier);
-            writer.WriteValue(this.typeArgumentList);
-        }
-
-        static GenericNameSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(GenericNameSyntax), r => new GenericNameSyntax(r));
-        }
     }
 
     /// <summary>Class which represents the syntax node for type argument list.</summary>
@@ -414,7 +333,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
         /// <summary>SyntaxToken representing less than.</summary>
         public SyntaxToken LessThanToken => this.lessThanToken;
         /// <summary>SeparatedSyntaxList of TypeSyntax node representing the type arguments.</summary>
-        public Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<TypeSyntax> Arguments => new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<TypeSyntax>(new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<CSharpSyntaxNode>(this.arguments));
+        public CoreSyntax.SeparatedSyntaxList<TypeSyntax> Arguments => new CoreSyntax.SeparatedSyntaxList<TypeSyntax>(new CoreSyntax.SyntaxList<CSharpSyntaxNode>(this.arguments));
         /// <summary>SyntaxToken representing greater than.</summary>
         public SyntaxToken GreaterThanToken => this.greaterThanToken;
 
@@ -432,7 +351,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
         public override void Accept(CSharpSyntaxVisitor visitor) => visitor.VisitTypeArgumentList(this);
         public override TResult Accept<TResult>(CSharpSyntaxVisitor<TResult> visitor) => visitor.VisitTypeArgumentList(this);
 
-        public TypeArgumentListSyntax Update(SyntaxToken lessThanToken, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<TypeSyntax> arguments, SyntaxToken greaterThanToken)
+        public TypeArgumentListSyntax Update(SyntaxToken lessThanToken, CoreSyntax.SeparatedSyntaxList<TypeSyntax> arguments, SyntaxToken greaterThanToken)
         {
             if (lessThanToken != this.LessThanToken || arguments != this.Arguments || greaterThanToken != this.GreaterThanToken)
             {
@@ -454,37 +373,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new TypeArgumentListSyntax(this.Kind, this.lessThanToken, this.arguments, this.greaterThanToken, GetDiagnostics(), annotations);
-
-        internal TypeArgumentListSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 3;
-            var lessThanToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(lessThanToken);
-            this.lessThanToken = lessThanToken;
-            var arguments = (GreenNode?)reader.ReadValue();
-            if (arguments != null)
-            {
-                AdjustFlagsAndWidth(arguments);
-                this.arguments = arguments;
-            }
-            var greaterThanToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(greaterThanToken);
-            this.greaterThanToken = greaterThanToken;
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.lessThanToken);
-            writer.WriteValue(this.arguments);
-            writer.WriteValue(this.greaterThanToken);
-        }
-
-        static TypeArgumentListSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(TypeArgumentListSyntax), r => new TypeArgumentListSyntax(r));
-        }
     }
 
     /// <summary>Class which represents the syntax node for alias qualified name.</summary>
@@ -574,34 +462,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new AliasQualifiedNameSyntax(this.Kind, this.alias, this.colonColonToken, this.name, GetDiagnostics(), annotations);
-
-        internal AliasQualifiedNameSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 3;
-            var alias = (IdentifierNameSyntax)reader.ReadValue();
-            AdjustFlagsAndWidth(alias);
-            this.alias = alias;
-            var colonColonToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(colonColonToken);
-            this.colonColonToken = colonColonToken;
-            var name = (SimpleNameSyntax)reader.ReadValue();
-            AdjustFlagsAndWidth(name);
-            this.name = name;
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.alias);
-            writer.WriteValue(this.colonColonToken);
-            writer.WriteValue(this.name);
-        }
-
-        static AliasQualifiedNameSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(AliasQualifiedNameSyntax), r => new AliasQualifiedNameSyntax(r));
-        }
     }
 
     /// <summary>Provides the base class from which the classes that represent type syntax nodes are derived. This is an abstract class.</summary>
@@ -614,11 +474,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal TypeSyntax(SyntaxKind kind)
           : base(kind)
-        {
-        }
-
-        protected TypeSyntax(ObjectReader reader)
-          : base(reader)
         {
         }
     }
@@ -686,26 +541,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new PredefinedTypeSyntax(this.Kind, this.keyword, GetDiagnostics(), annotations);
-
-        internal PredefinedTypeSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 1;
-            var keyword = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(keyword);
-            this.keyword = keyword;
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.keyword);
-        }
-
-        static PredefinedTypeSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(PredefinedTypeSyntax), r => new PredefinedTypeSyntax(r));
-        }
     }
 
     /// <summary>Class which represents the syntax node for the array type.</summary>
@@ -757,7 +592,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
         /// <summary>TypeSyntax node representing the type of the element of the array.</summary>
         public TypeSyntax ElementType => this.elementType;
         /// <summary>SyntaxList of ArrayRankSpecifierSyntax nodes representing the list of rank specifiers for the array.</summary>
-        public Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<ArrayRankSpecifierSyntax> RankSpecifiers => new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<ArrayRankSpecifierSyntax>(this.rankSpecifiers);
+        public CoreSyntax.SyntaxList<ArrayRankSpecifierSyntax> RankSpecifiers => new CoreSyntax.SyntaxList<ArrayRankSpecifierSyntax>(this.rankSpecifiers);
 
         internal override GreenNode? GetSlot(int index)
             => index switch
@@ -772,7 +607,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
         public override void Accept(CSharpSyntaxVisitor visitor) => visitor.VisitArrayType(this);
         public override TResult Accept<TResult>(CSharpSyntaxVisitor<TResult> visitor) => visitor.VisitArrayType(this);
 
-        public ArrayTypeSyntax Update(TypeSyntax elementType, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<ArrayRankSpecifierSyntax> rankSpecifiers)
+        public ArrayTypeSyntax Update(TypeSyntax elementType, CoreSyntax.SyntaxList<ArrayRankSpecifierSyntax> rankSpecifiers)
         {
             if (elementType != this.ElementType || rankSpecifiers != this.RankSpecifiers)
             {
@@ -794,33 +629,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new ArrayTypeSyntax(this.Kind, this.elementType, this.rankSpecifiers, GetDiagnostics(), annotations);
-
-        internal ArrayTypeSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 2;
-            var elementType = (TypeSyntax)reader.ReadValue();
-            AdjustFlagsAndWidth(elementType);
-            this.elementType = elementType;
-            var rankSpecifiers = (GreenNode?)reader.ReadValue();
-            if (rankSpecifiers != null)
-            {
-                AdjustFlagsAndWidth(rankSpecifiers);
-                this.rankSpecifiers = rankSpecifiers;
-            }
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.elementType);
-            writer.WriteValue(this.rankSpecifiers);
-        }
-
-        static ArrayTypeSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(ArrayTypeSyntax), r => new ArrayTypeSyntax(r));
-        }
     }
 
     internal sealed partial class ArrayRankSpecifierSyntax : CSharpSyntaxNode
@@ -876,7 +684,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
         }
 
         public SyntaxToken OpenBracketToken => this.openBracketToken;
-        public Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<ExpressionSyntax> Sizes => new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<ExpressionSyntax>(new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<CSharpSyntaxNode>(this.sizes));
+        public CoreSyntax.SeparatedSyntaxList<ExpressionSyntax> Sizes => new CoreSyntax.SeparatedSyntaxList<ExpressionSyntax>(new CoreSyntax.SyntaxList<CSharpSyntaxNode>(this.sizes));
         public SyntaxToken CloseBracketToken => this.closeBracketToken;
 
         internal override GreenNode? GetSlot(int index)
@@ -893,7 +701,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
         public override void Accept(CSharpSyntaxVisitor visitor) => visitor.VisitArrayRankSpecifier(this);
         public override TResult Accept<TResult>(CSharpSyntaxVisitor<TResult> visitor) => visitor.VisitArrayRankSpecifier(this);
 
-        public ArrayRankSpecifierSyntax Update(SyntaxToken openBracketToken, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<ExpressionSyntax> sizes, SyntaxToken closeBracketToken)
+        public ArrayRankSpecifierSyntax Update(SyntaxToken openBracketToken, CoreSyntax.SeparatedSyntaxList<ExpressionSyntax> sizes, SyntaxToken closeBracketToken)
         {
             if (openBracketToken != this.OpenBracketToken || sizes != this.Sizes || closeBracketToken != this.CloseBracketToken)
             {
@@ -915,37 +723,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new ArrayRankSpecifierSyntax(this.Kind, this.openBracketToken, this.sizes, this.closeBracketToken, GetDiagnostics(), annotations);
-
-        internal ArrayRankSpecifierSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 3;
-            var openBracketToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(openBracketToken);
-            this.openBracketToken = openBracketToken;
-            var sizes = (GreenNode?)reader.ReadValue();
-            if (sizes != null)
-            {
-                AdjustFlagsAndWidth(sizes);
-                this.sizes = sizes;
-            }
-            var closeBracketToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(closeBracketToken);
-            this.closeBracketToken = closeBracketToken;
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.openBracketToken);
-            writer.WriteValue(this.sizes);
-            writer.WriteValue(this.closeBracketToken);
-        }
-
-        static ArrayRankSpecifierSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(ArrayRankSpecifierSyntax), r => new ArrayRankSpecifierSyntax(r));
-        }
     }
 
     /// <summary>Class which represents the syntax node for pointer type.</summary>
@@ -1025,30 +802,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new PointerTypeSyntax(this.Kind, this.elementType, this.asteriskToken, GetDiagnostics(), annotations);
-
-        internal PointerTypeSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 2;
-            var elementType = (TypeSyntax)reader.ReadValue();
-            AdjustFlagsAndWidth(elementType);
-            this.elementType = elementType;
-            var asteriskToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(asteriskToken);
-            this.asteriskToken = asteriskToken;
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.elementType);
-            writer.WriteValue(this.asteriskToken);
-        }
-
-        static PointerTypeSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(PointerTypeSyntax), r => new PointerTypeSyntax(r));
-        }
     }
 
     internal sealed partial class FunctionPointerTypeSyntax : TypeSyntax
@@ -1156,41 +909,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new FunctionPointerTypeSyntax(this.Kind, this.delegateKeyword, this.asteriskToken, this.callingConvention, this.parameterList, GetDiagnostics(), annotations);
-
-        internal FunctionPointerTypeSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 4;
-            var delegateKeyword = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(delegateKeyword);
-            this.delegateKeyword = delegateKeyword;
-            var asteriskToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(asteriskToken);
-            this.asteriskToken = asteriskToken;
-            var callingConvention = (FunctionPointerCallingConventionSyntax?)reader.ReadValue();
-            if (callingConvention != null)
-            {
-                AdjustFlagsAndWidth(callingConvention);
-                this.callingConvention = callingConvention;
-            }
-            var parameterList = (FunctionPointerParameterListSyntax)reader.ReadValue();
-            AdjustFlagsAndWidth(parameterList);
-            this.parameterList = parameterList;
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.delegateKeyword);
-            writer.WriteValue(this.asteriskToken);
-            writer.WriteValue(this.callingConvention);
-            writer.WriteValue(this.parameterList);
-        }
-
-        static FunctionPointerTypeSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(FunctionPointerTypeSyntax), r => new FunctionPointerTypeSyntax(r));
-        }
     }
 
     /// <summary>Function pointer parameter list syntax.</summary>
@@ -1249,7 +967,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
         /// <summary>SyntaxToken representing the less than token.</summary>
         public SyntaxToken LessThanToken => this.lessThanToken;
         /// <summary>SeparatedSyntaxList of ParameterSyntaxes representing the list of parameters and return type.</summary>
-        public Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<FunctionPointerParameterSyntax> Parameters => new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<FunctionPointerParameterSyntax>(new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<CSharpSyntaxNode>(this.parameters));
+        public CoreSyntax.SeparatedSyntaxList<FunctionPointerParameterSyntax> Parameters => new CoreSyntax.SeparatedSyntaxList<FunctionPointerParameterSyntax>(new CoreSyntax.SyntaxList<CSharpSyntaxNode>(this.parameters));
         /// <summary>SyntaxToken representing the greater than token.</summary>
         public SyntaxToken GreaterThanToken => this.greaterThanToken;
 
@@ -1267,7 +985,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
         public override void Accept(CSharpSyntaxVisitor visitor) => visitor.VisitFunctionPointerParameterList(this);
         public override TResult Accept<TResult>(CSharpSyntaxVisitor<TResult> visitor) => visitor.VisitFunctionPointerParameterList(this);
 
-        public FunctionPointerParameterListSyntax Update(SyntaxToken lessThanToken, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<FunctionPointerParameterSyntax> parameters, SyntaxToken greaterThanToken)
+        public FunctionPointerParameterListSyntax Update(SyntaxToken lessThanToken, CoreSyntax.SeparatedSyntaxList<FunctionPointerParameterSyntax> parameters, SyntaxToken greaterThanToken)
         {
             if (lessThanToken != this.LessThanToken || parameters != this.Parameters || greaterThanToken != this.GreaterThanToken)
             {
@@ -1289,37 +1007,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new FunctionPointerParameterListSyntax(this.Kind, this.lessThanToken, this.parameters, this.greaterThanToken, GetDiagnostics(), annotations);
-
-        internal FunctionPointerParameterListSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 3;
-            var lessThanToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(lessThanToken);
-            this.lessThanToken = lessThanToken;
-            var parameters = (GreenNode?)reader.ReadValue();
-            if (parameters != null)
-            {
-                AdjustFlagsAndWidth(parameters);
-                this.parameters = parameters;
-            }
-            var greaterThanToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(greaterThanToken);
-            this.greaterThanToken = greaterThanToken;
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.lessThanToken);
-            writer.WriteValue(this.parameters);
-            writer.WriteValue(this.greaterThanToken);
-        }
-
-        static FunctionPointerParameterListSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(FunctionPointerParameterListSyntax), r => new FunctionPointerParameterListSyntax(r));
-        }
     }
 
     /// <summary>Function pointer calling convention syntax.</summary>
@@ -1408,33 +1095,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new FunctionPointerCallingConventionSyntax(this.Kind, this.managedOrUnmanagedKeyword, this.unmanagedCallingConventionList, GetDiagnostics(), annotations);
-
-        internal FunctionPointerCallingConventionSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 2;
-            var managedOrUnmanagedKeyword = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(managedOrUnmanagedKeyword);
-            this.managedOrUnmanagedKeyword = managedOrUnmanagedKeyword;
-            var unmanagedCallingConventionList = (FunctionPointerUnmanagedCallingConventionListSyntax?)reader.ReadValue();
-            if (unmanagedCallingConventionList != null)
-            {
-                AdjustFlagsAndWidth(unmanagedCallingConventionList);
-                this.unmanagedCallingConventionList = unmanagedCallingConventionList;
-            }
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.managedOrUnmanagedKeyword);
-            writer.WriteValue(this.unmanagedCallingConventionList);
-        }
-
-        static FunctionPointerCallingConventionSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(FunctionPointerCallingConventionSyntax), r => new FunctionPointerCallingConventionSyntax(r));
-        }
     }
 
     /// <summary>Function pointer calling convention syntax.</summary>
@@ -1493,7 +1153,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
         /// <summary>SyntaxToken representing open bracket.</summary>
         public SyntaxToken OpenBracketToken => this.openBracketToken;
         /// <summary>SeparatedSyntaxList of calling convention identifiers.</summary>
-        public Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<FunctionPointerUnmanagedCallingConventionSyntax> CallingConventions => new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<FunctionPointerUnmanagedCallingConventionSyntax>(new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<CSharpSyntaxNode>(this.callingConventions));
+        public CoreSyntax.SeparatedSyntaxList<FunctionPointerUnmanagedCallingConventionSyntax> CallingConventions => new CoreSyntax.SeparatedSyntaxList<FunctionPointerUnmanagedCallingConventionSyntax>(new CoreSyntax.SyntaxList<CSharpSyntaxNode>(this.callingConventions));
         /// <summary>SyntaxToken representing close bracket.</summary>
         public SyntaxToken CloseBracketToken => this.closeBracketToken;
 
@@ -1511,7 +1171,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
         public override void Accept(CSharpSyntaxVisitor visitor) => visitor.VisitFunctionPointerUnmanagedCallingConventionList(this);
         public override TResult Accept<TResult>(CSharpSyntaxVisitor<TResult> visitor) => visitor.VisitFunctionPointerUnmanagedCallingConventionList(this);
 
-        public FunctionPointerUnmanagedCallingConventionListSyntax Update(SyntaxToken openBracketToken, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<FunctionPointerUnmanagedCallingConventionSyntax> callingConventions, SyntaxToken closeBracketToken)
+        public FunctionPointerUnmanagedCallingConventionListSyntax Update(SyntaxToken openBracketToken, CoreSyntax.SeparatedSyntaxList<FunctionPointerUnmanagedCallingConventionSyntax> callingConventions, SyntaxToken closeBracketToken)
         {
             if (openBracketToken != this.OpenBracketToken || callingConventions != this.CallingConventions || closeBracketToken != this.CloseBracketToken)
             {
@@ -1533,37 +1193,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new FunctionPointerUnmanagedCallingConventionListSyntax(this.Kind, this.openBracketToken, this.callingConventions, this.closeBracketToken, GetDiagnostics(), annotations);
-
-        internal FunctionPointerUnmanagedCallingConventionListSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 3;
-            var openBracketToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(openBracketToken);
-            this.openBracketToken = openBracketToken;
-            var callingConventions = (GreenNode?)reader.ReadValue();
-            if (callingConventions != null)
-            {
-                AdjustFlagsAndWidth(callingConventions);
-                this.callingConventions = callingConventions;
-            }
-            var closeBracketToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(closeBracketToken);
-            this.closeBracketToken = closeBracketToken;
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.openBracketToken);
-            writer.WriteValue(this.callingConventions);
-            writer.WriteValue(this.closeBracketToken);
-        }
-
-        static FunctionPointerUnmanagedCallingConventionListSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(FunctionPointerUnmanagedCallingConventionListSyntax), r => new FunctionPointerUnmanagedCallingConventionListSyntax(r));
-        }
     }
 
     /// <summary>Individual function pointer unmanaged calling convention.</summary>
@@ -1629,26 +1258,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new FunctionPointerUnmanagedCallingConventionSyntax(this.Kind, this.name, GetDiagnostics(), annotations);
-
-        internal FunctionPointerUnmanagedCallingConventionSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 1;
-            var name = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(name);
-            this.name = name;
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.name);
-        }
-
-        static FunctionPointerUnmanagedCallingConventionSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(FunctionPointerUnmanagedCallingConventionSyntax), r => new FunctionPointerUnmanagedCallingConventionSyntax(r));
-        }
     }
 
     /// <summary>Class which represents the syntax node for a nullable type.</summary>
@@ -1728,30 +1337,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new NullableTypeSyntax(this.Kind, this.elementType, this.questionToken, GetDiagnostics(), annotations);
-
-        internal NullableTypeSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 2;
-            var elementType = (TypeSyntax)reader.ReadValue();
-            AdjustFlagsAndWidth(elementType);
-            this.elementType = elementType;
-            var questionToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(questionToken);
-            this.questionToken = questionToken;
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.elementType);
-            writer.WriteValue(this.questionToken);
-        }
-
-        static NullableTypeSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(NullableTypeSyntax), r => new NullableTypeSyntax(r));
-        }
     }
 
     /// <summary>Class which represents the syntax node for tuple type.</summary>
@@ -1809,7 +1394,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         /// <summary>SyntaxToken representing the open parenthesis.</summary>
         public SyntaxToken OpenParenToken => this.openParenToken;
-        public Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<TupleElementSyntax> Elements => new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<TupleElementSyntax>(new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<CSharpSyntaxNode>(this.elements));
+        public CoreSyntax.SeparatedSyntaxList<TupleElementSyntax> Elements => new CoreSyntax.SeparatedSyntaxList<TupleElementSyntax>(new CoreSyntax.SyntaxList<CSharpSyntaxNode>(this.elements));
         /// <summary>SyntaxToken representing the close parenthesis.</summary>
         public SyntaxToken CloseParenToken => this.closeParenToken;
 
@@ -1827,7 +1412,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
         public override void Accept(CSharpSyntaxVisitor visitor) => visitor.VisitTupleType(this);
         public override TResult Accept<TResult>(CSharpSyntaxVisitor<TResult> visitor) => visitor.VisitTupleType(this);
 
-        public TupleTypeSyntax Update(SyntaxToken openParenToken, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<TupleElementSyntax> elements, SyntaxToken closeParenToken)
+        public TupleTypeSyntax Update(SyntaxToken openParenToken, CoreSyntax.SeparatedSyntaxList<TupleElementSyntax> elements, SyntaxToken closeParenToken)
         {
             if (openParenToken != this.OpenParenToken || elements != this.Elements || closeParenToken != this.CloseParenToken)
             {
@@ -1849,37 +1434,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new TupleTypeSyntax(this.Kind, this.openParenToken, this.elements, this.closeParenToken, GetDiagnostics(), annotations);
-
-        internal TupleTypeSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 3;
-            var openParenToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(openParenToken);
-            this.openParenToken = openParenToken;
-            var elements = (GreenNode?)reader.ReadValue();
-            if (elements != null)
-            {
-                AdjustFlagsAndWidth(elements);
-                this.elements = elements;
-            }
-            var closeParenToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(closeParenToken);
-            this.closeParenToken = closeParenToken;
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.openParenToken);
-            writer.WriteValue(this.elements);
-            writer.WriteValue(this.closeParenToken);
-        }
-
-        static TupleTypeSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(TupleTypeSyntax), r => new TupleTypeSyntax(r));
-        }
     }
 
     /// <summary>Tuple type element.</summary>
@@ -1968,33 +1522,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new TupleElementSyntax(this.Kind, this.type, this.identifier, GetDiagnostics(), annotations);
-
-        internal TupleElementSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 2;
-            var type = (TypeSyntax)reader.ReadValue();
-            AdjustFlagsAndWidth(type);
-            this.type = type;
-            var identifier = (SyntaxToken?)reader.ReadValue();
-            if (identifier != null)
-            {
-                AdjustFlagsAndWidth(identifier);
-                this.identifier = identifier;
-            }
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.type);
-            writer.WriteValue(this.identifier);
-        }
-
-        static TupleElementSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(TupleElementSyntax), r => new TupleElementSyntax(r));
-        }
     }
 
     /// <summary>Class which represents a placeholder in the type argument list of an unbound generic type.</summary>
@@ -2060,26 +1587,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new OmittedTypeArgumentSyntax(this.Kind, this.omittedTypeArgumentToken, GetDiagnostics(), annotations);
-
-        internal OmittedTypeArgumentSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 1;
-            var omittedTypeArgumentToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(omittedTypeArgumentToken);
-            this.omittedTypeArgumentToken = omittedTypeArgumentToken;
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.omittedTypeArgumentToken);
-        }
-
-        static OmittedTypeArgumentSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(OmittedTypeArgumentSyntax), r => new OmittedTypeArgumentSyntax(r));
-        }
     }
 
     /// <summary>The ref modifier of a method's return value or a local.</summary>
@@ -2176,37 +1683,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new RefTypeSyntax(this.Kind, this.refKeyword, this.readOnlyKeyword, this.type, GetDiagnostics(), annotations);
-
-        internal RefTypeSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 3;
-            var refKeyword = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(refKeyword);
-            this.refKeyword = refKeyword;
-            var readOnlyKeyword = (SyntaxToken?)reader.ReadValue();
-            if (readOnlyKeyword != null)
-            {
-                AdjustFlagsAndWidth(readOnlyKeyword);
-                this.readOnlyKeyword = readOnlyKeyword;
-            }
-            var type = (TypeSyntax)reader.ReadValue();
-            AdjustFlagsAndWidth(type);
-            this.type = type;
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.refKeyword);
-            writer.WriteValue(this.readOnlyKeyword);
-            writer.WriteValue(this.type);
-        }
-
-        static RefTypeSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(RefTypeSyntax), r => new RefTypeSyntax(r));
-        }
     }
 
     /// <summary>The 'scoped' modifier of a local.</summary>
@@ -2284,30 +1760,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new ScopedTypeSyntax(this.Kind, this.scopedKeyword, this.type, GetDiagnostics(), annotations);
-
-        internal ScopedTypeSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 2;
-            var scopedKeyword = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(scopedKeyword);
-            this.scopedKeyword = scopedKeyword;
-            var type = (TypeSyntax)reader.ReadValue();
-            AdjustFlagsAndWidth(type);
-            this.type = type;
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.scopedKeyword);
-            writer.WriteValue(this.type);
-        }
-
-        static ScopedTypeSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(ScopedTypeSyntax), r => new ScopedTypeSyntax(r));
-        }
     }
 
     internal abstract partial class ExpressionOrPatternSyntax : CSharpSyntaxNode
@@ -2319,11 +1771,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal ExpressionOrPatternSyntax(SyntaxKind kind)
           : base(kind)
-        {
-        }
-
-        protected ExpressionOrPatternSyntax(ObjectReader reader)
-          : base(reader)
         {
         }
     }
@@ -2338,11 +1785,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal ExpressionSyntax(SyntaxKind kind)
           : base(kind)
-        {
-        }
-
-        protected ExpressionSyntax(ObjectReader reader)
-          : base(reader)
         {
         }
     }
@@ -2434,34 +1876,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new ParenthesizedExpressionSyntax(this.Kind, this.openParenToken, this.expression, this.closeParenToken, GetDiagnostics(), annotations);
-
-        internal ParenthesizedExpressionSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 3;
-            var openParenToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(openParenToken);
-            this.openParenToken = openParenToken;
-            var expression = (ExpressionSyntax)reader.ReadValue();
-            AdjustFlagsAndWidth(expression);
-            this.expression = expression;
-            var closeParenToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(closeParenToken);
-            this.closeParenToken = closeParenToken;
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.openParenToken);
-            writer.WriteValue(this.expression);
-            writer.WriteValue(this.closeParenToken);
-        }
-
-        static ParenthesizedExpressionSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(ParenthesizedExpressionSyntax), r => new ParenthesizedExpressionSyntax(r));
-        }
     }
 
     /// <summary>Class which represents the syntax node for tuple expression.</summary>
@@ -2520,7 +1934,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
         /// <summary>SyntaxToken representing the open parenthesis.</summary>
         public SyntaxToken OpenParenToken => this.openParenToken;
         /// <summary>SeparatedSyntaxList of ArgumentSyntax representing the list of arguments.</summary>
-        public Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<ArgumentSyntax> Arguments => new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<ArgumentSyntax>(new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<CSharpSyntaxNode>(this.arguments));
+        public CoreSyntax.SeparatedSyntaxList<ArgumentSyntax> Arguments => new CoreSyntax.SeparatedSyntaxList<ArgumentSyntax>(new CoreSyntax.SyntaxList<CSharpSyntaxNode>(this.arguments));
         /// <summary>SyntaxToken representing the close parenthesis.</summary>
         public SyntaxToken CloseParenToken => this.closeParenToken;
 
@@ -2538,7 +1952,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
         public override void Accept(CSharpSyntaxVisitor visitor) => visitor.VisitTupleExpression(this);
         public override TResult Accept<TResult>(CSharpSyntaxVisitor<TResult> visitor) => visitor.VisitTupleExpression(this);
 
-        public TupleExpressionSyntax Update(SyntaxToken openParenToken, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<ArgumentSyntax> arguments, SyntaxToken closeParenToken)
+        public TupleExpressionSyntax Update(SyntaxToken openParenToken, CoreSyntax.SeparatedSyntaxList<ArgumentSyntax> arguments, SyntaxToken closeParenToken)
         {
             if (openParenToken != this.OpenParenToken || arguments != this.Arguments || closeParenToken != this.CloseParenToken)
             {
@@ -2560,37 +1974,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new TupleExpressionSyntax(this.Kind, this.openParenToken, this.arguments, this.closeParenToken, GetDiagnostics(), annotations);
-
-        internal TupleExpressionSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 3;
-            var openParenToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(openParenToken);
-            this.openParenToken = openParenToken;
-            var arguments = (GreenNode?)reader.ReadValue();
-            if (arguments != null)
-            {
-                AdjustFlagsAndWidth(arguments);
-                this.arguments = arguments;
-            }
-            var closeParenToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(closeParenToken);
-            this.closeParenToken = closeParenToken;
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.openParenToken);
-            writer.WriteValue(this.arguments);
-            writer.WriteValue(this.closeParenToken);
-        }
-
-        static TupleExpressionSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(TupleExpressionSyntax), r => new TupleExpressionSyntax(r));
-        }
     }
 
     /// <summary>Class which represents the syntax node for prefix unary expression.</summary>
@@ -2670,30 +2053,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new PrefixUnaryExpressionSyntax(this.Kind, this.operatorToken, this.operand, GetDiagnostics(), annotations);
-
-        internal PrefixUnaryExpressionSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 2;
-            var operatorToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(operatorToken);
-            this.operatorToken = operatorToken;
-            var operand = (ExpressionSyntax)reader.ReadValue();
-            AdjustFlagsAndWidth(operand);
-            this.operand = operand;
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.operatorToken);
-            writer.WriteValue(this.operand);
-        }
-
-        static PrefixUnaryExpressionSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(PrefixUnaryExpressionSyntax), r => new PrefixUnaryExpressionSyntax(r));
-        }
     }
 
     /// <summary>Class which represents the syntax node for an "await" expression.</summary>
@@ -2773,30 +2132,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new AwaitExpressionSyntax(this.Kind, this.awaitKeyword, this.expression, GetDiagnostics(), annotations);
-
-        internal AwaitExpressionSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 2;
-            var awaitKeyword = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(awaitKeyword);
-            this.awaitKeyword = awaitKeyword;
-            var expression = (ExpressionSyntax)reader.ReadValue();
-            AdjustFlagsAndWidth(expression);
-            this.expression = expression;
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.awaitKeyword);
-            writer.WriteValue(this.expression);
-        }
-
-        static AwaitExpressionSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(AwaitExpressionSyntax), r => new AwaitExpressionSyntax(r));
-        }
     }
 
     /// <summary>Class which represents the syntax node for postfix unary expression.</summary>
@@ -2876,30 +2211,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new PostfixUnaryExpressionSyntax(this.Kind, this.operand, this.operatorToken, GetDiagnostics(), annotations);
-
-        internal PostfixUnaryExpressionSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 2;
-            var operand = (ExpressionSyntax)reader.ReadValue();
-            AdjustFlagsAndWidth(operand);
-            this.operand = operand;
-            var operatorToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(operatorToken);
-            this.operatorToken = operatorToken;
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.operand);
-            writer.WriteValue(this.operatorToken);
-        }
-
-        static PostfixUnaryExpressionSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(PostfixUnaryExpressionSyntax), r => new PostfixUnaryExpressionSyntax(r));
-        }
     }
 
     /// <summary>Class which represents the syntax node for member access expression.</summary>
@@ -2989,34 +2300,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new MemberAccessExpressionSyntax(this.Kind, this.expression, this.operatorToken, this.name, GetDiagnostics(), annotations);
-
-        internal MemberAccessExpressionSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 3;
-            var expression = (ExpressionSyntax)reader.ReadValue();
-            AdjustFlagsAndWidth(expression);
-            this.expression = expression;
-            var operatorToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(operatorToken);
-            this.operatorToken = operatorToken;
-            var name = (SimpleNameSyntax)reader.ReadValue();
-            AdjustFlagsAndWidth(name);
-            this.name = name;
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.expression);
-            writer.WriteValue(this.operatorToken);
-            writer.WriteValue(this.name);
-        }
-
-        static MemberAccessExpressionSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(MemberAccessExpressionSyntax), r => new MemberAccessExpressionSyntax(r));
-        }
     }
 
     /// <summary>Class which represents the syntax node for conditional access expression.</summary>
@@ -3106,34 +2389,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new ConditionalAccessExpressionSyntax(this.Kind, this.expression, this.operatorToken, this.whenNotNull, GetDiagnostics(), annotations);
-
-        internal ConditionalAccessExpressionSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 3;
-            var expression = (ExpressionSyntax)reader.ReadValue();
-            AdjustFlagsAndWidth(expression);
-            this.expression = expression;
-            var operatorToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(operatorToken);
-            this.operatorToken = operatorToken;
-            var whenNotNull = (ExpressionSyntax)reader.ReadValue();
-            AdjustFlagsAndWidth(whenNotNull);
-            this.whenNotNull = whenNotNull;
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.expression);
-            writer.WriteValue(this.operatorToken);
-            writer.WriteValue(this.whenNotNull);
-        }
-
-        static ConditionalAccessExpressionSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(ConditionalAccessExpressionSyntax), r => new ConditionalAccessExpressionSyntax(r));
-        }
     }
 
     /// <summary>Class which represents the syntax node for member binding expression.</summary>
@@ -3213,30 +2468,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new MemberBindingExpressionSyntax(this.Kind, this.operatorToken, this.name, GetDiagnostics(), annotations);
-
-        internal MemberBindingExpressionSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 2;
-            var operatorToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(operatorToken);
-            this.operatorToken = operatorToken;
-            var name = (SimpleNameSyntax)reader.ReadValue();
-            AdjustFlagsAndWidth(name);
-            this.name = name;
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.operatorToken);
-            writer.WriteValue(this.name);
-        }
-
-        static MemberBindingExpressionSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(MemberBindingExpressionSyntax), r => new MemberBindingExpressionSyntax(r));
-        }
     }
 
     /// <summary>Class which represents the syntax node for element binding expression.</summary>
@@ -3302,26 +2533,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new ElementBindingExpressionSyntax(this.Kind, this.argumentList, GetDiagnostics(), annotations);
-
-        internal ElementBindingExpressionSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 1;
-            var argumentList = (BracketedArgumentListSyntax)reader.ReadValue();
-            AdjustFlagsAndWidth(argumentList);
-            this.argumentList = argumentList;
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.argumentList);
-        }
-
-        static ElementBindingExpressionSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(ElementBindingExpressionSyntax), r => new ElementBindingExpressionSyntax(r));
-        }
     }
 
     /// <summary>Class which represents the syntax node for a range expression.</summary>
@@ -3429,40 +2640,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new RangeExpressionSyntax(this.Kind, this.leftOperand, this.operatorToken, this.rightOperand, GetDiagnostics(), annotations);
-
-        internal RangeExpressionSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 3;
-            var leftOperand = (ExpressionSyntax?)reader.ReadValue();
-            if (leftOperand != null)
-            {
-                AdjustFlagsAndWidth(leftOperand);
-                this.leftOperand = leftOperand;
-            }
-            var operatorToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(operatorToken);
-            this.operatorToken = operatorToken;
-            var rightOperand = (ExpressionSyntax?)reader.ReadValue();
-            if (rightOperand != null)
-            {
-                AdjustFlagsAndWidth(rightOperand);
-                this.rightOperand = rightOperand;
-            }
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.leftOperand);
-            writer.WriteValue(this.operatorToken);
-            writer.WriteValue(this.rightOperand);
-        }
-
-        static RangeExpressionSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(RangeExpressionSyntax), r => new RangeExpressionSyntax(r));
-        }
     }
 
     /// <summary>Class which represents the syntax node for implicit element access expression.</summary>
@@ -3528,26 +2705,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new ImplicitElementAccessSyntax(this.Kind, this.argumentList, GetDiagnostics(), annotations);
-
-        internal ImplicitElementAccessSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 1;
-            var argumentList = (BracketedArgumentListSyntax)reader.ReadValue();
-            AdjustFlagsAndWidth(argumentList);
-            this.argumentList = argumentList;
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.argumentList);
-        }
-
-        static ImplicitElementAccessSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(ImplicitElementAccessSyntax), r => new ImplicitElementAccessSyntax(r));
-        }
     }
 
     /// <summary>Class which represents an expression that has a binary operator.</summary>
@@ -3637,34 +2794,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new BinaryExpressionSyntax(this.Kind, this.left, this.operatorToken, this.right, GetDiagnostics(), annotations);
-
-        internal BinaryExpressionSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 3;
-            var left = (ExpressionSyntax)reader.ReadValue();
-            AdjustFlagsAndWidth(left);
-            this.left = left;
-            var operatorToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(operatorToken);
-            this.operatorToken = operatorToken;
-            var right = (ExpressionSyntax)reader.ReadValue();
-            AdjustFlagsAndWidth(right);
-            this.right = right;
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.left);
-            writer.WriteValue(this.operatorToken);
-            writer.WriteValue(this.right);
-        }
-
-        static BinaryExpressionSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(BinaryExpressionSyntax), r => new BinaryExpressionSyntax(r));
-        }
     }
 
     /// <summary>Class which represents an expression that has an assignment operator.</summary>
@@ -3754,34 +2883,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new AssignmentExpressionSyntax(this.Kind, this.left, this.operatorToken, this.right, GetDiagnostics(), annotations);
-
-        internal AssignmentExpressionSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 3;
-            var left = (ExpressionSyntax)reader.ReadValue();
-            AdjustFlagsAndWidth(left);
-            this.left = left;
-            var operatorToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(operatorToken);
-            this.operatorToken = operatorToken;
-            var right = (ExpressionSyntax)reader.ReadValue();
-            AdjustFlagsAndWidth(right);
-            this.right = right;
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.left);
-            writer.WriteValue(this.operatorToken);
-            writer.WriteValue(this.right);
-        }
-
-        static AssignmentExpressionSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(AssignmentExpressionSyntax), r => new AssignmentExpressionSyntax(r));
-        }
     }
 
     /// <summary>Class which represents the syntax node for conditional expression.</summary>
@@ -3891,42 +2992,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new ConditionalExpressionSyntax(this.Kind, this.condition, this.questionToken, this.whenTrue, this.colonToken, this.whenFalse, GetDiagnostics(), annotations);
-
-        internal ConditionalExpressionSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 5;
-            var condition = (ExpressionSyntax)reader.ReadValue();
-            AdjustFlagsAndWidth(condition);
-            this.condition = condition;
-            var questionToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(questionToken);
-            this.questionToken = questionToken;
-            var whenTrue = (ExpressionSyntax)reader.ReadValue();
-            AdjustFlagsAndWidth(whenTrue);
-            this.whenTrue = whenTrue;
-            var colonToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(colonToken);
-            this.colonToken = colonToken;
-            var whenFalse = (ExpressionSyntax)reader.ReadValue();
-            AdjustFlagsAndWidth(whenFalse);
-            this.whenFalse = whenFalse;
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.condition);
-            writer.WriteValue(this.questionToken);
-            writer.WriteValue(this.whenTrue);
-            writer.WriteValue(this.colonToken);
-            writer.WriteValue(this.whenFalse);
-        }
-
-        static ConditionalExpressionSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(ConditionalExpressionSyntax), r => new ConditionalExpressionSyntax(r));
-        }
     }
 
     /// <summary>Provides the base class from which the classes that represent instance expression syntax nodes are derived. This is an abstract class.</summary>
@@ -3939,11 +3004,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal InstanceExpressionSyntax(SyntaxKind kind)
           : base(kind)
-        {
-        }
-
-        protected InstanceExpressionSyntax(ObjectReader reader)
-          : base(reader)
         {
         }
     }
@@ -4011,26 +3071,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new ThisExpressionSyntax(this.Kind, this.token, GetDiagnostics(), annotations);
-
-        internal ThisExpressionSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 1;
-            var token = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(token);
-            this.token = token;
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.token);
-        }
-
-        static ThisExpressionSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(ThisExpressionSyntax), r => new ThisExpressionSyntax(r));
-        }
     }
 
     /// <summary>Class which represents the syntax node for a base expression.</summary>
@@ -4096,26 +3136,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new BaseExpressionSyntax(this.Kind, this.token, GetDiagnostics(), annotations);
-
-        internal BaseExpressionSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 1;
-            var token = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(token);
-            this.token = token;
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.token);
-        }
-
-        static BaseExpressionSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(BaseExpressionSyntax), r => new BaseExpressionSyntax(r));
-        }
     }
 
     /// <summary>Class which represents the syntax node for a literal expression.</summary>
@@ -4181,26 +3201,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new LiteralExpressionSyntax(this.Kind, this.token, GetDiagnostics(), annotations);
-
-        internal LiteralExpressionSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 1;
-            var token = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(token);
-            this.token = token;
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.token);
-        }
-
-        static LiteralExpressionSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(LiteralExpressionSyntax), r => new LiteralExpressionSyntax(r));
-        }
     }
 
     /// <summary>Class which represents the syntax node for MakeRef expression.</summary>
@@ -4300,38 +3300,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new MakeRefExpressionSyntax(this.Kind, this.keyword, this.openParenToken, this.expression, this.closeParenToken, GetDiagnostics(), annotations);
-
-        internal MakeRefExpressionSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 4;
-            var keyword = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(keyword);
-            this.keyword = keyword;
-            var openParenToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(openParenToken);
-            this.openParenToken = openParenToken;
-            var expression = (ExpressionSyntax)reader.ReadValue();
-            AdjustFlagsAndWidth(expression);
-            this.expression = expression;
-            var closeParenToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(closeParenToken);
-            this.closeParenToken = closeParenToken;
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.keyword);
-            writer.WriteValue(this.openParenToken);
-            writer.WriteValue(this.expression);
-            writer.WriteValue(this.closeParenToken);
-        }
-
-        static MakeRefExpressionSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(MakeRefExpressionSyntax), r => new MakeRefExpressionSyntax(r));
-        }
     }
 
     /// <summary>Class which represents the syntax node for RefType expression.</summary>
@@ -4431,38 +3399,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new RefTypeExpressionSyntax(this.Kind, this.keyword, this.openParenToken, this.expression, this.closeParenToken, GetDiagnostics(), annotations);
-
-        internal RefTypeExpressionSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 4;
-            var keyword = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(keyword);
-            this.keyword = keyword;
-            var openParenToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(openParenToken);
-            this.openParenToken = openParenToken;
-            var expression = (ExpressionSyntax)reader.ReadValue();
-            AdjustFlagsAndWidth(expression);
-            this.expression = expression;
-            var closeParenToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(closeParenToken);
-            this.closeParenToken = closeParenToken;
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.keyword);
-            writer.WriteValue(this.openParenToken);
-            writer.WriteValue(this.expression);
-            writer.WriteValue(this.closeParenToken);
-        }
-
-        static RefTypeExpressionSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(RefTypeExpressionSyntax), r => new RefTypeExpressionSyntax(r));
-        }
     }
 
     /// <summary>Class which represents the syntax node for RefValue expression.</summary>
@@ -4582,46 +3518,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new RefValueExpressionSyntax(this.Kind, this.keyword, this.openParenToken, this.expression, this.comma, this.type, this.closeParenToken, GetDiagnostics(), annotations);
-
-        internal RefValueExpressionSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 6;
-            var keyword = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(keyword);
-            this.keyword = keyword;
-            var openParenToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(openParenToken);
-            this.openParenToken = openParenToken;
-            var expression = (ExpressionSyntax)reader.ReadValue();
-            AdjustFlagsAndWidth(expression);
-            this.expression = expression;
-            var comma = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(comma);
-            this.comma = comma;
-            var type = (TypeSyntax)reader.ReadValue();
-            AdjustFlagsAndWidth(type);
-            this.type = type;
-            var closeParenToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(closeParenToken);
-            this.closeParenToken = closeParenToken;
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.keyword);
-            writer.WriteValue(this.openParenToken);
-            writer.WriteValue(this.expression);
-            writer.WriteValue(this.comma);
-            writer.WriteValue(this.type);
-            writer.WriteValue(this.closeParenToken);
-        }
-
-        static RefValueExpressionSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(RefValueExpressionSyntax), r => new RefValueExpressionSyntax(r));
-        }
     }
 
     /// <summary>Class which represents the syntax node for Checked or Unchecked expression.</summary>
@@ -4721,38 +3617,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new CheckedExpressionSyntax(this.Kind, this.keyword, this.openParenToken, this.expression, this.closeParenToken, GetDiagnostics(), annotations);
-
-        internal CheckedExpressionSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 4;
-            var keyword = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(keyword);
-            this.keyword = keyword;
-            var openParenToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(openParenToken);
-            this.openParenToken = openParenToken;
-            var expression = (ExpressionSyntax)reader.ReadValue();
-            AdjustFlagsAndWidth(expression);
-            this.expression = expression;
-            var closeParenToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(closeParenToken);
-            this.closeParenToken = closeParenToken;
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.keyword);
-            writer.WriteValue(this.openParenToken);
-            writer.WriteValue(this.expression);
-            writer.WriteValue(this.closeParenToken);
-        }
-
-        static CheckedExpressionSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(CheckedExpressionSyntax), r => new CheckedExpressionSyntax(r));
-        }
     }
 
     /// <summary>Class which represents the syntax node for Default expression.</summary>
@@ -4852,38 +3716,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new DefaultExpressionSyntax(this.Kind, this.keyword, this.openParenToken, this.type, this.closeParenToken, GetDiagnostics(), annotations);
-
-        internal DefaultExpressionSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 4;
-            var keyword = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(keyword);
-            this.keyword = keyword;
-            var openParenToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(openParenToken);
-            this.openParenToken = openParenToken;
-            var type = (TypeSyntax)reader.ReadValue();
-            AdjustFlagsAndWidth(type);
-            this.type = type;
-            var closeParenToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(closeParenToken);
-            this.closeParenToken = closeParenToken;
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.keyword);
-            writer.WriteValue(this.openParenToken);
-            writer.WriteValue(this.type);
-            writer.WriteValue(this.closeParenToken);
-        }
-
-        static DefaultExpressionSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(DefaultExpressionSyntax), r => new DefaultExpressionSyntax(r));
-        }
     }
 
     /// <summary>Class which represents the syntax node for TypeOf expression.</summary>
@@ -4983,38 +3815,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new TypeOfExpressionSyntax(this.Kind, this.keyword, this.openParenToken, this.type, this.closeParenToken, GetDiagnostics(), annotations);
-
-        internal TypeOfExpressionSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 4;
-            var keyword = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(keyword);
-            this.keyword = keyword;
-            var openParenToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(openParenToken);
-            this.openParenToken = openParenToken;
-            var type = (TypeSyntax)reader.ReadValue();
-            AdjustFlagsAndWidth(type);
-            this.type = type;
-            var closeParenToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(closeParenToken);
-            this.closeParenToken = closeParenToken;
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.keyword);
-            writer.WriteValue(this.openParenToken);
-            writer.WriteValue(this.type);
-            writer.WriteValue(this.closeParenToken);
-        }
-
-        static TypeOfExpressionSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(TypeOfExpressionSyntax), r => new TypeOfExpressionSyntax(r));
-        }
     }
 
     /// <summary>Class which represents the syntax node for SizeOf expression.</summary>
@@ -5114,38 +3914,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new SizeOfExpressionSyntax(this.Kind, this.keyword, this.openParenToken, this.type, this.closeParenToken, GetDiagnostics(), annotations);
-
-        internal SizeOfExpressionSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 4;
-            var keyword = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(keyword);
-            this.keyword = keyword;
-            var openParenToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(openParenToken);
-            this.openParenToken = openParenToken;
-            var type = (TypeSyntax)reader.ReadValue();
-            AdjustFlagsAndWidth(type);
-            this.type = type;
-            var closeParenToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(closeParenToken);
-            this.closeParenToken = closeParenToken;
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.keyword);
-            writer.WriteValue(this.openParenToken);
-            writer.WriteValue(this.type);
-            writer.WriteValue(this.closeParenToken);
-        }
-
-        static SizeOfExpressionSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(SizeOfExpressionSyntax), r => new SizeOfExpressionSyntax(r));
-        }
     }
 
     /// <summary>Class which represents the syntax node for invocation expression.</summary>
@@ -5225,30 +3993,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new InvocationExpressionSyntax(this.Kind, this.expression, this.argumentList, GetDiagnostics(), annotations);
-
-        internal InvocationExpressionSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 2;
-            var expression = (ExpressionSyntax)reader.ReadValue();
-            AdjustFlagsAndWidth(expression);
-            this.expression = expression;
-            var argumentList = (ArgumentListSyntax)reader.ReadValue();
-            AdjustFlagsAndWidth(argumentList);
-            this.argumentList = argumentList;
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.expression);
-            writer.WriteValue(this.argumentList);
-        }
-
-        static InvocationExpressionSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(InvocationExpressionSyntax), r => new InvocationExpressionSyntax(r));
-        }
     }
 
     /// <summary>Class which represents the syntax node for element access expression.</summary>
@@ -5328,30 +4072,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new ElementAccessExpressionSyntax(this.Kind, this.expression, this.argumentList, GetDiagnostics(), annotations);
-
-        internal ElementAccessExpressionSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 2;
-            var expression = (ExpressionSyntax)reader.ReadValue();
-            AdjustFlagsAndWidth(expression);
-            this.expression = expression;
-            var argumentList = (BracketedArgumentListSyntax)reader.ReadValue();
-            AdjustFlagsAndWidth(argumentList);
-            this.argumentList = argumentList;
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.expression);
-            writer.WriteValue(this.argumentList);
-        }
-
-        static ElementAccessExpressionSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(ElementAccessExpressionSyntax), r => new ElementAccessExpressionSyntax(r));
-        }
     }
 
     /// <summary>Provides the base class from which the classes that represent argument list syntax nodes are derived. This is an abstract class.</summary>
@@ -5367,13 +4087,8 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
         {
         }
 
-        protected BaseArgumentListSyntax(ObjectReader reader)
-          : base(reader)
-        {
-        }
-
         /// <summary>SeparatedSyntaxList of ArgumentSyntax nodes representing the list of arguments.</summary>
-        public abstract Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<ArgumentSyntax> Arguments { get; }
+        public abstract CoreSyntax.SeparatedSyntaxList<ArgumentSyntax> Arguments { get; }
     }
 
     /// <summary>Class which represents the syntax node for the list of arguments.</summary>
@@ -5432,7 +4147,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
         /// <summary>SyntaxToken representing open parenthesis.</summary>
         public SyntaxToken OpenParenToken => this.openParenToken;
         /// <summary>SeparatedSyntaxList of ArgumentSyntax representing the list of arguments.</summary>
-        public override Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<ArgumentSyntax> Arguments => new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<ArgumentSyntax>(new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<CSharpSyntaxNode>(this.arguments));
+        public override CoreSyntax.SeparatedSyntaxList<ArgumentSyntax> Arguments => new CoreSyntax.SeparatedSyntaxList<ArgumentSyntax>(new CoreSyntax.SyntaxList<CSharpSyntaxNode>(this.arguments));
         /// <summary>SyntaxToken representing close parenthesis.</summary>
         public SyntaxToken CloseParenToken => this.closeParenToken;
 
@@ -5450,7 +4165,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
         public override void Accept(CSharpSyntaxVisitor visitor) => visitor.VisitArgumentList(this);
         public override TResult Accept<TResult>(CSharpSyntaxVisitor<TResult> visitor) => visitor.VisitArgumentList(this);
 
-        public ArgumentListSyntax Update(SyntaxToken openParenToken, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<ArgumentSyntax> arguments, SyntaxToken closeParenToken)
+        public ArgumentListSyntax Update(SyntaxToken openParenToken, CoreSyntax.SeparatedSyntaxList<ArgumentSyntax> arguments, SyntaxToken closeParenToken)
         {
             if (openParenToken != this.OpenParenToken || arguments != this.Arguments || closeParenToken != this.CloseParenToken)
             {
@@ -5472,37 +4187,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new ArgumentListSyntax(this.Kind, this.openParenToken, this.arguments, this.closeParenToken, GetDiagnostics(), annotations);
-
-        internal ArgumentListSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 3;
-            var openParenToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(openParenToken);
-            this.openParenToken = openParenToken;
-            var arguments = (GreenNode?)reader.ReadValue();
-            if (arguments != null)
-            {
-                AdjustFlagsAndWidth(arguments);
-                this.arguments = arguments;
-            }
-            var closeParenToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(closeParenToken);
-            this.closeParenToken = closeParenToken;
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.openParenToken);
-            writer.WriteValue(this.arguments);
-            writer.WriteValue(this.closeParenToken);
-        }
-
-        static ArgumentListSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(ArgumentListSyntax), r => new ArgumentListSyntax(r));
-        }
     }
 
     /// <summary>Class which represents the syntax node for bracketed argument list.</summary>
@@ -5561,7 +4245,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
         /// <summary>SyntaxToken representing open bracket.</summary>
         public SyntaxToken OpenBracketToken => this.openBracketToken;
         /// <summary>SeparatedSyntaxList of ArgumentSyntax representing the list of arguments.</summary>
-        public override Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<ArgumentSyntax> Arguments => new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<ArgumentSyntax>(new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<CSharpSyntaxNode>(this.arguments));
+        public override CoreSyntax.SeparatedSyntaxList<ArgumentSyntax> Arguments => new CoreSyntax.SeparatedSyntaxList<ArgumentSyntax>(new CoreSyntax.SyntaxList<CSharpSyntaxNode>(this.arguments));
         /// <summary>SyntaxToken representing close bracket.</summary>
         public SyntaxToken CloseBracketToken => this.closeBracketToken;
 
@@ -5579,7 +4263,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
         public override void Accept(CSharpSyntaxVisitor visitor) => visitor.VisitBracketedArgumentList(this);
         public override TResult Accept<TResult>(CSharpSyntaxVisitor<TResult> visitor) => visitor.VisitBracketedArgumentList(this);
 
-        public BracketedArgumentListSyntax Update(SyntaxToken openBracketToken, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<ArgumentSyntax> arguments, SyntaxToken closeBracketToken)
+        public BracketedArgumentListSyntax Update(SyntaxToken openBracketToken, CoreSyntax.SeparatedSyntaxList<ArgumentSyntax> arguments, SyntaxToken closeBracketToken)
         {
             if (openBracketToken != this.OpenBracketToken || arguments != this.Arguments || closeBracketToken != this.CloseBracketToken)
             {
@@ -5601,37 +4285,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new BracketedArgumentListSyntax(this.Kind, this.openBracketToken, this.arguments, this.closeBracketToken, GetDiagnostics(), annotations);
-
-        internal BracketedArgumentListSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 3;
-            var openBracketToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(openBracketToken);
-            this.openBracketToken = openBracketToken;
-            var arguments = (GreenNode?)reader.ReadValue();
-            if (arguments != null)
-            {
-                AdjustFlagsAndWidth(arguments);
-                this.arguments = arguments;
-            }
-            var closeBracketToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(closeBracketToken);
-            this.closeBracketToken = closeBracketToken;
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.openBracketToken);
-            writer.WriteValue(this.arguments);
-            writer.WriteValue(this.closeBracketToken);
-        }
-
-        static BracketedArgumentListSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(BracketedArgumentListSyntax), r => new BracketedArgumentListSyntax(r));
-        }
     }
 
     /// <summary>Class which represents the syntax node for argument.</summary>
@@ -5739,40 +4392,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new ArgumentSyntax(this.Kind, this.nameColon, this.refKindKeyword, this.expression, GetDiagnostics(), annotations);
-
-        internal ArgumentSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 3;
-            var nameColon = (NameColonSyntax?)reader.ReadValue();
-            if (nameColon != null)
-            {
-                AdjustFlagsAndWidth(nameColon);
-                this.nameColon = nameColon;
-            }
-            var refKindKeyword = (SyntaxToken?)reader.ReadValue();
-            if (refKindKeyword != null)
-            {
-                AdjustFlagsAndWidth(refKindKeyword);
-                this.refKindKeyword = refKindKeyword;
-            }
-            var expression = (ExpressionSyntax)reader.ReadValue();
-            AdjustFlagsAndWidth(expression);
-            this.expression = expression;
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.nameColon);
-            writer.WriteValue(this.refKindKeyword);
-            writer.WriteValue(this.expression);
-        }
-
-        static ArgumentSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(ArgumentSyntax), r => new ArgumentSyntax(r));
-        }
     }
 
     internal abstract partial class BaseExpressionColonSyntax : CSharpSyntaxNode
@@ -5784,11 +4403,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal BaseExpressionColonSyntax(SyntaxKind kind)
           : base(kind)
-        {
-        }
-
-        protected BaseExpressionColonSyntax(ObjectReader reader)
-          : base(reader)
         {
         }
 
@@ -5871,30 +4485,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new ExpressionColonSyntax(this.Kind, this.expression, this.colonToken, GetDiagnostics(), annotations);
-
-        internal ExpressionColonSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 2;
-            var expression = (ExpressionSyntax)reader.ReadValue();
-            AdjustFlagsAndWidth(expression);
-            this.expression = expression;
-            var colonToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(colonToken);
-            this.colonToken = colonToken;
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.expression);
-            writer.WriteValue(this.colonToken);
-        }
-
-        static ExpressionColonSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(ExpressionColonSyntax), r => new ExpressionColonSyntax(r));
-        }
     }
 
     /// <summary>Class which represents the syntax node for name colon syntax.</summary>
@@ -5974,30 +4564,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new NameColonSyntax(this.Kind, this.name, this.colonToken, GetDiagnostics(), annotations);
-
-        internal NameColonSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 2;
-            var name = (IdentifierNameSyntax)reader.ReadValue();
-            AdjustFlagsAndWidth(name);
-            this.name = name;
-            var colonToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(colonToken);
-            this.colonToken = colonToken;
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.name);
-            writer.WriteValue(this.colonToken);
-        }
-
-        static NameColonSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(NameColonSyntax), r => new NameColonSyntax(r));
-        }
     }
 
     /// <summary>Class which represents the syntax node for the variable declaration in an out var declaration or a deconstruction declaration.</summary>
@@ -6076,30 +4642,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new DeclarationExpressionSyntax(this.Kind, this.type, this.designation, GetDiagnostics(), annotations);
-
-        internal DeclarationExpressionSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 2;
-            var type = (TypeSyntax)reader.ReadValue();
-            AdjustFlagsAndWidth(type);
-            this.type = type;
-            var designation = (VariableDesignationSyntax)reader.ReadValue();
-            AdjustFlagsAndWidth(designation);
-            this.designation = designation;
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.type);
-            writer.WriteValue(this.designation);
-        }
-
-        static DeclarationExpressionSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(DeclarationExpressionSyntax), r => new DeclarationExpressionSyntax(r));
-        }
     }
 
     /// <summary>Class which represents the syntax node for cast expression.</summary>
@@ -6199,38 +4741,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new CastExpressionSyntax(this.Kind, this.openParenToken, this.type, this.closeParenToken, this.expression, GetDiagnostics(), annotations);
-
-        internal CastExpressionSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 4;
-            var openParenToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(openParenToken);
-            this.openParenToken = openParenToken;
-            var type = (TypeSyntax)reader.ReadValue();
-            AdjustFlagsAndWidth(type);
-            this.type = type;
-            var closeParenToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(closeParenToken);
-            this.closeParenToken = closeParenToken;
-            var expression = (ExpressionSyntax)reader.ReadValue();
-            AdjustFlagsAndWidth(expression);
-            this.expression = expression;
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.openParenToken);
-            writer.WriteValue(this.type);
-            writer.WriteValue(this.closeParenToken);
-            writer.WriteValue(this.expression);
-        }
-
-        static CastExpressionSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(CastExpressionSyntax), r => new CastExpressionSyntax(r));
-        }
     }
 
     /// <summary>Provides the base class from which the classes that represent anonymous function expressions are derived.</summary>
@@ -6246,12 +4756,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
         {
         }
 
-        protected AnonymousFunctionExpressionSyntax(ObjectReader reader)
-          : base(reader)
-        {
-        }
-
-        public abstract Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SyntaxToken> Modifiers { get; }
+        public abstract CoreSyntax.SyntaxList<SyntaxToken> Modifiers { get; }
 
         /// <summary>
         /// BlockSyntax node representing the body of the anonymous function.
@@ -6351,7 +4856,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             }
         }
 
-        public override Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SyntaxToken> Modifiers => new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SyntaxToken>(this.modifiers);
+        public override CoreSyntax.SyntaxList<SyntaxToken> Modifiers => new CoreSyntax.SyntaxList<SyntaxToken>(this.modifiers);
         /// <summary>SyntaxToken representing the delegate keyword.</summary>
         public SyntaxToken DelegateKeyword => this.delegateKeyword;
         /// <summary>List of parameters of the anonymous method expression, or null if there no parameters are specified.</summary>
@@ -6383,7 +4888,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
         public override void Accept(CSharpSyntaxVisitor visitor) => visitor.VisitAnonymousMethodExpression(this);
         public override TResult Accept<TResult>(CSharpSyntaxVisitor<TResult> visitor) => visitor.VisitAnonymousMethodExpression(this);
 
-        public AnonymousMethodExpressionSyntax Update(Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SyntaxToken> modifiers, SyntaxToken delegateKeyword, ParameterListSyntax parameterList, BlockSyntax block, ExpressionSyntax expressionBody)
+        public AnonymousMethodExpressionSyntax Update(CoreSyntax.SyntaxList<SyntaxToken> modifiers, SyntaxToken delegateKeyword, ParameterListSyntax parameterList, BlockSyntax block, ExpressionSyntax expressionBody)
         {
             if (modifiers != this.Modifiers || delegateKeyword != this.DelegateKeyword || parameterList != this.ParameterList || block != this.Block || expressionBody != this.ExpressionBody)
             {
@@ -6405,51 +4910,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new AnonymousMethodExpressionSyntax(this.Kind, this.modifiers, this.delegateKeyword, this.parameterList, this.block, this.expressionBody, GetDiagnostics(), annotations);
-
-        internal AnonymousMethodExpressionSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 5;
-            var modifiers = (GreenNode?)reader.ReadValue();
-            if (modifiers != null)
-            {
-                AdjustFlagsAndWidth(modifiers);
-                this.modifiers = modifiers;
-            }
-            var delegateKeyword = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(delegateKeyword);
-            this.delegateKeyword = delegateKeyword;
-            var parameterList = (ParameterListSyntax?)reader.ReadValue();
-            if (parameterList != null)
-            {
-                AdjustFlagsAndWidth(parameterList);
-                this.parameterList = parameterList;
-            }
-            var block = (BlockSyntax)reader.ReadValue();
-            AdjustFlagsAndWidth(block);
-            this.block = block;
-            var expressionBody = (ExpressionSyntax?)reader.ReadValue();
-            if (expressionBody != null)
-            {
-                AdjustFlagsAndWidth(expressionBody);
-                this.expressionBody = expressionBody;
-            }
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.modifiers);
-            writer.WriteValue(this.delegateKeyword);
-            writer.WriteValue(this.parameterList);
-            writer.WriteValue(this.block);
-            writer.WriteValue(this.expressionBody);
-        }
-
-        static AnonymousMethodExpressionSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(AnonymousMethodExpressionSyntax), r => new AnonymousMethodExpressionSyntax(r));
-        }
     }
 
     /// <summary>Provides the base class from which the classes that represent lambda expressions are derived.</summary>
@@ -6465,12 +4925,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
         {
         }
 
-        protected LambdaExpressionSyntax(ObjectReader reader)
-          : base(reader)
-        {
-        }
-
-        public abstract Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> AttributeLists { get; }
+        public abstract CoreSyntax.SyntaxList<AttributeListSyntax> AttributeLists { get; }
 
         /// <summary>SyntaxToken representing equals greater than.</summary>
         public abstract SyntaxToken ArrowToken { get; }
@@ -6577,8 +5032,8 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             }
         }
 
-        public override Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> AttributeLists => new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax>(this.attributeLists);
-        public override Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SyntaxToken> Modifiers => new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SyntaxToken>(this.modifiers);
+        public override CoreSyntax.SyntaxList<AttributeListSyntax> AttributeLists => new CoreSyntax.SyntaxList<AttributeListSyntax>(this.attributeLists);
+        public override CoreSyntax.SyntaxList<SyntaxToken> Modifiers => new CoreSyntax.SyntaxList<SyntaxToken>(this.modifiers);
         /// <summary>ParameterSyntax node representing the parameter of the lambda expression.</summary>
         public ParameterSyntax Parameter => this.parameter;
         /// <summary>SyntaxToken representing equals greater than.</summary>
@@ -6611,7 +5066,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
         public override void Accept(CSharpSyntaxVisitor visitor) => visitor.VisitSimpleLambdaExpression(this);
         public override TResult Accept<TResult>(CSharpSyntaxVisitor<TResult> visitor) => visitor.VisitSimpleLambdaExpression(this);
 
-        public SimpleLambdaExpressionSyntax Update(Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> attributeLists, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SyntaxToken> modifiers, ParameterSyntax parameter, SyntaxToken arrowToken, BlockSyntax block, ExpressionSyntax expressionBody)
+        public SimpleLambdaExpressionSyntax Update(CoreSyntax.SyntaxList<AttributeListSyntax> attributeLists, CoreSyntax.SyntaxList<SyntaxToken> modifiers, ParameterSyntax parameter, SyntaxToken arrowToken, BlockSyntax block, ExpressionSyntax expressionBody)
         {
             if (attributeLists != this.AttributeLists || modifiers != this.Modifiers || parameter != this.Parameter || arrowToken != this.ArrowToken || block != this.Block || expressionBody != this.ExpressionBody)
             {
@@ -6633,58 +5088,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new SimpleLambdaExpressionSyntax(this.Kind, this.attributeLists, this.modifiers, this.parameter, this.arrowToken, this.block, this.expressionBody, GetDiagnostics(), annotations);
-
-        internal SimpleLambdaExpressionSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 6;
-            var attributeLists = (GreenNode?)reader.ReadValue();
-            if (attributeLists != null)
-            {
-                AdjustFlagsAndWidth(attributeLists);
-                this.attributeLists = attributeLists;
-            }
-            var modifiers = (GreenNode?)reader.ReadValue();
-            if (modifiers != null)
-            {
-                AdjustFlagsAndWidth(modifiers);
-                this.modifiers = modifiers;
-            }
-            var parameter = (ParameterSyntax)reader.ReadValue();
-            AdjustFlagsAndWidth(parameter);
-            this.parameter = parameter;
-            var arrowToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(arrowToken);
-            this.arrowToken = arrowToken;
-            var block = (BlockSyntax?)reader.ReadValue();
-            if (block != null)
-            {
-                AdjustFlagsAndWidth(block);
-                this.block = block;
-            }
-            var expressionBody = (ExpressionSyntax?)reader.ReadValue();
-            if (expressionBody != null)
-            {
-                AdjustFlagsAndWidth(expressionBody);
-                this.expressionBody = expressionBody;
-            }
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.attributeLists);
-            writer.WriteValue(this.modifiers);
-            writer.WriteValue(this.parameter);
-            writer.WriteValue(this.arrowToken);
-            writer.WriteValue(this.block);
-            writer.WriteValue(this.expressionBody);
-        }
-
-        static SimpleLambdaExpressionSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(SimpleLambdaExpressionSyntax), r => new SimpleLambdaExpressionSyntax(r));
-        }
     }
 
     internal sealed partial class RefExpressionSyntax : ExpressionSyntax
@@ -6761,30 +5164,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new RefExpressionSyntax(this.Kind, this.refKeyword, this.expression, GetDiagnostics(), annotations);
-
-        internal RefExpressionSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 2;
-            var refKeyword = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(refKeyword);
-            this.refKeyword = refKeyword;
-            var expression = (ExpressionSyntax)reader.ReadValue();
-            AdjustFlagsAndWidth(expression);
-            this.expression = expression;
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.refKeyword);
-            writer.WriteValue(this.expression);
-        }
-
-        static RefExpressionSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(RefExpressionSyntax), r => new RefExpressionSyntax(r));
-        }
     }
 
     /// <summary>Class which represents the syntax node for parenthesized lambda expression.</summary>
@@ -6904,8 +5283,8 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             }
         }
 
-        public override Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> AttributeLists => new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax>(this.attributeLists);
-        public override Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SyntaxToken> Modifiers => new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SyntaxToken>(this.modifiers);
+        public override CoreSyntax.SyntaxList<AttributeListSyntax> AttributeLists => new CoreSyntax.SyntaxList<AttributeListSyntax>(this.attributeLists);
+        public override CoreSyntax.SyntaxList<SyntaxToken> Modifiers => new CoreSyntax.SyntaxList<SyntaxToken>(this.modifiers);
         public TypeSyntax? ReturnType => this.returnType;
         /// <summary>ParameterListSyntax node representing the list of parameters for the lambda expression.</summary>
         public ParameterListSyntax ParameterList => this.parameterList;
@@ -6940,7 +5319,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
         public override void Accept(CSharpSyntaxVisitor visitor) => visitor.VisitParenthesizedLambdaExpression(this);
         public override TResult Accept<TResult>(CSharpSyntaxVisitor<TResult> visitor) => visitor.VisitParenthesizedLambdaExpression(this);
 
-        public ParenthesizedLambdaExpressionSyntax Update(Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> attributeLists, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SyntaxToken> modifiers, TypeSyntax returnType, ParameterListSyntax parameterList, SyntaxToken arrowToken, BlockSyntax block, ExpressionSyntax expressionBody)
+        public ParenthesizedLambdaExpressionSyntax Update(CoreSyntax.SyntaxList<AttributeListSyntax> attributeLists, CoreSyntax.SyntaxList<SyntaxToken> modifiers, TypeSyntax returnType, ParameterListSyntax parameterList, SyntaxToken arrowToken, BlockSyntax block, ExpressionSyntax expressionBody)
         {
             if (attributeLists != this.AttributeLists || modifiers != this.Modifiers || returnType != this.ReturnType || parameterList != this.ParameterList || arrowToken != this.ArrowToken || block != this.Block || expressionBody != this.ExpressionBody)
             {
@@ -6962,65 +5341,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new ParenthesizedLambdaExpressionSyntax(this.Kind, this.attributeLists, this.modifiers, this.returnType, this.parameterList, this.arrowToken, this.block, this.expressionBody, GetDiagnostics(), annotations);
-
-        internal ParenthesizedLambdaExpressionSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 7;
-            var attributeLists = (GreenNode?)reader.ReadValue();
-            if (attributeLists != null)
-            {
-                AdjustFlagsAndWidth(attributeLists);
-                this.attributeLists = attributeLists;
-            }
-            var modifiers = (GreenNode?)reader.ReadValue();
-            if (modifiers != null)
-            {
-                AdjustFlagsAndWidth(modifiers);
-                this.modifiers = modifiers;
-            }
-            var returnType = (TypeSyntax?)reader.ReadValue();
-            if (returnType != null)
-            {
-                AdjustFlagsAndWidth(returnType);
-                this.returnType = returnType;
-            }
-            var parameterList = (ParameterListSyntax)reader.ReadValue();
-            AdjustFlagsAndWidth(parameterList);
-            this.parameterList = parameterList;
-            var arrowToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(arrowToken);
-            this.arrowToken = arrowToken;
-            var block = (BlockSyntax?)reader.ReadValue();
-            if (block != null)
-            {
-                AdjustFlagsAndWidth(block);
-                this.block = block;
-            }
-            var expressionBody = (ExpressionSyntax?)reader.ReadValue();
-            if (expressionBody != null)
-            {
-                AdjustFlagsAndWidth(expressionBody);
-                this.expressionBody = expressionBody;
-            }
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.attributeLists);
-            writer.WriteValue(this.modifiers);
-            writer.WriteValue(this.returnType);
-            writer.WriteValue(this.parameterList);
-            writer.WriteValue(this.arrowToken);
-            writer.WriteValue(this.block);
-            writer.WriteValue(this.expressionBody);
-        }
-
-        static ParenthesizedLambdaExpressionSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(ParenthesizedLambdaExpressionSyntax), r => new ParenthesizedLambdaExpressionSyntax(r));
-        }
     }
 
     /// <summary>Class which represents the syntax node for initializer expression.</summary>
@@ -7079,7 +5399,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
         /// <summary>SyntaxToken representing the open brace.</summary>
         public SyntaxToken OpenBraceToken => this.openBraceToken;
         /// <summary>SeparatedSyntaxList of ExpressionSyntax representing the list of expressions in the initializer expression.</summary>
-        public Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<ExpressionSyntax> Expressions => new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<ExpressionSyntax>(new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<CSharpSyntaxNode>(this.expressions));
+        public CoreSyntax.SeparatedSyntaxList<ExpressionSyntax> Expressions => new CoreSyntax.SeparatedSyntaxList<ExpressionSyntax>(new CoreSyntax.SyntaxList<CSharpSyntaxNode>(this.expressions));
         /// <summary>SyntaxToken representing the close brace.</summary>
         public SyntaxToken CloseBraceToken => this.closeBraceToken;
 
@@ -7097,7 +5417,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
         public override void Accept(CSharpSyntaxVisitor visitor) => visitor.VisitInitializerExpression(this);
         public override TResult Accept<TResult>(CSharpSyntaxVisitor<TResult> visitor) => visitor.VisitInitializerExpression(this);
 
-        public InitializerExpressionSyntax Update(SyntaxToken openBraceToken, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<ExpressionSyntax> expressions, SyntaxToken closeBraceToken)
+        public InitializerExpressionSyntax Update(SyntaxToken openBraceToken, CoreSyntax.SeparatedSyntaxList<ExpressionSyntax> expressions, SyntaxToken closeBraceToken)
         {
             if (openBraceToken != this.OpenBraceToken || expressions != this.Expressions || closeBraceToken != this.CloseBraceToken)
             {
@@ -7119,37 +5439,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new InitializerExpressionSyntax(this.Kind, this.openBraceToken, this.expressions, this.closeBraceToken, GetDiagnostics(), annotations);
-
-        internal InitializerExpressionSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 3;
-            var openBraceToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(openBraceToken);
-            this.openBraceToken = openBraceToken;
-            var expressions = (GreenNode?)reader.ReadValue();
-            if (expressions != null)
-            {
-                AdjustFlagsAndWidth(expressions);
-                this.expressions = expressions;
-            }
-            var closeBraceToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(closeBraceToken);
-            this.closeBraceToken = closeBraceToken;
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.openBraceToken);
-            writer.WriteValue(this.expressions);
-            writer.WriteValue(this.closeBraceToken);
-        }
-
-        static InitializerExpressionSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(InitializerExpressionSyntax), r => new InitializerExpressionSyntax(r));
-        }
     }
 
     internal abstract partial class BaseObjectCreationExpressionSyntax : ExpressionSyntax
@@ -7161,11 +5450,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal BaseObjectCreationExpressionSyntax(SyntaxKind kind)
           : base(kind)
-        {
-        }
-
-        protected BaseObjectCreationExpressionSyntax(ObjectReader reader)
-          : base(reader)
         {
         }
 
@@ -7275,37 +5559,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new ImplicitObjectCreationExpressionSyntax(this.Kind, this.newKeyword, this.argumentList, this.initializer, GetDiagnostics(), annotations);
-
-        internal ImplicitObjectCreationExpressionSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 3;
-            var newKeyword = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(newKeyword);
-            this.newKeyword = newKeyword;
-            var argumentList = (ArgumentListSyntax)reader.ReadValue();
-            AdjustFlagsAndWidth(argumentList);
-            this.argumentList = argumentList;
-            var initializer = (InitializerExpressionSyntax?)reader.ReadValue();
-            if (initializer != null)
-            {
-                AdjustFlagsAndWidth(initializer);
-                this.initializer = initializer;
-            }
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.newKeyword);
-            writer.WriteValue(this.argumentList);
-            writer.WriteValue(this.initializer);
-        }
-
-        static ImplicitObjectCreationExpressionSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(ImplicitObjectCreationExpressionSyntax), r => new ImplicitObjectCreationExpressionSyntax(r));
-        }
     }
 
     /// <summary>Class which represents the syntax node for object creation expression.</summary>
@@ -7423,44 +5676,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new ObjectCreationExpressionSyntax(this.Kind, this.newKeyword, this.type, this.argumentList, this.initializer, GetDiagnostics(), annotations);
-
-        internal ObjectCreationExpressionSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 4;
-            var newKeyword = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(newKeyword);
-            this.newKeyword = newKeyword;
-            var type = (TypeSyntax)reader.ReadValue();
-            AdjustFlagsAndWidth(type);
-            this.type = type;
-            var argumentList = (ArgumentListSyntax?)reader.ReadValue();
-            if (argumentList != null)
-            {
-                AdjustFlagsAndWidth(argumentList);
-                this.argumentList = argumentList;
-            }
-            var initializer = (InitializerExpressionSyntax?)reader.ReadValue();
-            if (initializer != null)
-            {
-                AdjustFlagsAndWidth(initializer);
-                this.initializer = initializer;
-            }
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.newKeyword);
-            writer.WriteValue(this.type);
-            writer.WriteValue(this.argumentList);
-            writer.WriteValue(this.initializer);
-        }
-
-        static ObjectCreationExpressionSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(ObjectCreationExpressionSyntax), r => new ObjectCreationExpressionSyntax(r));
-        }
     }
 
     internal sealed partial class WithExpressionSyntax : ExpressionSyntax
@@ -7547,34 +5762,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new WithExpressionSyntax(this.Kind, this.expression, this.withKeyword, this.initializer, GetDiagnostics(), annotations);
-
-        internal WithExpressionSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 3;
-            var expression = (ExpressionSyntax)reader.ReadValue();
-            AdjustFlagsAndWidth(expression);
-            this.expression = expression;
-            var withKeyword = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(withKeyword);
-            this.withKeyword = withKeyword;
-            var initializer = (InitializerExpressionSyntax)reader.ReadValue();
-            AdjustFlagsAndWidth(initializer);
-            this.initializer = initializer;
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.expression);
-            writer.WriteValue(this.withKeyword);
-            writer.WriteValue(this.initializer);
-        }
-
-        static WithExpressionSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(WithExpressionSyntax), r => new WithExpressionSyntax(r));
-        }
     }
 
     internal sealed partial class AnonymousObjectMemberDeclaratorSyntax : CSharpSyntaxNode
@@ -7662,33 +5849,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new AnonymousObjectMemberDeclaratorSyntax(this.Kind, this.nameEquals, this.expression, GetDiagnostics(), annotations);
-
-        internal AnonymousObjectMemberDeclaratorSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 2;
-            var nameEquals = (NameEqualsSyntax?)reader.ReadValue();
-            if (nameEquals != null)
-            {
-                AdjustFlagsAndWidth(nameEquals);
-                this.nameEquals = nameEquals;
-            }
-            var expression = (ExpressionSyntax)reader.ReadValue();
-            AdjustFlagsAndWidth(expression);
-            this.expression = expression;
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.nameEquals);
-            writer.WriteValue(this.expression);
-        }
-
-        static AnonymousObjectMemberDeclaratorSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(AnonymousObjectMemberDeclaratorSyntax), r => new AnonymousObjectMemberDeclaratorSyntax(r));
-        }
     }
 
     /// <summary>Class which represents the syntax node for anonymous object creation expression.</summary>
@@ -7756,7 +5916,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
         /// <summary>SyntaxToken representing the open brace.</summary>
         public SyntaxToken OpenBraceToken => this.openBraceToken;
         /// <summary>SeparatedSyntaxList of AnonymousObjectMemberDeclaratorSyntax representing the list of object member initializers.</summary>
-        public Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<AnonymousObjectMemberDeclaratorSyntax> Initializers => new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<AnonymousObjectMemberDeclaratorSyntax>(new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<CSharpSyntaxNode>(this.initializers));
+        public CoreSyntax.SeparatedSyntaxList<AnonymousObjectMemberDeclaratorSyntax> Initializers => new CoreSyntax.SeparatedSyntaxList<AnonymousObjectMemberDeclaratorSyntax>(new CoreSyntax.SyntaxList<CSharpSyntaxNode>(this.initializers));
         /// <summary>SyntaxToken representing the close brace.</summary>
         public SyntaxToken CloseBraceToken => this.closeBraceToken;
 
@@ -7775,7 +5935,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
         public override void Accept(CSharpSyntaxVisitor visitor) => visitor.VisitAnonymousObjectCreationExpression(this);
         public override TResult Accept<TResult>(CSharpSyntaxVisitor<TResult> visitor) => visitor.VisitAnonymousObjectCreationExpression(this);
 
-        public AnonymousObjectCreationExpressionSyntax Update(SyntaxToken newKeyword, SyntaxToken openBraceToken, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<AnonymousObjectMemberDeclaratorSyntax> initializers, SyntaxToken closeBraceToken)
+        public AnonymousObjectCreationExpressionSyntax Update(SyntaxToken newKeyword, SyntaxToken openBraceToken, CoreSyntax.SeparatedSyntaxList<AnonymousObjectMemberDeclaratorSyntax> initializers, SyntaxToken closeBraceToken)
         {
             if (newKeyword != this.NewKeyword || openBraceToken != this.OpenBraceToken || initializers != this.Initializers || closeBraceToken != this.CloseBraceToken)
             {
@@ -7797,41 +5957,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new AnonymousObjectCreationExpressionSyntax(this.Kind, this.newKeyword, this.openBraceToken, this.initializers, this.closeBraceToken, GetDiagnostics(), annotations);
-
-        internal AnonymousObjectCreationExpressionSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 4;
-            var newKeyword = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(newKeyword);
-            this.newKeyword = newKeyword;
-            var openBraceToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(openBraceToken);
-            this.openBraceToken = openBraceToken;
-            var initializers = (GreenNode?)reader.ReadValue();
-            if (initializers != null)
-            {
-                AdjustFlagsAndWidth(initializers);
-                this.initializers = initializers;
-            }
-            var closeBraceToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(closeBraceToken);
-            this.closeBraceToken = closeBraceToken;
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.newKeyword);
-            writer.WriteValue(this.openBraceToken);
-            writer.WriteValue(this.initializers);
-            writer.WriteValue(this.closeBraceToken);
-        }
-
-        static AnonymousObjectCreationExpressionSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(AnonymousObjectCreationExpressionSyntax), r => new AnonymousObjectCreationExpressionSyntax(r));
-        }
     }
 
     /// <summary>Class which represents the syntax node for array creation expression.</summary>
@@ -7930,37 +6055,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new ArrayCreationExpressionSyntax(this.Kind, this.newKeyword, this.type, this.initializer, GetDiagnostics(), annotations);
-
-        internal ArrayCreationExpressionSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 3;
-            var newKeyword = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(newKeyword);
-            this.newKeyword = newKeyword;
-            var type = (ArrayTypeSyntax)reader.ReadValue();
-            AdjustFlagsAndWidth(type);
-            this.type = type;
-            var initializer = (InitializerExpressionSyntax?)reader.ReadValue();
-            if (initializer != null)
-            {
-                AdjustFlagsAndWidth(initializer);
-                this.initializer = initializer;
-            }
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.newKeyword);
-            writer.WriteValue(this.type);
-            writer.WriteValue(this.initializer);
-        }
-
-        static ArrayCreationExpressionSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(ArrayCreationExpressionSyntax), r => new ArrayCreationExpressionSyntax(r));
-        }
     }
 
     /// <summary>Class which represents the syntax node for implicit array creation expression.</summary>
@@ -8035,7 +6129,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
         /// <summary>SyntaxToken representing the open bracket.</summary>
         public SyntaxToken OpenBracketToken => this.openBracketToken;
         /// <summary>SyntaxList of SyntaxToken representing the commas in the implicit array creation expression.</summary>
-        public Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SyntaxToken> Commas => new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SyntaxToken>(this.commas);
+        public CoreSyntax.SyntaxList<SyntaxToken> Commas => new CoreSyntax.SyntaxList<SyntaxToken>(this.commas);
         /// <summary>SyntaxToken representing the close bracket.</summary>
         public SyntaxToken CloseBracketToken => this.closeBracketToken;
         /// <summary>InitializerExpressionSyntax representing the initializer expression of the implicit array creation expression.</summary>
@@ -8057,7 +6151,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
         public override void Accept(CSharpSyntaxVisitor visitor) => visitor.VisitImplicitArrayCreationExpression(this);
         public override TResult Accept<TResult>(CSharpSyntaxVisitor<TResult> visitor) => visitor.VisitImplicitArrayCreationExpression(this);
 
-        public ImplicitArrayCreationExpressionSyntax Update(SyntaxToken newKeyword, SyntaxToken openBracketToken, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SyntaxToken> commas, SyntaxToken closeBracketToken, InitializerExpressionSyntax initializer)
+        public ImplicitArrayCreationExpressionSyntax Update(SyntaxToken newKeyword, SyntaxToken openBracketToken, CoreSyntax.SyntaxList<SyntaxToken> commas, SyntaxToken closeBracketToken, InitializerExpressionSyntax initializer)
         {
             if (newKeyword != this.NewKeyword || openBracketToken != this.OpenBracketToken || commas != this.Commas || closeBracketToken != this.CloseBracketToken || initializer != this.Initializer)
             {
@@ -8079,45 +6173,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new ImplicitArrayCreationExpressionSyntax(this.Kind, this.newKeyword, this.openBracketToken, this.commas, this.closeBracketToken, this.initializer, GetDiagnostics(), annotations);
-
-        internal ImplicitArrayCreationExpressionSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 5;
-            var newKeyword = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(newKeyword);
-            this.newKeyword = newKeyword;
-            var openBracketToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(openBracketToken);
-            this.openBracketToken = openBracketToken;
-            var commas = (GreenNode?)reader.ReadValue();
-            if (commas != null)
-            {
-                AdjustFlagsAndWidth(commas);
-                this.commas = commas;
-            }
-            var closeBracketToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(closeBracketToken);
-            this.closeBracketToken = closeBracketToken;
-            var initializer = (InitializerExpressionSyntax)reader.ReadValue();
-            AdjustFlagsAndWidth(initializer);
-            this.initializer = initializer;
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.newKeyword);
-            writer.WriteValue(this.openBracketToken);
-            writer.WriteValue(this.commas);
-            writer.WriteValue(this.closeBracketToken);
-            writer.WriteValue(this.initializer);
-        }
-
-        static ImplicitArrayCreationExpressionSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(ImplicitArrayCreationExpressionSyntax), r => new ImplicitArrayCreationExpressionSyntax(r));
-        }
     }
 
     /// <summary>Class which represents the syntax node for stackalloc array creation expression.</summary>
@@ -8216,37 +6271,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new StackAllocArrayCreationExpressionSyntax(this.Kind, this.stackAllocKeyword, this.type, this.initializer, GetDiagnostics(), annotations);
-
-        internal StackAllocArrayCreationExpressionSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 3;
-            var stackAllocKeyword = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(stackAllocKeyword);
-            this.stackAllocKeyword = stackAllocKeyword;
-            var type = (TypeSyntax)reader.ReadValue();
-            AdjustFlagsAndWidth(type);
-            this.type = type;
-            var initializer = (InitializerExpressionSyntax?)reader.ReadValue();
-            if (initializer != null)
-            {
-                AdjustFlagsAndWidth(initializer);
-                this.initializer = initializer;
-            }
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.stackAllocKeyword);
-            writer.WriteValue(this.type);
-            writer.WriteValue(this.initializer);
-        }
-
-        static StackAllocArrayCreationExpressionSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(StackAllocArrayCreationExpressionSyntax), r => new StackAllocArrayCreationExpressionSyntax(r));
-        }
     }
 
     /// <summary>Class which represents the syntax node for implicit stackalloc array creation expression.</summary>
@@ -8346,38 +6370,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new ImplicitStackAllocArrayCreationExpressionSyntax(this.Kind, this.stackAllocKeyword, this.openBracketToken, this.closeBracketToken, this.initializer, GetDiagnostics(), annotations);
-
-        internal ImplicitStackAllocArrayCreationExpressionSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 4;
-            var stackAllocKeyword = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(stackAllocKeyword);
-            this.stackAllocKeyword = stackAllocKeyword;
-            var openBracketToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(openBracketToken);
-            this.openBracketToken = openBracketToken;
-            var closeBracketToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(closeBracketToken);
-            this.closeBracketToken = closeBracketToken;
-            var initializer = (InitializerExpressionSyntax)reader.ReadValue();
-            AdjustFlagsAndWidth(initializer);
-            this.initializer = initializer;
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.stackAllocKeyword);
-            writer.WriteValue(this.openBracketToken);
-            writer.WriteValue(this.closeBracketToken);
-            writer.WriteValue(this.initializer);
-        }
-
-        static ImplicitStackAllocArrayCreationExpressionSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(ImplicitStackAllocArrayCreationExpressionSyntax), r => new ImplicitStackAllocArrayCreationExpressionSyntax(r));
-        }
     }
 
     internal sealed partial class CollectionExpressionSyntax : ExpressionSyntax
@@ -8434,7 +6426,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         public SyntaxToken OpenBracketToken => this.openBracketToken;
         /// <summary>SeparatedSyntaxList of CollectionElementSyntax representing the list of elements in the collection expression.</summary>
-        public Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<CollectionElementSyntax> Elements => new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<CollectionElementSyntax>(new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<CSharpSyntaxNode>(this.elements));
+        public CoreSyntax.SeparatedSyntaxList<CollectionElementSyntax> Elements => new CoreSyntax.SeparatedSyntaxList<CollectionElementSyntax>(new CoreSyntax.SyntaxList<CSharpSyntaxNode>(this.elements));
         public SyntaxToken CloseBracketToken => this.closeBracketToken;
 
         internal override GreenNode? GetSlot(int index)
@@ -8451,7 +6443,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
         public override void Accept(CSharpSyntaxVisitor visitor) => visitor.VisitCollectionExpression(this);
         public override TResult Accept<TResult>(CSharpSyntaxVisitor<TResult> visitor) => visitor.VisitCollectionExpression(this);
 
-        public CollectionExpressionSyntax Update(SyntaxToken openBracketToken, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<CollectionElementSyntax> elements, SyntaxToken closeBracketToken)
+        public CollectionExpressionSyntax Update(SyntaxToken openBracketToken, CoreSyntax.SeparatedSyntaxList<CollectionElementSyntax> elements, SyntaxToken closeBracketToken)
         {
             if (openBracketToken != this.OpenBracketToken || elements != this.Elements || closeBracketToken != this.CloseBracketToken)
             {
@@ -8473,37 +6465,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new CollectionExpressionSyntax(this.Kind, this.openBracketToken, this.elements, this.closeBracketToken, GetDiagnostics(), annotations);
-
-        internal CollectionExpressionSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 3;
-            var openBracketToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(openBracketToken);
-            this.openBracketToken = openBracketToken;
-            var elements = (GreenNode?)reader.ReadValue();
-            if (elements != null)
-            {
-                AdjustFlagsAndWidth(elements);
-                this.elements = elements;
-            }
-            var closeBracketToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(closeBracketToken);
-            this.closeBracketToken = closeBracketToken;
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.openBracketToken);
-            writer.WriteValue(this.elements);
-            writer.WriteValue(this.closeBracketToken);
-        }
-
-        static CollectionExpressionSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(CollectionExpressionSyntax), r => new CollectionExpressionSyntax(r));
-        }
     }
 
     internal abstract partial class CollectionElementSyntax : CSharpSyntaxNode
@@ -8515,11 +6476,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal CollectionElementSyntax(SyntaxKind kind)
           : base(kind)
-        {
-        }
-
-        protected CollectionElementSyntax(ObjectReader reader)
-          : base(reader)
         {
         }
     }
@@ -8585,26 +6541,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new ExpressionElementSyntax(this.Kind, this.expression, GetDiagnostics(), annotations);
-
-        internal ExpressionElementSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 1;
-            var expression = (ExpressionSyntax)reader.ReadValue();
-            AdjustFlagsAndWidth(expression);
-            this.expression = expression;
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.expression);
-        }
-
-        static ExpressionElementSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(ExpressionElementSyntax), r => new ExpressionElementSyntax(r));
-        }
     }
 
     internal sealed partial class SpreadElementSyntax : CollectionElementSyntax
@@ -8681,30 +6617,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new SpreadElementSyntax(this.Kind, this.operatorToken, this.expression, GetDiagnostics(), annotations);
-
-        internal SpreadElementSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 2;
-            var operatorToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(operatorToken);
-            this.operatorToken = operatorToken;
-            var expression = (ExpressionSyntax)reader.ReadValue();
-            AdjustFlagsAndWidth(expression);
-            this.expression = expression;
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.operatorToken);
-            writer.WriteValue(this.expression);
-        }
-
-        static SpreadElementSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(SpreadElementSyntax), r => new SpreadElementSyntax(r));
-        }
     }
 
     internal abstract partial class QueryClauseSyntax : CSharpSyntaxNode
@@ -8718,11 +6630,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
           : base(kind)
         {
         }
-
-        protected QueryClauseSyntax(ObjectReader reader)
-          : base(reader)
-        {
-        }
     }
 
     internal abstract partial class SelectOrGroupClauseSyntax : CSharpSyntaxNode
@@ -8734,11 +6641,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal SelectOrGroupClauseSyntax(SyntaxKind kind)
           : base(kind)
-        {
-        }
-
-        protected SelectOrGroupClauseSyntax(ObjectReader reader)
-          : base(reader)
         {
         }
     }
@@ -8817,30 +6719,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new QueryExpressionSyntax(this.Kind, this.fromClause, this.body, GetDiagnostics(), annotations);
-
-        internal QueryExpressionSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 2;
-            var fromClause = (FromClauseSyntax)reader.ReadValue();
-            AdjustFlagsAndWidth(fromClause);
-            this.fromClause = fromClause;
-            var body = (QueryBodySyntax)reader.ReadValue();
-            AdjustFlagsAndWidth(body);
-            this.body = body;
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.fromClause);
-            writer.WriteValue(this.body);
-        }
-
-        static QueryExpressionSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(QueryExpressionSyntax), r => new QueryExpressionSyntax(r));
-        }
     }
 
     internal sealed partial class QueryBodySyntax : CSharpSyntaxNode
@@ -8904,7 +6782,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             }
         }
 
-        public Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<QueryClauseSyntax> Clauses => new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<QueryClauseSyntax>(this.clauses);
+        public CoreSyntax.SyntaxList<QueryClauseSyntax> Clauses => new CoreSyntax.SyntaxList<QueryClauseSyntax>(this.clauses);
         public SelectOrGroupClauseSyntax SelectOrGroup => this.selectOrGroup;
         public QueryContinuationSyntax? Continuation => this.continuation;
 
@@ -8922,7 +6800,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
         public override void Accept(CSharpSyntaxVisitor visitor) => visitor.VisitQueryBody(this);
         public override TResult Accept<TResult>(CSharpSyntaxVisitor<TResult> visitor) => visitor.VisitQueryBody(this);
 
-        public QueryBodySyntax Update(Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<QueryClauseSyntax> clauses, SelectOrGroupClauseSyntax selectOrGroup, QueryContinuationSyntax continuation)
+        public QueryBodySyntax Update(CoreSyntax.SyntaxList<QueryClauseSyntax> clauses, SelectOrGroupClauseSyntax selectOrGroup, QueryContinuationSyntax continuation)
         {
             if (clauses != this.Clauses || selectOrGroup != this.SelectOrGroup || continuation != this.Continuation)
             {
@@ -8944,40 +6822,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new QueryBodySyntax(this.Kind, this.clauses, this.selectOrGroup, this.continuation, GetDiagnostics(), annotations);
-
-        internal QueryBodySyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 3;
-            var clauses = (GreenNode?)reader.ReadValue();
-            if (clauses != null)
-            {
-                AdjustFlagsAndWidth(clauses);
-                this.clauses = clauses;
-            }
-            var selectOrGroup = (SelectOrGroupClauseSyntax)reader.ReadValue();
-            AdjustFlagsAndWidth(selectOrGroup);
-            this.selectOrGroup = selectOrGroup;
-            var continuation = (QueryContinuationSyntax?)reader.ReadValue();
-            if (continuation != null)
-            {
-                AdjustFlagsAndWidth(continuation);
-                this.continuation = continuation;
-            }
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.clauses);
-            writer.WriteValue(this.selectOrGroup);
-            writer.WriteValue(this.continuation);
-        }
-
-        static QueryBodySyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(QueryBodySyntax), r => new QueryBodySyntax(r));
-        }
     }
 
     internal sealed partial class FromClauseSyntax : QueryClauseSyntax
@@ -9091,45 +6935,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new FromClauseSyntax(this.Kind, this.fromKeyword, this.type, this.identifier, this.inKeyword, this.expression, GetDiagnostics(), annotations);
-
-        internal FromClauseSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 5;
-            var fromKeyword = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(fromKeyword);
-            this.fromKeyword = fromKeyword;
-            var type = (TypeSyntax?)reader.ReadValue();
-            if (type != null)
-            {
-                AdjustFlagsAndWidth(type);
-                this.type = type;
-            }
-            var identifier = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(identifier);
-            this.identifier = identifier;
-            var inKeyword = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(inKeyword);
-            this.inKeyword = inKeyword;
-            var expression = (ExpressionSyntax)reader.ReadValue();
-            AdjustFlagsAndWidth(expression);
-            this.expression = expression;
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.fromKeyword);
-            writer.WriteValue(this.type);
-            writer.WriteValue(this.identifier);
-            writer.WriteValue(this.inKeyword);
-            writer.WriteValue(this.expression);
-        }
-
-        static FromClauseSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(FromClauseSyntax), r => new FromClauseSyntax(r));
-        }
     }
 
     internal sealed partial class LetClauseSyntax : QueryClauseSyntax
@@ -9225,38 +7030,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new LetClauseSyntax(this.Kind, this.letKeyword, this.identifier, this.equalsToken, this.expression, GetDiagnostics(), annotations);
-
-        internal LetClauseSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 4;
-            var letKeyword = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(letKeyword);
-            this.letKeyword = letKeyword;
-            var identifier = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(identifier);
-            this.identifier = identifier;
-            var equalsToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(equalsToken);
-            this.equalsToken = equalsToken;
-            var expression = (ExpressionSyntax)reader.ReadValue();
-            AdjustFlagsAndWidth(expression);
-            this.expression = expression;
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.letKeyword);
-            writer.WriteValue(this.identifier);
-            writer.WriteValue(this.equalsToken);
-            writer.WriteValue(this.expression);
-        }
-
-        static LetClauseSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(LetClauseSyntax), r => new LetClauseSyntax(r));
-        }
     }
 
     internal sealed partial class JoinClauseSyntax : QueryClauseSyntax
@@ -9424,68 +7197,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new JoinClauseSyntax(this.Kind, this.joinKeyword, this.type, this.identifier, this.inKeyword, this.inExpression, this.onKeyword, this.leftExpression, this.equalsKeyword, this.rightExpression, this.into, GetDiagnostics(), annotations);
-
-        internal JoinClauseSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 10;
-            var joinKeyword = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(joinKeyword);
-            this.joinKeyword = joinKeyword;
-            var type = (TypeSyntax?)reader.ReadValue();
-            if (type != null)
-            {
-                AdjustFlagsAndWidth(type);
-                this.type = type;
-            }
-            var identifier = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(identifier);
-            this.identifier = identifier;
-            var inKeyword = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(inKeyword);
-            this.inKeyword = inKeyword;
-            var inExpression = (ExpressionSyntax)reader.ReadValue();
-            AdjustFlagsAndWidth(inExpression);
-            this.inExpression = inExpression;
-            var onKeyword = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(onKeyword);
-            this.onKeyword = onKeyword;
-            var leftExpression = (ExpressionSyntax)reader.ReadValue();
-            AdjustFlagsAndWidth(leftExpression);
-            this.leftExpression = leftExpression;
-            var equalsKeyword = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(equalsKeyword);
-            this.equalsKeyword = equalsKeyword;
-            var rightExpression = (ExpressionSyntax)reader.ReadValue();
-            AdjustFlagsAndWidth(rightExpression);
-            this.rightExpression = rightExpression;
-            var into = (JoinIntoClauseSyntax?)reader.ReadValue();
-            if (into != null)
-            {
-                AdjustFlagsAndWidth(into);
-                this.into = into;
-            }
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.joinKeyword);
-            writer.WriteValue(this.type);
-            writer.WriteValue(this.identifier);
-            writer.WriteValue(this.inKeyword);
-            writer.WriteValue(this.inExpression);
-            writer.WriteValue(this.onKeyword);
-            writer.WriteValue(this.leftExpression);
-            writer.WriteValue(this.equalsKeyword);
-            writer.WriteValue(this.rightExpression);
-            writer.WriteValue(this.into);
-        }
-
-        static JoinClauseSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(JoinClauseSyntax), r => new JoinClauseSyntax(r));
-        }
     }
 
     internal sealed partial class JoinIntoClauseSyntax : CSharpSyntaxNode
@@ -9563,30 +7274,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new JoinIntoClauseSyntax(this.Kind, this.intoKeyword, this.identifier, GetDiagnostics(), annotations);
-
-        internal JoinIntoClauseSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 2;
-            var intoKeyword = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(intoKeyword);
-            this.intoKeyword = intoKeyword;
-            var identifier = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(identifier);
-            this.identifier = identifier;
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.intoKeyword);
-            writer.WriteValue(this.identifier);
-        }
-
-        static JoinIntoClauseSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(JoinIntoClauseSyntax), r => new JoinIntoClauseSyntax(r));
-        }
     }
 
     internal sealed partial class WhereClauseSyntax : QueryClauseSyntax
@@ -9663,30 +7350,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new WhereClauseSyntax(this.Kind, this.whereKeyword, this.condition, GetDiagnostics(), annotations);
-
-        internal WhereClauseSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 2;
-            var whereKeyword = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(whereKeyword);
-            this.whereKeyword = whereKeyword;
-            var condition = (ExpressionSyntax)reader.ReadValue();
-            AdjustFlagsAndWidth(condition);
-            this.condition = condition;
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.whereKeyword);
-            writer.WriteValue(this.condition);
-        }
-
-        static WhereClauseSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(WhereClauseSyntax), r => new WhereClauseSyntax(r));
-        }
     }
 
     internal sealed partial class OrderByClauseSyntax : QueryClauseSyntax
@@ -9735,7 +7398,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
         }
 
         public SyntaxToken OrderByKeyword => this.orderByKeyword;
-        public Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<OrderingSyntax> Orderings => new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<OrderingSyntax>(new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<CSharpSyntaxNode>(this.orderings));
+        public CoreSyntax.SeparatedSyntaxList<OrderingSyntax> Orderings => new CoreSyntax.SeparatedSyntaxList<OrderingSyntax>(new CoreSyntax.SyntaxList<CSharpSyntaxNode>(this.orderings));
 
         internal override GreenNode? GetSlot(int index)
             => index switch
@@ -9750,7 +7413,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
         public override void Accept(CSharpSyntaxVisitor visitor) => visitor.VisitOrderByClause(this);
         public override TResult Accept<TResult>(CSharpSyntaxVisitor<TResult> visitor) => visitor.VisitOrderByClause(this);
 
-        public OrderByClauseSyntax Update(SyntaxToken orderByKeyword, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<OrderingSyntax> orderings)
+        public OrderByClauseSyntax Update(SyntaxToken orderByKeyword, CoreSyntax.SeparatedSyntaxList<OrderingSyntax> orderings)
         {
             if (orderByKeyword != this.OrderByKeyword || orderings != this.Orderings)
             {
@@ -9772,33 +7435,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new OrderByClauseSyntax(this.Kind, this.orderByKeyword, this.orderings, GetDiagnostics(), annotations);
-
-        internal OrderByClauseSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 2;
-            var orderByKeyword = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(orderByKeyword);
-            this.orderByKeyword = orderByKeyword;
-            var orderings = (GreenNode?)reader.ReadValue();
-            if (orderings != null)
-            {
-                AdjustFlagsAndWidth(orderings);
-                this.orderings = orderings;
-            }
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.orderByKeyword);
-            writer.WriteValue(this.orderings);
-        }
-
-        static OrderByClauseSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(OrderByClauseSyntax), r => new OrderByClauseSyntax(r));
-        }
     }
 
     internal sealed partial class OrderingSyntax : CSharpSyntaxNode
@@ -9884,33 +7520,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new OrderingSyntax(this.Kind, this.expression, this.ascendingOrDescendingKeyword, GetDiagnostics(), annotations);
-
-        internal OrderingSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 2;
-            var expression = (ExpressionSyntax)reader.ReadValue();
-            AdjustFlagsAndWidth(expression);
-            this.expression = expression;
-            var ascendingOrDescendingKeyword = (SyntaxToken?)reader.ReadValue();
-            if (ascendingOrDescendingKeyword != null)
-            {
-                AdjustFlagsAndWidth(ascendingOrDescendingKeyword);
-                this.ascendingOrDescendingKeyword = ascendingOrDescendingKeyword;
-            }
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.expression);
-            writer.WriteValue(this.ascendingOrDescendingKeyword);
-        }
-
-        static OrderingSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(OrderingSyntax), r => new OrderingSyntax(r));
-        }
     }
 
     internal sealed partial class SelectClauseSyntax : SelectOrGroupClauseSyntax
@@ -9987,30 +7596,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new SelectClauseSyntax(this.Kind, this.selectKeyword, this.expression, GetDiagnostics(), annotations);
-
-        internal SelectClauseSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 2;
-            var selectKeyword = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(selectKeyword);
-            this.selectKeyword = selectKeyword;
-            var expression = (ExpressionSyntax)reader.ReadValue();
-            AdjustFlagsAndWidth(expression);
-            this.expression = expression;
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.selectKeyword);
-            writer.WriteValue(this.expression);
-        }
-
-        static SelectClauseSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(SelectClauseSyntax), r => new SelectClauseSyntax(r));
-        }
     }
 
     internal sealed partial class GroupClauseSyntax : SelectOrGroupClauseSyntax
@@ -10105,38 +7690,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new GroupClauseSyntax(this.Kind, this.groupKeyword, this.groupExpression, this.byKeyword, this.byExpression, GetDiagnostics(), annotations);
-
-        internal GroupClauseSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 4;
-            var groupKeyword = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(groupKeyword);
-            this.groupKeyword = groupKeyword;
-            var groupExpression = (ExpressionSyntax)reader.ReadValue();
-            AdjustFlagsAndWidth(groupExpression);
-            this.groupExpression = groupExpression;
-            var byKeyword = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(byKeyword);
-            this.byKeyword = byKeyword;
-            var byExpression = (ExpressionSyntax)reader.ReadValue();
-            AdjustFlagsAndWidth(byExpression);
-            this.byExpression = byExpression;
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.groupKeyword);
-            writer.WriteValue(this.groupExpression);
-            writer.WriteValue(this.byKeyword);
-            writer.WriteValue(this.byExpression);
-        }
-
-        static GroupClauseSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(GroupClauseSyntax), r => new GroupClauseSyntax(r));
-        }
     }
 
     internal sealed partial class QueryContinuationSyntax : CSharpSyntaxNode
@@ -10223,34 +7776,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new QueryContinuationSyntax(this.Kind, this.intoKeyword, this.identifier, this.body, GetDiagnostics(), annotations);
-
-        internal QueryContinuationSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 3;
-            var intoKeyword = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(intoKeyword);
-            this.intoKeyword = intoKeyword;
-            var identifier = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(identifier);
-            this.identifier = identifier;
-            var body = (QueryBodySyntax)reader.ReadValue();
-            AdjustFlagsAndWidth(body);
-            this.body = body;
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.intoKeyword);
-            writer.WriteValue(this.identifier);
-            writer.WriteValue(this.body);
-        }
-
-        static QueryContinuationSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(QueryContinuationSyntax), r => new QueryContinuationSyntax(r));
-        }
     }
 
     /// <summary>Class which represents a placeholder in an array size list.</summary>
@@ -10316,26 +7841,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new OmittedArraySizeExpressionSyntax(this.Kind, this.omittedArraySizeExpressionToken, GetDiagnostics(), annotations);
-
-        internal OmittedArraySizeExpressionSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 1;
-            var omittedArraySizeExpressionToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(omittedArraySizeExpressionToken);
-            this.omittedArraySizeExpressionToken = omittedArraySizeExpressionToken;
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.omittedArraySizeExpressionToken);
-        }
-
-        static OmittedArraySizeExpressionSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(OmittedArraySizeExpressionSyntax), r => new OmittedArraySizeExpressionSyntax(r));
-        }
     }
 
     internal sealed partial class InterpolatedStringExpressionSyntax : ExpressionSyntax
@@ -10393,7 +7898,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
         /// <summary>The first part of an interpolated string, <c>$"</c> or <c>$@"</c> or <c>$"""</c></summary>
         public SyntaxToken StringStartToken => this.stringStartToken;
         /// <summary>List of parts of the interpolated string, each one is either a literal part or an interpolation.</summary>
-        public Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<InterpolatedStringContentSyntax> Contents => new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<InterpolatedStringContentSyntax>(this.contents);
+        public CoreSyntax.SyntaxList<InterpolatedStringContentSyntax> Contents => new CoreSyntax.SyntaxList<InterpolatedStringContentSyntax>(this.contents);
         /// <summary>The closing quote of the interpolated string.</summary>
         public SyntaxToken StringEndToken => this.stringEndToken;
 
@@ -10411,7 +7916,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
         public override void Accept(CSharpSyntaxVisitor visitor) => visitor.VisitInterpolatedStringExpression(this);
         public override TResult Accept<TResult>(CSharpSyntaxVisitor<TResult> visitor) => visitor.VisitInterpolatedStringExpression(this);
 
-        public InterpolatedStringExpressionSyntax Update(SyntaxToken stringStartToken, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<InterpolatedStringContentSyntax> contents, SyntaxToken stringEndToken)
+        public InterpolatedStringExpressionSyntax Update(SyntaxToken stringStartToken, CoreSyntax.SyntaxList<InterpolatedStringContentSyntax> contents, SyntaxToken stringEndToken)
         {
             if (stringStartToken != this.StringStartToken || contents != this.Contents || stringEndToken != this.StringEndToken)
             {
@@ -10433,37 +7938,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new InterpolatedStringExpressionSyntax(this.Kind, this.stringStartToken, this.contents, this.stringEndToken, GetDiagnostics(), annotations);
-
-        internal InterpolatedStringExpressionSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 3;
-            var stringStartToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(stringStartToken);
-            this.stringStartToken = stringStartToken;
-            var contents = (GreenNode?)reader.ReadValue();
-            if (contents != null)
-            {
-                AdjustFlagsAndWidth(contents);
-                this.contents = contents;
-            }
-            var stringEndToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(stringEndToken);
-            this.stringEndToken = stringEndToken;
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.stringStartToken);
-            writer.WriteValue(this.contents);
-            writer.WriteValue(this.stringEndToken);
-        }
-
-        static InterpolatedStringExpressionSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(InterpolatedStringExpressionSyntax), r => new InterpolatedStringExpressionSyntax(r));
-        }
     }
 
     /// <summary>Class which represents a simple pattern-matching expression using the "is" keyword.</summary>
@@ -10552,34 +8026,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new IsPatternExpressionSyntax(this.Kind, this.expression, this.isKeyword, this.pattern, GetDiagnostics(), annotations);
-
-        internal IsPatternExpressionSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 3;
-            var expression = (ExpressionSyntax)reader.ReadValue();
-            AdjustFlagsAndWidth(expression);
-            this.expression = expression;
-            var isKeyword = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(isKeyword);
-            this.isKeyword = isKeyword;
-            var pattern = (PatternSyntax)reader.ReadValue();
-            AdjustFlagsAndWidth(pattern);
-            this.pattern = pattern;
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.expression);
-            writer.WriteValue(this.isKeyword);
-            writer.WriteValue(this.pattern);
-        }
-
-        static IsPatternExpressionSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(IsPatternExpressionSyntax), r => new IsPatternExpressionSyntax(r));
-        }
     }
 
     internal sealed partial class ThrowExpressionSyntax : ExpressionSyntax
@@ -10656,30 +8102,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new ThrowExpressionSyntax(this.Kind, this.throwKeyword, this.expression, GetDiagnostics(), annotations);
-
-        internal ThrowExpressionSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 2;
-            var throwKeyword = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(throwKeyword);
-            this.throwKeyword = throwKeyword;
-            var expression = (ExpressionSyntax)reader.ReadValue();
-            AdjustFlagsAndWidth(expression);
-            this.expression = expression;
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.throwKeyword);
-            writer.WriteValue(this.expression);
-        }
-
-        static ThrowExpressionSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(ThrowExpressionSyntax), r => new ThrowExpressionSyntax(r));
-        }
     }
 
     internal sealed partial class WhenClauseSyntax : CSharpSyntaxNode
@@ -10756,30 +8178,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new WhenClauseSyntax(this.Kind, this.whenKeyword, this.condition, GetDiagnostics(), annotations);
-
-        internal WhenClauseSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 2;
-            var whenKeyword = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(whenKeyword);
-            this.whenKeyword = whenKeyword;
-            var condition = (ExpressionSyntax)reader.ReadValue();
-            AdjustFlagsAndWidth(condition);
-            this.condition = condition;
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.whenKeyword);
-            writer.WriteValue(this.condition);
-        }
-
-        static WhenClauseSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(WhenClauseSyntax), r => new WhenClauseSyntax(r));
-        }
     }
 
     internal abstract partial class PatternSyntax : ExpressionOrPatternSyntax
@@ -10791,11 +8189,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal PatternSyntax(SyntaxKind kind)
           : base(kind)
-        {
-        }
-
-        protected PatternSyntax(ObjectReader reader)
-          : base(reader)
         {
         }
     }
@@ -10861,26 +8254,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new DiscardPatternSyntax(this.Kind, this.underscoreToken, GetDiagnostics(), annotations);
-
-        internal DiscardPatternSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 1;
-            var underscoreToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(underscoreToken);
-            this.underscoreToken = underscoreToken;
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.underscoreToken);
-        }
-
-        static DiscardPatternSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(DiscardPatternSyntax), r => new DiscardPatternSyntax(r));
-        }
     }
 
     internal sealed partial class DeclarationPatternSyntax : PatternSyntax
@@ -10957,30 +8330,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new DeclarationPatternSyntax(this.Kind, this.type, this.designation, GetDiagnostics(), annotations);
-
-        internal DeclarationPatternSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 2;
-            var type = (TypeSyntax)reader.ReadValue();
-            AdjustFlagsAndWidth(type);
-            this.type = type;
-            var designation = (VariableDesignationSyntax)reader.ReadValue();
-            AdjustFlagsAndWidth(designation);
-            this.designation = designation;
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.type);
-            writer.WriteValue(this.designation);
-        }
-
-        static DeclarationPatternSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(DeclarationPatternSyntax), r => new DeclarationPatternSyntax(r));
-        }
     }
 
     internal sealed partial class VarPatternSyntax : PatternSyntax
@@ -11057,30 +8406,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new VarPatternSyntax(this.Kind, this.varKeyword, this.designation, GetDiagnostics(), annotations);
-
-        internal VarPatternSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 2;
-            var varKeyword = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(varKeyword);
-            this.varKeyword = varKeyword;
-            var designation = (VariableDesignationSyntax)reader.ReadValue();
-            AdjustFlagsAndWidth(designation);
-            this.designation = designation;
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.varKeyword);
-            writer.WriteValue(this.designation);
-        }
-
-        static VarPatternSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(VarPatternSyntax), r => new VarPatternSyntax(r));
-        }
     }
 
     internal sealed partial class RecursivePatternSyntax : PatternSyntax
@@ -11211,50 +8536,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new RecursivePatternSyntax(this.Kind, this.type, this.positionalPatternClause, this.propertyPatternClause, this.designation, GetDiagnostics(), annotations);
-
-        internal RecursivePatternSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 4;
-            var type = (TypeSyntax?)reader.ReadValue();
-            if (type != null)
-            {
-                AdjustFlagsAndWidth(type);
-                this.type = type;
-            }
-            var positionalPatternClause = (PositionalPatternClauseSyntax?)reader.ReadValue();
-            if (positionalPatternClause != null)
-            {
-                AdjustFlagsAndWidth(positionalPatternClause);
-                this.positionalPatternClause = positionalPatternClause;
-            }
-            var propertyPatternClause = (PropertyPatternClauseSyntax?)reader.ReadValue();
-            if (propertyPatternClause != null)
-            {
-                AdjustFlagsAndWidth(propertyPatternClause);
-                this.propertyPatternClause = propertyPatternClause;
-            }
-            var designation = (VariableDesignationSyntax?)reader.ReadValue();
-            if (designation != null)
-            {
-                AdjustFlagsAndWidth(designation);
-                this.designation = designation;
-            }
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.type);
-            writer.WriteValue(this.positionalPatternClause);
-            writer.WriteValue(this.propertyPatternClause);
-            writer.WriteValue(this.designation);
-        }
-
-        static RecursivePatternSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(RecursivePatternSyntax), r => new RecursivePatternSyntax(r));
-        }
     }
 
     internal sealed partial class PositionalPatternClauseSyntax : CSharpSyntaxNode
@@ -11310,7 +8591,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
         }
 
         public SyntaxToken OpenParenToken => this.openParenToken;
-        public Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<SubpatternSyntax> Subpatterns => new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<SubpatternSyntax>(new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<CSharpSyntaxNode>(this.subpatterns));
+        public CoreSyntax.SeparatedSyntaxList<SubpatternSyntax> Subpatterns => new CoreSyntax.SeparatedSyntaxList<SubpatternSyntax>(new CoreSyntax.SyntaxList<CSharpSyntaxNode>(this.subpatterns));
         public SyntaxToken CloseParenToken => this.closeParenToken;
 
         internal override GreenNode? GetSlot(int index)
@@ -11327,7 +8608,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
         public override void Accept(CSharpSyntaxVisitor visitor) => visitor.VisitPositionalPatternClause(this);
         public override TResult Accept<TResult>(CSharpSyntaxVisitor<TResult> visitor) => visitor.VisitPositionalPatternClause(this);
 
-        public PositionalPatternClauseSyntax Update(SyntaxToken openParenToken, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<SubpatternSyntax> subpatterns, SyntaxToken closeParenToken)
+        public PositionalPatternClauseSyntax Update(SyntaxToken openParenToken, CoreSyntax.SeparatedSyntaxList<SubpatternSyntax> subpatterns, SyntaxToken closeParenToken)
         {
             if (openParenToken != this.OpenParenToken || subpatterns != this.Subpatterns || closeParenToken != this.CloseParenToken)
             {
@@ -11349,37 +8630,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new PositionalPatternClauseSyntax(this.Kind, this.openParenToken, this.subpatterns, this.closeParenToken, GetDiagnostics(), annotations);
-
-        internal PositionalPatternClauseSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 3;
-            var openParenToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(openParenToken);
-            this.openParenToken = openParenToken;
-            var subpatterns = (GreenNode?)reader.ReadValue();
-            if (subpatterns != null)
-            {
-                AdjustFlagsAndWidth(subpatterns);
-                this.subpatterns = subpatterns;
-            }
-            var closeParenToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(closeParenToken);
-            this.closeParenToken = closeParenToken;
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.openParenToken);
-            writer.WriteValue(this.subpatterns);
-            writer.WriteValue(this.closeParenToken);
-        }
-
-        static PositionalPatternClauseSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(PositionalPatternClauseSyntax), r => new PositionalPatternClauseSyntax(r));
-        }
     }
 
     internal sealed partial class PropertyPatternClauseSyntax : CSharpSyntaxNode
@@ -11435,7 +8685,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
         }
 
         public SyntaxToken OpenBraceToken => this.openBraceToken;
-        public Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<SubpatternSyntax> Subpatterns => new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<SubpatternSyntax>(new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<CSharpSyntaxNode>(this.subpatterns));
+        public CoreSyntax.SeparatedSyntaxList<SubpatternSyntax> Subpatterns => new CoreSyntax.SeparatedSyntaxList<SubpatternSyntax>(new CoreSyntax.SyntaxList<CSharpSyntaxNode>(this.subpatterns));
         public SyntaxToken CloseBraceToken => this.closeBraceToken;
 
         internal override GreenNode? GetSlot(int index)
@@ -11452,7 +8702,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
         public override void Accept(CSharpSyntaxVisitor visitor) => visitor.VisitPropertyPatternClause(this);
         public override TResult Accept<TResult>(CSharpSyntaxVisitor<TResult> visitor) => visitor.VisitPropertyPatternClause(this);
 
-        public PropertyPatternClauseSyntax Update(SyntaxToken openBraceToken, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<SubpatternSyntax> subpatterns, SyntaxToken closeBraceToken)
+        public PropertyPatternClauseSyntax Update(SyntaxToken openBraceToken, CoreSyntax.SeparatedSyntaxList<SubpatternSyntax> subpatterns, SyntaxToken closeBraceToken)
         {
             if (openBraceToken != this.OpenBraceToken || subpatterns != this.Subpatterns || closeBraceToken != this.CloseBraceToken)
             {
@@ -11474,37 +8724,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new PropertyPatternClauseSyntax(this.Kind, this.openBraceToken, this.subpatterns, this.closeBraceToken, GetDiagnostics(), annotations);
-
-        internal PropertyPatternClauseSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 3;
-            var openBraceToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(openBraceToken);
-            this.openBraceToken = openBraceToken;
-            var subpatterns = (GreenNode?)reader.ReadValue();
-            if (subpatterns != null)
-            {
-                AdjustFlagsAndWidth(subpatterns);
-                this.subpatterns = subpatterns;
-            }
-            var closeBraceToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(closeBraceToken);
-            this.closeBraceToken = closeBraceToken;
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.openBraceToken);
-            writer.WriteValue(this.subpatterns);
-            writer.WriteValue(this.closeBraceToken);
-        }
-
-        static PropertyPatternClauseSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(PropertyPatternClauseSyntax), r => new PropertyPatternClauseSyntax(r));
-        }
     }
 
     internal sealed partial class SubpatternSyntax : CSharpSyntaxNode
@@ -11590,33 +8809,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new SubpatternSyntax(this.Kind, this.expressionColon, this.pattern, GetDiagnostics(), annotations);
-
-        internal SubpatternSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 2;
-            var expressionColon = (BaseExpressionColonSyntax?)reader.ReadValue();
-            if (expressionColon != null)
-            {
-                AdjustFlagsAndWidth(expressionColon);
-                this.expressionColon = expressionColon;
-            }
-            var pattern = (PatternSyntax)reader.ReadValue();
-            AdjustFlagsAndWidth(pattern);
-            this.pattern = pattern;
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.expressionColon);
-            writer.WriteValue(this.pattern);
-        }
-
-        static SubpatternSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(SubpatternSyntax), r => new SubpatternSyntax(r));
-        }
     }
 
     internal sealed partial class ConstantPatternSyntax : PatternSyntax
@@ -11681,26 +8873,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new ConstantPatternSyntax(this.Kind, this.expression, GetDiagnostics(), annotations);
-
-        internal ConstantPatternSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 1;
-            var expression = (ExpressionSyntax)reader.ReadValue();
-            AdjustFlagsAndWidth(expression);
-            this.expression = expression;
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.expression);
-        }
-
-        static ConstantPatternSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(ConstantPatternSyntax), r => new ConstantPatternSyntax(r));
-        }
     }
 
     internal sealed partial class ParenthesizedPatternSyntax : PatternSyntax
@@ -11786,34 +8958,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new ParenthesizedPatternSyntax(this.Kind, this.openParenToken, this.pattern, this.closeParenToken, GetDiagnostics(), annotations);
-
-        internal ParenthesizedPatternSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 3;
-            var openParenToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(openParenToken);
-            this.openParenToken = openParenToken;
-            var pattern = (PatternSyntax)reader.ReadValue();
-            AdjustFlagsAndWidth(pattern);
-            this.pattern = pattern;
-            var closeParenToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(closeParenToken);
-            this.closeParenToken = closeParenToken;
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.openParenToken);
-            writer.WriteValue(this.pattern);
-            writer.WriteValue(this.closeParenToken);
-        }
-
-        static ParenthesizedPatternSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(ParenthesizedPatternSyntax), r => new ParenthesizedPatternSyntax(r));
-        }
     }
 
     internal sealed partial class RelationalPatternSyntax : PatternSyntax
@@ -11891,30 +9035,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new RelationalPatternSyntax(this.Kind, this.operatorToken, this.expression, GetDiagnostics(), annotations);
-
-        internal RelationalPatternSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 2;
-            var operatorToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(operatorToken);
-            this.operatorToken = operatorToken;
-            var expression = (ExpressionSyntax)reader.ReadValue();
-            AdjustFlagsAndWidth(expression);
-            this.expression = expression;
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.operatorToken);
-            writer.WriteValue(this.expression);
-        }
-
-        static RelationalPatternSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(RelationalPatternSyntax), r => new RelationalPatternSyntax(r));
-        }
     }
 
     internal sealed partial class TypePatternSyntax : PatternSyntax
@@ -11979,26 +9099,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new TypePatternSyntax(this.Kind, this.type, GetDiagnostics(), annotations);
-
-        internal TypePatternSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 1;
-            var type = (TypeSyntax)reader.ReadValue();
-            AdjustFlagsAndWidth(type);
-            this.type = type;
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.type);
-        }
-
-        static TypePatternSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(TypePatternSyntax), r => new TypePatternSyntax(r));
-        }
     }
 
     internal sealed partial class BinaryPatternSyntax : PatternSyntax
@@ -12084,34 +9184,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new BinaryPatternSyntax(this.Kind, this.left, this.operatorToken, this.right, GetDiagnostics(), annotations);
-
-        internal BinaryPatternSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 3;
-            var left = (PatternSyntax)reader.ReadValue();
-            AdjustFlagsAndWidth(left);
-            this.left = left;
-            var operatorToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(operatorToken);
-            this.operatorToken = operatorToken;
-            var right = (PatternSyntax)reader.ReadValue();
-            AdjustFlagsAndWidth(right);
-            this.right = right;
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.left);
-            writer.WriteValue(this.operatorToken);
-            writer.WriteValue(this.right);
-        }
-
-        static BinaryPatternSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(BinaryPatternSyntax), r => new BinaryPatternSyntax(r));
-        }
     }
 
     internal sealed partial class UnaryPatternSyntax : PatternSyntax
@@ -12188,30 +9260,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new UnaryPatternSyntax(this.Kind, this.operatorToken, this.pattern, GetDiagnostics(), annotations);
-
-        internal UnaryPatternSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 2;
-            var operatorToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(operatorToken);
-            this.operatorToken = operatorToken;
-            var pattern = (PatternSyntax)reader.ReadValue();
-            AdjustFlagsAndWidth(pattern);
-            this.pattern = pattern;
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.operatorToken);
-            writer.WriteValue(this.pattern);
-        }
-
-        static UnaryPatternSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(UnaryPatternSyntax), r => new UnaryPatternSyntax(r));
-        }
     }
 
     internal sealed partial class ListPatternSyntax : PatternSyntax
@@ -12283,7 +9331,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
         }
 
         public SyntaxToken OpenBracketToken => this.openBracketToken;
-        public Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<PatternSyntax> Patterns => new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<PatternSyntax>(new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<CSharpSyntaxNode>(this.patterns));
+        public CoreSyntax.SeparatedSyntaxList<PatternSyntax> Patterns => new CoreSyntax.SeparatedSyntaxList<PatternSyntax>(new CoreSyntax.SyntaxList<CSharpSyntaxNode>(this.patterns));
         public SyntaxToken CloseBracketToken => this.closeBracketToken;
         public VariableDesignationSyntax? Designation => this.designation;
 
@@ -12302,7 +9350,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
         public override void Accept(CSharpSyntaxVisitor visitor) => visitor.VisitListPattern(this);
         public override TResult Accept<TResult>(CSharpSyntaxVisitor<TResult> visitor) => visitor.VisitListPattern(this);
 
-        public ListPatternSyntax Update(SyntaxToken openBracketToken, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<PatternSyntax> patterns, SyntaxToken closeBracketToken, VariableDesignationSyntax designation)
+        public ListPatternSyntax Update(SyntaxToken openBracketToken, CoreSyntax.SeparatedSyntaxList<PatternSyntax> patterns, SyntaxToken closeBracketToken, VariableDesignationSyntax designation)
         {
             if (openBracketToken != this.OpenBracketToken || patterns != this.Patterns || closeBracketToken != this.CloseBracketToken || designation != this.Designation)
             {
@@ -12324,44 +9372,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new ListPatternSyntax(this.Kind, this.openBracketToken, this.patterns, this.closeBracketToken, this.designation, GetDiagnostics(), annotations);
-
-        internal ListPatternSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 4;
-            var openBracketToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(openBracketToken);
-            this.openBracketToken = openBracketToken;
-            var patterns = (GreenNode?)reader.ReadValue();
-            if (patterns != null)
-            {
-                AdjustFlagsAndWidth(patterns);
-                this.patterns = patterns;
-            }
-            var closeBracketToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(closeBracketToken);
-            this.closeBracketToken = closeBracketToken;
-            var designation = (VariableDesignationSyntax?)reader.ReadValue();
-            if (designation != null)
-            {
-                AdjustFlagsAndWidth(designation);
-                this.designation = designation;
-            }
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.openBracketToken);
-            writer.WriteValue(this.patterns);
-            writer.WriteValue(this.closeBracketToken);
-            writer.WriteValue(this.designation);
-        }
-
-        static ListPatternSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(ListPatternSyntax), r => new ListPatternSyntax(r));
-        }
     }
 
     internal sealed partial class SlicePatternSyntax : PatternSyntax
@@ -12447,33 +9457,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new SlicePatternSyntax(this.Kind, this.dotDotToken, this.pattern, GetDiagnostics(), annotations);
-
-        internal SlicePatternSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 2;
-            var dotDotToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(dotDotToken);
-            this.dotDotToken = dotDotToken;
-            var pattern = (PatternSyntax?)reader.ReadValue();
-            if (pattern != null)
-            {
-                AdjustFlagsAndWidth(pattern);
-                this.pattern = pattern;
-            }
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.dotDotToken);
-            writer.WriteValue(this.pattern);
-        }
-
-        static SlicePatternSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(SlicePatternSyntax), r => new SlicePatternSyntax(r));
-        }
     }
 
     internal abstract partial class InterpolatedStringContentSyntax : CSharpSyntaxNode
@@ -12485,11 +9468,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal InterpolatedStringContentSyntax(SyntaxKind kind)
           : base(kind)
-        {
-        }
-
-        protected InterpolatedStringContentSyntax(ObjectReader reader)
-          : base(reader)
         {
         }
     }
@@ -12556,26 +9534,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new InterpolatedStringTextSyntax(this.Kind, this.textToken, GetDiagnostics(), annotations);
-
-        internal InterpolatedStringTextSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 1;
-            var textToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(textToken);
-            this.textToken = textToken;
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.textToken);
-        }
-
-        static InterpolatedStringTextSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(InterpolatedStringTextSyntax), r => new InterpolatedStringTextSyntax(r));
-        }
     }
 
     internal sealed partial class InterpolationSyntax : InterpolatedStringContentSyntax
@@ -12701,48 +9659,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new InterpolationSyntax(this.Kind, this.openBraceToken, this.expression, this.alignmentClause, this.formatClause, this.closeBraceToken, GetDiagnostics(), annotations);
-
-        internal InterpolationSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 5;
-            var openBraceToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(openBraceToken);
-            this.openBraceToken = openBraceToken;
-            var expression = (ExpressionSyntax)reader.ReadValue();
-            AdjustFlagsAndWidth(expression);
-            this.expression = expression;
-            var alignmentClause = (InterpolationAlignmentClauseSyntax?)reader.ReadValue();
-            if (alignmentClause != null)
-            {
-                AdjustFlagsAndWidth(alignmentClause);
-                this.alignmentClause = alignmentClause;
-            }
-            var formatClause = (InterpolationFormatClauseSyntax?)reader.ReadValue();
-            if (formatClause != null)
-            {
-                AdjustFlagsAndWidth(formatClause);
-                this.formatClause = formatClause;
-            }
-            var closeBraceToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(closeBraceToken);
-            this.closeBraceToken = closeBraceToken;
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.openBraceToken);
-            writer.WriteValue(this.expression);
-            writer.WriteValue(this.alignmentClause);
-            writer.WriteValue(this.formatClause);
-            writer.WriteValue(this.closeBraceToken);
-        }
-
-        static InterpolationSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(InterpolationSyntax), r => new InterpolationSyntax(r));
-        }
     }
 
     internal sealed partial class InterpolationAlignmentClauseSyntax : CSharpSyntaxNode
@@ -12819,30 +9735,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new InterpolationAlignmentClauseSyntax(this.Kind, this.commaToken, this.value, GetDiagnostics(), annotations);
-
-        internal InterpolationAlignmentClauseSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 2;
-            var commaToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(commaToken);
-            this.commaToken = commaToken;
-            var value = (ExpressionSyntax)reader.ReadValue();
-            AdjustFlagsAndWidth(value);
-            this.value = value;
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.commaToken);
-            writer.WriteValue(this.value);
-        }
-
-        static InterpolationAlignmentClauseSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(InterpolationAlignmentClauseSyntax), r => new InterpolationAlignmentClauseSyntax(r));
-        }
     }
 
     internal sealed partial class InterpolationFormatClauseSyntax : CSharpSyntaxNode
@@ -12920,30 +9812,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new InterpolationFormatClauseSyntax(this.Kind, this.colonToken, this.formatStringToken, GetDiagnostics(), annotations);
-
-        internal InterpolationFormatClauseSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 2;
-            var colonToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(colonToken);
-            this.colonToken = colonToken;
-            var formatStringToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(formatStringToken);
-            this.formatStringToken = formatStringToken;
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.colonToken);
-            writer.WriteValue(this.formatStringToken);
-        }
-
-        static InterpolationFormatClauseSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(InterpolationFormatClauseSyntax), r => new InterpolationFormatClauseSyntax(r));
-        }
     }
 
     internal sealed partial class GlobalStatementSyntax : MemberDeclarationSyntax
@@ -13007,8 +9875,8 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             this.statement = statement;
         }
 
-        public override Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> AttributeLists => new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax>(this.attributeLists);
-        public override Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SyntaxToken> Modifiers => new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SyntaxToken>(this.modifiers);
+        public override CoreSyntax.SyntaxList<AttributeListSyntax> AttributeLists => new CoreSyntax.SyntaxList<AttributeListSyntax>(this.attributeLists);
+        public override CoreSyntax.SyntaxList<SyntaxToken> Modifiers => new CoreSyntax.SyntaxList<SyntaxToken>(this.modifiers);
         public StatementSyntax Statement => this.statement;
 
         internal override GreenNode? GetSlot(int index)
@@ -13025,7 +9893,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
         public override void Accept(CSharpSyntaxVisitor visitor) => visitor.VisitGlobalStatement(this);
         public override TResult Accept<TResult>(CSharpSyntaxVisitor<TResult> visitor) => visitor.VisitGlobalStatement(this);
 
-        public GlobalStatementSyntax Update(Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> attributeLists, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SyntaxToken> modifiers, StatementSyntax statement)
+        public GlobalStatementSyntax Update(CoreSyntax.SyntaxList<AttributeListSyntax> attributeLists, CoreSyntax.SyntaxList<SyntaxToken> modifiers, StatementSyntax statement)
         {
             if (attributeLists != this.AttributeLists || modifiers != this.Modifiers || statement != this.Statement)
             {
@@ -13047,40 +9915,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new GlobalStatementSyntax(this.Kind, this.attributeLists, this.modifiers, this.statement, GetDiagnostics(), annotations);
-
-        internal GlobalStatementSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 3;
-            var attributeLists = (GreenNode?)reader.ReadValue();
-            if (attributeLists != null)
-            {
-                AdjustFlagsAndWidth(attributeLists);
-                this.attributeLists = attributeLists;
-            }
-            var modifiers = (GreenNode?)reader.ReadValue();
-            if (modifiers != null)
-            {
-                AdjustFlagsAndWidth(modifiers);
-                this.modifiers = modifiers;
-            }
-            var statement = (StatementSyntax)reader.ReadValue();
-            AdjustFlagsAndWidth(statement);
-            this.statement = statement;
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.attributeLists);
-            writer.WriteValue(this.modifiers);
-            writer.WriteValue(this.statement);
-        }
-
-        static GlobalStatementSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(GlobalStatementSyntax), r => new GlobalStatementSyntax(r));
-        }
     }
 
     /// <summary>Represents the base class for all statements syntax classes.</summary>
@@ -13096,12 +9930,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
         {
         }
 
-        protected StatementSyntax(ObjectReader reader)
-          : base(reader)
-        {
-        }
-
-        public abstract Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> AttributeLists { get; }
+        public abstract CoreSyntax.SyntaxList<AttributeListSyntax> AttributeLists { get; }
     }
 
     internal sealed partial class BlockSyntax : StatementSyntax
@@ -13172,9 +10001,9 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             this.closeBraceToken = closeBraceToken;
         }
 
-        public override Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> AttributeLists => new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax>(this.attributeLists);
+        public override CoreSyntax.SyntaxList<AttributeListSyntax> AttributeLists => new CoreSyntax.SyntaxList<AttributeListSyntax>(this.attributeLists);
         public SyntaxToken OpenBraceToken => this.openBraceToken;
-        public Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<StatementSyntax> Statements => new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<StatementSyntax>(this.statements);
+        public CoreSyntax.SyntaxList<StatementSyntax> Statements => new CoreSyntax.SyntaxList<StatementSyntax>(this.statements);
         public SyntaxToken CloseBraceToken => this.closeBraceToken;
 
         internal override GreenNode? GetSlot(int index)
@@ -13192,7 +10021,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
         public override void Accept(CSharpSyntaxVisitor visitor) => visitor.VisitBlock(this);
         public override TResult Accept<TResult>(CSharpSyntaxVisitor<TResult> visitor) => visitor.VisitBlock(this);
 
-        public BlockSyntax Update(Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> attributeLists, SyntaxToken openBraceToken, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<StatementSyntax> statements, SyntaxToken closeBraceToken)
+        public BlockSyntax Update(CoreSyntax.SyntaxList<AttributeListSyntax> attributeLists, SyntaxToken openBraceToken, CoreSyntax.SyntaxList<StatementSyntax> statements, SyntaxToken closeBraceToken)
         {
             if (attributeLists != this.AttributeLists || openBraceToken != this.OpenBraceToken || statements != this.Statements || closeBraceToken != this.CloseBraceToken)
             {
@@ -13214,44 +10043,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new BlockSyntax(this.Kind, this.attributeLists, this.openBraceToken, this.statements, this.closeBraceToken, GetDiagnostics(), annotations);
-
-        internal BlockSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 4;
-            var attributeLists = (GreenNode?)reader.ReadValue();
-            if (attributeLists != null)
-            {
-                AdjustFlagsAndWidth(attributeLists);
-                this.attributeLists = attributeLists;
-            }
-            var openBraceToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(openBraceToken);
-            this.openBraceToken = openBraceToken;
-            var statements = (GreenNode?)reader.ReadValue();
-            if (statements != null)
-            {
-                AdjustFlagsAndWidth(statements);
-                this.statements = statements;
-            }
-            var closeBraceToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(closeBraceToken);
-            this.closeBraceToken = closeBraceToken;
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.attributeLists);
-            writer.WriteValue(this.openBraceToken);
-            writer.WriteValue(this.statements);
-            writer.WriteValue(this.closeBraceToken);
-        }
-
-        static BlockSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(BlockSyntax), r => new BlockSyntax(r));
-        }
     }
 
     internal sealed partial class LocalFunctionStatementSyntax : StatementSyntax
@@ -13409,14 +10200,14 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             }
         }
 
-        public override Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> AttributeLists => new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax>(this.attributeLists);
-        public Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SyntaxToken> Modifiers => new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SyntaxToken>(this.modifiers);
+        public override CoreSyntax.SyntaxList<AttributeListSyntax> AttributeLists => new CoreSyntax.SyntaxList<AttributeListSyntax>(this.attributeLists);
+        public CoreSyntax.SyntaxList<SyntaxToken> Modifiers => new CoreSyntax.SyntaxList<SyntaxToken>(this.modifiers);
         public TypeSyntax ReturnType => this.returnType;
         /// <summary>Gets the identifier.</summary>
         public SyntaxToken Identifier => this.identifier;
         public TypeParameterListSyntax? TypeParameterList => this.typeParameterList;
         public ParameterListSyntax ParameterList => this.parameterList;
-        public Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<TypeParameterConstraintClauseSyntax> ConstraintClauses => new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<TypeParameterConstraintClauseSyntax>(this.constraintClauses);
+        public CoreSyntax.SyntaxList<TypeParameterConstraintClauseSyntax> ConstraintClauses => new CoreSyntax.SyntaxList<TypeParameterConstraintClauseSyntax>(this.constraintClauses);
         public BlockSyntax? Body => this.body;
         public ArrowExpressionClauseSyntax? ExpressionBody => this.expressionBody;
         /// <summary>Gets the optional semicolon token.</summary>
@@ -13443,7 +10234,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
         public override void Accept(CSharpSyntaxVisitor visitor) => visitor.VisitLocalFunctionStatement(this);
         public override TResult Accept<TResult>(CSharpSyntaxVisitor<TResult> visitor) => visitor.VisitLocalFunctionStatement(this);
 
-        public LocalFunctionStatementSyntax Update(Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> attributeLists, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SyntaxToken> modifiers, TypeSyntax returnType, SyntaxToken identifier, TypeParameterListSyntax typeParameterList, ParameterListSyntax parameterList, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<TypeParameterConstraintClauseSyntax> constraintClauses, BlockSyntax body, ArrowExpressionClauseSyntax expressionBody, SyntaxToken semicolonToken)
+        public LocalFunctionStatementSyntax Update(CoreSyntax.SyntaxList<AttributeListSyntax> attributeLists, CoreSyntax.SyntaxList<SyntaxToken> modifiers, TypeSyntax returnType, SyntaxToken identifier, TypeParameterListSyntax typeParameterList, ParameterListSyntax parameterList, CoreSyntax.SyntaxList<TypeParameterConstraintClauseSyntax> constraintClauses, BlockSyntax body, ArrowExpressionClauseSyntax expressionBody, SyntaxToken semicolonToken)
         {
             if (attributeLists != this.AttributeLists || modifiers != this.Modifiers || returnType != this.ReturnType || identifier != this.Identifier || typeParameterList != this.TypeParameterList || parameterList != this.ParameterList || constraintClauses != this.ConstraintClauses || body != this.Body || expressionBody != this.ExpressionBody || semicolonToken != this.SemicolonToken)
             {
@@ -13465,83 +10256,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new LocalFunctionStatementSyntax(this.Kind, this.attributeLists, this.modifiers, this.returnType, this.identifier, this.typeParameterList, this.parameterList, this.constraintClauses, this.body, this.expressionBody, this.semicolonToken, GetDiagnostics(), annotations);
-
-        internal LocalFunctionStatementSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 10;
-            var attributeLists = (GreenNode?)reader.ReadValue();
-            if (attributeLists != null)
-            {
-                AdjustFlagsAndWidth(attributeLists);
-                this.attributeLists = attributeLists;
-            }
-            var modifiers = (GreenNode?)reader.ReadValue();
-            if (modifiers != null)
-            {
-                AdjustFlagsAndWidth(modifiers);
-                this.modifiers = modifiers;
-            }
-            var returnType = (TypeSyntax)reader.ReadValue();
-            AdjustFlagsAndWidth(returnType);
-            this.returnType = returnType;
-            var identifier = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(identifier);
-            this.identifier = identifier;
-            var typeParameterList = (TypeParameterListSyntax?)reader.ReadValue();
-            if (typeParameterList != null)
-            {
-                AdjustFlagsAndWidth(typeParameterList);
-                this.typeParameterList = typeParameterList;
-            }
-            var parameterList = (ParameterListSyntax)reader.ReadValue();
-            AdjustFlagsAndWidth(parameterList);
-            this.parameterList = parameterList;
-            var constraintClauses = (GreenNode?)reader.ReadValue();
-            if (constraintClauses != null)
-            {
-                AdjustFlagsAndWidth(constraintClauses);
-                this.constraintClauses = constraintClauses;
-            }
-            var body = (BlockSyntax?)reader.ReadValue();
-            if (body != null)
-            {
-                AdjustFlagsAndWidth(body);
-                this.body = body;
-            }
-            var expressionBody = (ArrowExpressionClauseSyntax?)reader.ReadValue();
-            if (expressionBody != null)
-            {
-                AdjustFlagsAndWidth(expressionBody);
-                this.expressionBody = expressionBody;
-            }
-            var semicolonToken = (SyntaxToken?)reader.ReadValue();
-            if (semicolonToken != null)
-            {
-                AdjustFlagsAndWidth(semicolonToken);
-                this.semicolonToken = semicolonToken;
-            }
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.attributeLists);
-            writer.WriteValue(this.modifiers);
-            writer.WriteValue(this.returnType);
-            writer.WriteValue(this.identifier);
-            writer.WriteValue(this.typeParameterList);
-            writer.WriteValue(this.parameterList);
-            writer.WriteValue(this.constraintClauses);
-            writer.WriteValue(this.body);
-            writer.WriteValue(this.expressionBody);
-            writer.WriteValue(this.semicolonToken);
-        }
-
-        static LocalFunctionStatementSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(LocalFunctionStatementSyntax), r => new LocalFunctionStatementSyntax(r));
-        }
     }
 
     internal sealed partial class LocalDeclarationStatementSyntax : StatementSyntax
@@ -13644,11 +10358,11 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             this.semicolonToken = semicolonToken;
         }
 
-        public override Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> AttributeLists => new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax>(this.attributeLists);
+        public override CoreSyntax.SyntaxList<AttributeListSyntax> AttributeLists => new CoreSyntax.SyntaxList<AttributeListSyntax>(this.attributeLists);
         public SyntaxToken? AwaitKeyword => this.awaitKeyword;
         public SyntaxToken? UsingKeyword => this.usingKeyword;
         /// <summary>Gets the modifier list.</summary>
-        public Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SyntaxToken> Modifiers => new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SyntaxToken>(this.modifiers);
+        public CoreSyntax.SyntaxList<SyntaxToken> Modifiers => new CoreSyntax.SyntaxList<SyntaxToken>(this.modifiers);
         public VariableDeclarationSyntax Declaration => this.declaration;
         public SyntaxToken SemicolonToken => this.semicolonToken;
 
@@ -13669,7 +10383,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
         public override void Accept(CSharpSyntaxVisitor visitor) => visitor.VisitLocalDeclarationStatement(this);
         public override TResult Accept<TResult>(CSharpSyntaxVisitor<TResult> visitor) => visitor.VisitLocalDeclarationStatement(this);
 
-        public LocalDeclarationStatementSyntax Update(Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> attributeLists, SyntaxToken awaitKeyword, SyntaxToken usingKeyword, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SyntaxToken> modifiers, VariableDeclarationSyntax declaration, SyntaxToken semicolonToken)
+        public LocalDeclarationStatementSyntax Update(CoreSyntax.SyntaxList<AttributeListSyntax> attributeLists, SyntaxToken awaitKeyword, SyntaxToken usingKeyword, CoreSyntax.SyntaxList<SyntaxToken> modifiers, VariableDeclarationSyntax declaration, SyntaxToken semicolonToken)
         {
             if (attributeLists != this.AttributeLists || awaitKeyword != this.AwaitKeyword || usingKeyword != this.UsingKeyword || modifiers != this.Modifiers || declaration != this.Declaration || semicolonToken != this.SemicolonToken)
             {
@@ -13691,58 +10405,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new LocalDeclarationStatementSyntax(this.Kind, this.attributeLists, this.awaitKeyword, this.usingKeyword, this.modifiers, this.declaration, this.semicolonToken, GetDiagnostics(), annotations);
-
-        internal LocalDeclarationStatementSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 6;
-            var attributeLists = (GreenNode?)reader.ReadValue();
-            if (attributeLists != null)
-            {
-                AdjustFlagsAndWidth(attributeLists);
-                this.attributeLists = attributeLists;
-            }
-            var awaitKeyword = (SyntaxToken?)reader.ReadValue();
-            if (awaitKeyword != null)
-            {
-                AdjustFlagsAndWidth(awaitKeyword);
-                this.awaitKeyword = awaitKeyword;
-            }
-            var usingKeyword = (SyntaxToken?)reader.ReadValue();
-            if (usingKeyword != null)
-            {
-                AdjustFlagsAndWidth(usingKeyword);
-                this.usingKeyword = usingKeyword;
-            }
-            var modifiers = (GreenNode?)reader.ReadValue();
-            if (modifiers != null)
-            {
-                AdjustFlagsAndWidth(modifiers);
-                this.modifiers = modifiers;
-            }
-            var declaration = (VariableDeclarationSyntax)reader.ReadValue();
-            AdjustFlagsAndWidth(declaration);
-            this.declaration = declaration;
-            var semicolonToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(semicolonToken);
-            this.semicolonToken = semicolonToken;
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.attributeLists);
-            writer.WriteValue(this.awaitKeyword);
-            writer.WriteValue(this.usingKeyword);
-            writer.WriteValue(this.modifiers);
-            writer.WriteValue(this.declaration);
-            writer.WriteValue(this.semicolonToken);
-        }
-
-        static LocalDeclarationStatementSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(LocalDeclarationStatementSyntax), r => new LocalDeclarationStatementSyntax(r));
-        }
     }
 
     internal sealed partial class VariableDeclarationSyntax : CSharpSyntaxNode
@@ -13791,7 +10453,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
         }
 
         public TypeSyntax Type => this.type;
-        public Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<VariableDeclaratorSyntax> Variables => new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<VariableDeclaratorSyntax>(new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<CSharpSyntaxNode>(this.variables));
+        public CoreSyntax.SeparatedSyntaxList<VariableDeclaratorSyntax> Variables => new CoreSyntax.SeparatedSyntaxList<VariableDeclaratorSyntax>(new CoreSyntax.SyntaxList<CSharpSyntaxNode>(this.variables));
 
         internal override GreenNode? GetSlot(int index)
             => index switch
@@ -13806,7 +10468,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
         public override void Accept(CSharpSyntaxVisitor visitor) => visitor.VisitVariableDeclaration(this);
         public override TResult Accept<TResult>(CSharpSyntaxVisitor<TResult> visitor) => visitor.VisitVariableDeclaration(this);
 
-        public VariableDeclarationSyntax Update(TypeSyntax type, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<VariableDeclaratorSyntax> variables)
+        public VariableDeclarationSyntax Update(TypeSyntax type, CoreSyntax.SeparatedSyntaxList<VariableDeclaratorSyntax> variables)
         {
             if (type != this.Type || variables != this.Variables)
             {
@@ -13828,33 +10490,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new VariableDeclarationSyntax(this.Kind, this.type, this.variables, GetDiagnostics(), annotations);
-
-        internal VariableDeclarationSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 2;
-            var type = (TypeSyntax)reader.ReadValue();
-            AdjustFlagsAndWidth(type);
-            this.type = type;
-            var variables = (GreenNode?)reader.ReadValue();
-            if (variables != null)
-            {
-                AdjustFlagsAndWidth(variables);
-                this.variables = variables;
-            }
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.type);
-            writer.WriteValue(this.variables);
-        }
-
-        static VariableDeclarationSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(VariableDeclarationSyntax), r => new VariableDeclarationSyntax(r));
-        }
     }
 
     internal sealed partial class VariableDeclaratorSyntax : CSharpSyntaxNode
@@ -13959,40 +10594,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new VariableDeclaratorSyntax(this.Kind, this.identifier, this.argumentList, this.initializer, GetDiagnostics(), annotations);
-
-        internal VariableDeclaratorSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 3;
-            var identifier = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(identifier);
-            this.identifier = identifier;
-            var argumentList = (BracketedArgumentListSyntax?)reader.ReadValue();
-            if (argumentList != null)
-            {
-                AdjustFlagsAndWidth(argumentList);
-                this.argumentList = argumentList;
-            }
-            var initializer = (EqualsValueClauseSyntax?)reader.ReadValue();
-            if (initializer != null)
-            {
-                AdjustFlagsAndWidth(initializer);
-                this.initializer = initializer;
-            }
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.identifier);
-            writer.WriteValue(this.argumentList);
-            writer.WriteValue(this.initializer);
-        }
-
-        static VariableDeclaratorSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(VariableDeclaratorSyntax), r => new VariableDeclaratorSyntax(r));
-        }
     }
 
     internal sealed partial class EqualsValueClauseSyntax : CSharpSyntaxNode
@@ -14069,30 +10670,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new EqualsValueClauseSyntax(this.Kind, this.equalsToken, this.value, GetDiagnostics(), annotations);
-
-        internal EqualsValueClauseSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 2;
-            var equalsToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(equalsToken);
-            this.equalsToken = equalsToken;
-            var value = (ExpressionSyntax)reader.ReadValue();
-            AdjustFlagsAndWidth(value);
-            this.value = value;
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.equalsToken);
-            writer.WriteValue(this.value);
-        }
-
-        static EqualsValueClauseSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(EqualsValueClauseSyntax), r => new EqualsValueClauseSyntax(r));
-        }
     }
 
     internal abstract partial class VariableDesignationSyntax : CSharpSyntaxNode
@@ -14104,11 +10681,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal VariableDesignationSyntax(SyntaxKind kind)
           : base(kind)
-        {
-        }
-
-        protected VariableDesignationSyntax(ObjectReader reader)
-          : base(reader)
         {
         }
     }
@@ -14174,26 +10746,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new SingleVariableDesignationSyntax(this.Kind, this.identifier, GetDiagnostics(), annotations);
-
-        internal SingleVariableDesignationSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 1;
-            var identifier = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(identifier);
-            this.identifier = identifier;
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.identifier);
-        }
-
-        static SingleVariableDesignationSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(SingleVariableDesignationSyntax), r => new SingleVariableDesignationSyntax(r));
-        }
     }
 
     internal sealed partial class DiscardDesignationSyntax : VariableDesignationSyntax
@@ -14257,26 +10809,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new DiscardDesignationSyntax(this.Kind, this.underscoreToken, GetDiagnostics(), annotations);
-
-        internal DiscardDesignationSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 1;
-            var underscoreToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(underscoreToken);
-            this.underscoreToken = underscoreToken;
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.underscoreToken);
-        }
-
-        static DiscardDesignationSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(DiscardDesignationSyntax), r => new DiscardDesignationSyntax(r));
-        }
     }
 
     internal sealed partial class ParenthesizedVariableDesignationSyntax : VariableDesignationSyntax
@@ -14332,7 +10864,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
         }
 
         public SyntaxToken OpenParenToken => this.openParenToken;
-        public Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<VariableDesignationSyntax> Variables => new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<VariableDesignationSyntax>(new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<CSharpSyntaxNode>(this.variables));
+        public CoreSyntax.SeparatedSyntaxList<VariableDesignationSyntax> Variables => new CoreSyntax.SeparatedSyntaxList<VariableDesignationSyntax>(new CoreSyntax.SyntaxList<CSharpSyntaxNode>(this.variables));
         public SyntaxToken CloseParenToken => this.closeParenToken;
 
         internal override GreenNode? GetSlot(int index)
@@ -14349,7 +10881,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
         public override void Accept(CSharpSyntaxVisitor visitor) => visitor.VisitParenthesizedVariableDesignation(this);
         public override TResult Accept<TResult>(CSharpSyntaxVisitor<TResult> visitor) => visitor.VisitParenthesizedVariableDesignation(this);
 
-        public ParenthesizedVariableDesignationSyntax Update(SyntaxToken openParenToken, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<VariableDesignationSyntax> variables, SyntaxToken closeParenToken)
+        public ParenthesizedVariableDesignationSyntax Update(SyntaxToken openParenToken, CoreSyntax.SeparatedSyntaxList<VariableDesignationSyntax> variables, SyntaxToken closeParenToken)
         {
             if (openParenToken != this.OpenParenToken || variables != this.Variables || closeParenToken != this.CloseParenToken)
             {
@@ -14371,37 +10903,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new ParenthesizedVariableDesignationSyntax(this.Kind, this.openParenToken, this.variables, this.closeParenToken, GetDiagnostics(), annotations);
-
-        internal ParenthesizedVariableDesignationSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 3;
-            var openParenToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(openParenToken);
-            this.openParenToken = openParenToken;
-            var variables = (GreenNode?)reader.ReadValue();
-            if (variables != null)
-            {
-                AdjustFlagsAndWidth(variables);
-                this.variables = variables;
-            }
-            var closeParenToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(closeParenToken);
-            this.closeParenToken = closeParenToken;
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.openParenToken);
-            writer.WriteValue(this.variables);
-            writer.WriteValue(this.closeParenToken);
-        }
-
-        static ParenthesizedVariableDesignationSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(ParenthesizedVariableDesignationSyntax), r => new ParenthesizedVariableDesignationSyntax(r));
-        }
     }
 
     internal sealed partial class ExpressionStatementSyntax : StatementSyntax
@@ -14456,7 +10957,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             this.semicolonToken = semicolonToken;
         }
 
-        public override Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> AttributeLists => new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax>(this.attributeLists);
+        public override CoreSyntax.SyntaxList<AttributeListSyntax> AttributeLists => new CoreSyntax.SyntaxList<AttributeListSyntax>(this.attributeLists);
         public ExpressionSyntax Expression => this.expression;
         public SyntaxToken SemicolonToken => this.semicolonToken;
 
@@ -14474,7 +10975,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
         public override void Accept(CSharpSyntaxVisitor visitor) => visitor.VisitExpressionStatement(this);
         public override TResult Accept<TResult>(CSharpSyntaxVisitor<TResult> visitor) => visitor.VisitExpressionStatement(this);
 
-        public ExpressionStatementSyntax Update(Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> attributeLists, ExpressionSyntax expression, SyntaxToken semicolonToken)
+        public ExpressionStatementSyntax Update(CoreSyntax.SyntaxList<AttributeListSyntax> attributeLists, ExpressionSyntax expression, SyntaxToken semicolonToken)
         {
             if (attributeLists != this.AttributeLists || expression != this.Expression || semicolonToken != this.SemicolonToken)
             {
@@ -14496,37 +10997,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new ExpressionStatementSyntax(this.Kind, this.attributeLists, this.expression, this.semicolonToken, GetDiagnostics(), annotations);
-
-        internal ExpressionStatementSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 3;
-            var attributeLists = (GreenNode?)reader.ReadValue();
-            if (attributeLists != null)
-            {
-                AdjustFlagsAndWidth(attributeLists);
-                this.attributeLists = attributeLists;
-            }
-            var expression = (ExpressionSyntax)reader.ReadValue();
-            AdjustFlagsAndWidth(expression);
-            this.expression = expression;
-            var semicolonToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(semicolonToken);
-            this.semicolonToken = semicolonToken;
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.attributeLists);
-            writer.WriteValue(this.expression);
-            writer.WriteValue(this.semicolonToken);
-        }
-
-        static ExpressionStatementSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(ExpressionStatementSyntax), r => new ExpressionStatementSyntax(r));
-        }
     }
 
     internal sealed partial class EmptyStatementSyntax : StatementSyntax
@@ -14574,7 +11044,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             this.semicolonToken = semicolonToken;
         }
 
-        public override Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> AttributeLists => new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax>(this.attributeLists);
+        public override CoreSyntax.SyntaxList<AttributeListSyntax> AttributeLists => new CoreSyntax.SyntaxList<AttributeListSyntax>(this.attributeLists);
         public SyntaxToken SemicolonToken => this.semicolonToken;
 
         internal override GreenNode? GetSlot(int index)
@@ -14590,7 +11060,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
         public override void Accept(CSharpSyntaxVisitor visitor) => visitor.VisitEmptyStatement(this);
         public override TResult Accept<TResult>(CSharpSyntaxVisitor<TResult> visitor) => visitor.VisitEmptyStatement(this);
 
-        public EmptyStatementSyntax Update(Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> attributeLists, SyntaxToken semicolonToken)
+        public EmptyStatementSyntax Update(CoreSyntax.SyntaxList<AttributeListSyntax> attributeLists, SyntaxToken semicolonToken)
         {
             if (attributeLists != this.AttributeLists || semicolonToken != this.SemicolonToken)
             {
@@ -14612,33 +11082,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new EmptyStatementSyntax(this.Kind, this.attributeLists, this.semicolonToken, GetDiagnostics(), annotations);
-
-        internal EmptyStatementSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 2;
-            var attributeLists = (GreenNode?)reader.ReadValue();
-            if (attributeLists != null)
-            {
-                AdjustFlagsAndWidth(attributeLists);
-                this.attributeLists = attributeLists;
-            }
-            var semicolonToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(semicolonToken);
-            this.semicolonToken = semicolonToken;
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.attributeLists);
-            writer.WriteValue(this.semicolonToken);
-        }
-
-        static EmptyStatementSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(EmptyStatementSyntax), r => new EmptyStatementSyntax(r));
-        }
     }
 
     /// <summary>Represents a labeled statement syntax.</summary>
@@ -14701,7 +11144,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             this.statement = statement;
         }
 
-        public override Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> AttributeLists => new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax>(this.attributeLists);
+        public override CoreSyntax.SyntaxList<AttributeListSyntax> AttributeLists => new CoreSyntax.SyntaxList<AttributeListSyntax>(this.attributeLists);
         /// <summary>Gets the identifier.</summary>
         public SyntaxToken Identifier => this.identifier;
         /// <summary>Gets a SyntaxToken that represents the colon following the statement's label.</summary>
@@ -14723,7 +11166,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
         public override void Accept(CSharpSyntaxVisitor visitor) => visitor.VisitLabeledStatement(this);
         public override TResult Accept<TResult>(CSharpSyntaxVisitor<TResult> visitor) => visitor.VisitLabeledStatement(this);
 
-        public LabeledStatementSyntax Update(Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> attributeLists, SyntaxToken identifier, SyntaxToken colonToken, StatementSyntax statement)
+        public LabeledStatementSyntax Update(CoreSyntax.SyntaxList<AttributeListSyntax> attributeLists, SyntaxToken identifier, SyntaxToken colonToken, StatementSyntax statement)
         {
             if (attributeLists != this.AttributeLists || identifier != this.Identifier || colonToken != this.ColonToken || statement != this.Statement)
             {
@@ -14745,41 +11188,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new LabeledStatementSyntax(this.Kind, this.attributeLists, this.identifier, this.colonToken, this.statement, GetDiagnostics(), annotations);
-
-        internal LabeledStatementSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 4;
-            var attributeLists = (GreenNode?)reader.ReadValue();
-            if (attributeLists != null)
-            {
-                AdjustFlagsAndWidth(attributeLists);
-                this.attributeLists = attributeLists;
-            }
-            var identifier = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(identifier);
-            this.identifier = identifier;
-            var colonToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(colonToken);
-            this.colonToken = colonToken;
-            var statement = (StatementSyntax)reader.ReadValue();
-            AdjustFlagsAndWidth(statement);
-            this.statement = statement;
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.attributeLists);
-            writer.WriteValue(this.identifier);
-            writer.WriteValue(this.colonToken);
-            writer.WriteValue(this.statement);
-        }
-
-        static LabeledStatementSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(LabeledStatementSyntax), r => new LabeledStatementSyntax(r));
-        }
     }
 
     /// <summary>
@@ -14869,7 +11277,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             this.semicolonToken = semicolonToken;
         }
 
-        public override Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> AttributeLists => new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax>(this.attributeLists);
+        public override CoreSyntax.SyntaxList<AttributeListSyntax> AttributeLists => new CoreSyntax.SyntaxList<AttributeListSyntax>(this.attributeLists);
         /// <summary>
         /// Gets a SyntaxToken that represents the goto keyword.
         /// </summary>
@@ -14903,7 +11311,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
         public override void Accept(CSharpSyntaxVisitor visitor) => visitor.VisitGotoStatement(this);
         public override TResult Accept<TResult>(CSharpSyntaxVisitor<TResult> visitor) => visitor.VisitGotoStatement(this);
 
-        public GotoStatementSyntax Update(Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> attributeLists, SyntaxToken gotoKeyword, SyntaxToken caseOrDefaultKeyword, ExpressionSyntax expression, SyntaxToken semicolonToken)
+        public GotoStatementSyntax Update(CoreSyntax.SyntaxList<AttributeListSyntax> attributeLists, SyntaxToken gotoKeyword, SyntaxToken caseOrDefaultKeyword, ExpressionSyntax expression, SyntaxToken semicolonToken)
         {
             if (attributeLists != this.AttributeLists || gotoKeyword != this.GotoKeyword || caseOrDefaultKeyword != this.CaseOrDefaultKeyword || expression != this.Expression || semicolonToken != this.SemicolonToken)
             {
@@ -14925,51 +11333,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new GotoStatementSyntax(this.Kind, this.attributeLists, this.gotoKeyword, this.caseOrDefaultKeyword, this.expression, this.semicolonToken, GetDiagnostics(), annotations);
-
-        internal GotoStatementSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 5;
-            var attributeLists = (GreenNode?)reader.ReadValue();
-            if (attributeLists != null)
-            {
-                AdjustFlagsAndWidth(attributeLists);
-                this.attributeLists = attributeLists;
-            }
-            var gotoKeyword = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(gotoKeyword);
-            this.gotoKeyword = gotoKeyword;
-            var caseOrDefaultKeyword = (SyntaxToken?)reader.ReadValue();
-            if (caseOrDefaultKeyword != null)
-            {
-                AdjustFlagsAndWidth(caseOrDefaultKeyword);
-                this.caseOrDefaultKeyword = caseOrDefaultKeyword;
-            }
-            var expression = (ExpressionSyntax?)reader.ReadValue();
-            if (expression != null)
-            {
-                AdjustFlagsAndWidth(expression);
-                this.expression = expression;
-            }
-            var semicolonToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(semicolonToken);
-            this.semicolonToken = semicolonToken;
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.attributeLists);
-            writer.WriteValue(this.gotoKeyword);
-            writer.WriteValue(this.caseOrDefaultKeyword);
-            writer.WriteValue(this.expression);
-            writer.WriteValue(this.semicolonToken);
-        }
-
-        static GotoStatementSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(GotoStatementSyntax), r => new GotoStatementSyntax(r));
-        }
     }
 
     internal sealed partial class BreakStatementSyntax : StatementSyntax
@@ -15024,7 +11387,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             this.semicolonToken = semicolonToken;
         }
 
-        public override Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> AttributeLists => new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax>(this.attributeLists);
+        public override CoreSyntax.SyntaxList<AttributeListSyntax> AttributeLists => new CoreSyntax.SyntaxList<AttributeListSyntax>(this.attributeLists);
         public SyntaxToken BreakKeyword => this.breakKeyword;
         public SyntaxToken SemicolonToken => this.semicolonToken;
 
@@ -15042,7 +11405,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
         public override void Accept(CSharpSyntaxVisitor visitor) => visitor.VisitBreakStatement(this);
         public override TResult Accept<TResult>(CSharpSyntaxVisitor<TResult> visitor) => visitor.VisitBreakStatement(this);
 
-        public BreakStatementSyntax Update(Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> attributeLists, SyntaxToken breakKeyword, SyntaxToken semicolonToken)
+        public BreakStatementSyntax Update(CoreSyntax.SyntaxList<AttributeListSyntax> attributeLists, SyntaxToken breakKeyword, SyntaxToken semicolonToken)
         {
             if (attributeLists != this.AttributeLists || breakKeyword != this.BreakKeyword || semicolonToken != this.SemicolonToken)
             {
@@ -15064,37 +11427,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new BreakStatementSyntax(this.Kind, this.attributeLists, this.breakKeyword, this.semicolonToken, GetDiagnostics(), annotations);
-
-        internal BreakStatementSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 3;
-            var attributeLists = (GreenNode?)reader.ReadValue();
-            if (attributeLists != null)
-            {
-                AdjustFlagsAndWidth(attributeLists);
-                this.attributeLists = attributeLists;
-            }
-            var breakKeyword = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(breakKeyword);
-            this.breakKeyword = breakKeyword;
-            var semicolonToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(semicolonToken);
-            this.semicolonToken = semicolonToken;
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.attributeLists);
-            writer.WriteValue(this.breakKeyword);
-            writer.WriteValue(this.semicolonToken);
-        }
-
-        static BreakStatementSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(BreakStatementSyntax), r => new BreakStatementSyntax(r));
-        }
     }
 
     internal sealed partial class ContinueStatementSyntax : StatementSyntax
@@ -15149,7 +11481,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             this.semicolonToken = semicolonToken;
         }
 
-        public override Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> AttributeLists => new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax>(this.attributeLists);
+        public override CoreSyntax.SyntaxList<AttributeListSyntax> AttributeLists => new CoreSyntax.SyntaxList<AttributeListSyntax>(this.attributeLists);
         public SyntaxToken ContinueKeyword => this.continueKeyword;
         public SyntaxToken SemicolonToken => this.semicolonToken;
 
@@ -15167,7 +11499,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
         public override void Accept(CSharpSyntaxVisitor visitor) => visitor.VisitContinueStatement(this);
         public override TResult Accept<TResult>(CSharpSyntaxVisitor<TResult> visitor) => visitor.VisitContinueStatement(this);
 
-        public ContinueStatementSyntax Update(Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> attributeLists, SyntaxToken continueKeyword, SyntaxToken semicolonToken)
+        public ContinueStatementSyntax Update(CoreSyntax.SyntaxList<AttributeListSyntax> attributeLists, SyntaxToken continueKeyword, SyntaxToken semicolonToken)
         {
             if (attributeLists != this.AttributeLists || continueKeyword != this.ContinueKeyword || semicolonToken != this.SemicolonToken)
             {
@@ -15189,37 +11521,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new ContinueStatementSyntax(this.Kind, this.attributeLists, this.continueKeyword, this.semicolonToken, GetDiagnostics(), annotations);
-
-        internal ContinueStatementSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 3;
-            var attributeLists = (GreenNode?)reader.ReadValue();
-            if (attributeLists != null)
-            {
-                AdjustFlagsAndWidth(attributeLists);
-                this.attributeLists = attributeLists;
-            }
-            var continueKeyword = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(continueKeyword);
-            this.continueKeyword = continueKeyword;
-            var semicolonToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(semicolonToken);
-            this.semicolonToken = semicolonToken;
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.attributeLists);
-            writer.WriteValue(this.continueKeyword);
-            writer.WriteValue(this.semicolonToken);
-        }
-
-        static ContinueStatementSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(ContinueStatementSyntax), r => new ContinueStatementSyntax(r));
-        }
     }
 
     internal sealed partial class ReturnStatementSyntax : StatementSyntax
@@ -15290,7 +11591,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             this.semicolonToken = semicolonToken;
         }
 
-        public override Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> AttributeLists => new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax>(this.attributeLists);
+        public override CoreSyntax.SyntaxList<AttributeListSyntax> AttributeLists => new CoreSyntax.SyntaxList<AttributeListSyntax>(this.attributeLists);
         public SyntaxToken ReturnKeyword => this.returnKeyword;
         public ExpressionSyntax? Expression => this.expression;
         public SyntaxToken SemicolonToken => this.semicolonToken;
@@ -15310,7 +11611,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
         public override void Accept(CSharpSyntaxVisitor visitor) => visitor.VisitReturnStatement(this);
         public override TResult Accept<TResult>(CSharpSyntaxVisitor<TResult> visitor) => visitor.VisitReturnStatement(this);
 
-        public ReturnStatementSyntax Update(Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> attributeLists, SyntaxToken returnKeyword, ExpressionSyntax expression, SyntaxToken semicolonToken)
+        public ReturnStatementSyntax Update(CoreSyntax.SyntaxList<AttributeListSyntax> attributeLists, SyntaxToken returnKeyword, ExpressionSyntax expression, SyntaxToken semicolonToken)
         {
             if (attributeLists != this.AttributeLists || returnKeyword != this.ReturnKeyword || expression != this.Expression || semicolonToken != this.SemicolonToken)
             {
@@ -15332,44 +11633,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new ReturnStatementSyntax(this.Kind, this.attributeLists, this.returnKeyword, this.expression, this.semicolonToken, GetDiagnostics(), annotations);
-
-        internal ReturnStatementSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 4;
-            var attributeLists = (GreenNode?)reader.ReadValue();
-            if (attributeLists != null)
-            {
-                AdjustFlagsAndWidth(attributeLists);
-                this.attributeLists = attributeLists;
-            }
-            var returnKeyword = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(returnKeyword);
-            this.returnKeyword = returnKeyword;
-            var expression = (ExpressionSyntax?)reader.ReadValue();
-            if (expression != null)
-            {
-                AdjustFlagsAndWidth(expression);
-                this.expression = expression;
-            }
-            var semicolonToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(semicolonToken);
-            this.semicolonToken = semicolonToken;
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.attributeLists);
-            writer.WriteValue(this.returnKeyword);
-            writer.WriteValue(this.expression);
-            writer.WriteValue(this.semicolonToken);
-        }
-
-        static ReturnStatementSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(ReturnStatementSyntax), r => new ReturnStatementSyntax(r));
-        }
     }
 
     internal sealed partial class ThrowStatementSyntax : StatementSyntax
@@ -15440,7 +11703,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             this.semicolonToken = semicolonToken;
         }
 
-        public override Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> AttributeLists => new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax>(this.attributeLists);
+        public override CoreSyntax.SyntaxList<AttributeListSyntax> AttributeLists => new CoreSyntax.SyntaxList<AttributeListSyntax>(this.attributeLists);
         public SyntaxToken ThrowKeyword => this.throwKeyword;
         public ExpressionSyntax? Expression => this.expression;
         public SyntaxToken SemicolonToken => this.semicolonToken;
@@ -15460,7 +11723,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
         public override void Accept(CSharpSyntaxVisitor visitor) => visitor.VisitThrowStatement(this);
         public override TResult Accept<TResult>(CSharpSyntaxVisitor<TResult> visitor) => visitor.VisitThrowStatement(this);
 
-        public ThrowStatementSyntax Update(Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> attributeLists, SyntaxToken throwKeyword, ExpressionSyntax expression, SyntaxToken semicolonToken)
+        public ThrowStatementSyntax Update(CoreSyntax.SyntaxList<AttributeListSyntax> attributeLists, SyntaxToken throwKeyword, ExpressionSyntax expression, SyntaxToken semicolonToken)
         {
             if (attributeLists != this.AttributeLists || throwKeyword != this.ThrowKeyword || expression != this.Expression || semicolonToken != this.SemicolonToken)
             {
@@ -15482,44 +11745,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new ThrowStatementSyntax(this.Kind, this.attributeLists, this.throwKeyword, this.expression, this.semicolonToken, GetDiagnostics(), annotations);
-
-        internal ThrowStatementSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 4;
-            var attributeLists = (GreenNode?)reader.ReadValue();
-            if (attributeLists != null)
-            {
-                AdjustFlagsAndWidth(attributeLists);
-                this.attributeLists = attributeLists;
-            }
-            var throwKeyword = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(throwKeyword);
-            this.throwKeyword = throwKeyword;
-            var expression = (ExpressionSyntax?)reader.ReadValue();
-            if (expression != null)
-            {
-                AdjustFlagsAndWidth(expression);
-                this.expression = expression;
-            }
-            var semicolonToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(semicolonToken);
-            this.semicolonToken = semicolonToken;
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.attributeLists);
-            writer.WriteValue(this.throwKeyword);
-            writer.WriteValue(this.expression);
-            writer.WriteValue(this.semicolonToken);
-        }
-
-        static ThrowStatementSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(ThrowStatementSyntax), r => new ThrowStatementSyntax(r));
-        }
     }
 
     internal sealed partial class YieldStatementSyntax : StatementSyntax
@@ -15597,7 +11822,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             this.semicolonToken = semicolonToken;
         }
 
-        public override Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> AttributeLists => new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax>(this.attributeLists);
+        public override CoreSyntax.SyntaxList<AttributeListSyntax> AttributeLists => new CoreSyntax.SyntaxList<AttributeListSyntax>(this.attributeLists);
         public SyntaxToken YieldKeyword => this.yieldKeyword;
         public SyntaxToken ReturnOrBreakKeyword => this.returnOrBreakKeyword;
         public ExpressionSyntax? Expression => this.expression;
@@ -15619,7 +11844,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
         public override void Accept(CSharpSyntaxVisitor visitor) => visitor.VisitYieldStatement(this);
         public override TResult Accept<TResult>(CSharpSyntaxVisitor<TResult> visitor) => visitor.VisitYieldStatement(this);
 
-        public YieldStatementSyntax Update(Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> attributeLists, SyntaxToken yieldKeyword, SyntaxToken returnOrBreakKeyword, ExpressionSyntax expression, SyntaxToken semicolonToken)
+        public YieldStatementSyntax Update(CoreSyntax.SyntaxList<AttributeListSyntax> attributeLists, SyntaxToken yieldKeyword, SyntaxToken returnOrBreakKeyword, ExpressionSyntax expression, SyntaxToken semicolonToken)
         {
             if (attributeLists != this.AttributeLists || yieldKeyword != this.YieldKeyword || returnOrBreakKeyword != this.ReturnOrBreakKeyword || expression != this.Expression || semicolonToken != this.SemicolonToken)
             {
@@ -15641,48 +11866,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new YieldStatementSyntax(this.Kind, this.attributeLists, this.yieldKeyword, this.returnOrBreakKeyword, this.expression, this.semicolonToken, GetDiagnostics(), annotations);
-
-        internal YieldStatementSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 5;
-            var attributeLists = (GreenNode?)reader.ReadValue();
-            if (attributeLists != null)
-            {
-                AdjustFlagsAndWidth(attributeLists);
-                this.attributeLists = attributeLists;
-            }
-            var yieldKeyword = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(yieldKeyword);
-            this.yieldKeyword = yieldKeyword;
-            var returnOrBreakKeyword = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(returnOrBreakKeyword);
-            this.returnOrBreakKeyword = returnOrBreakKeyword;
-            var expression = (ExpressionSyntax?)reader.ReadValue();
-            if (expression != null)
-            {
-                AdjustFlagsAndWidth(expression);
-                this.expression = expression;
-            }
-            var semicolonToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(semicolonToken);
-            this.semicolonToken = semicolonToken;
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.attributeLists);
-            writer.WriteValue(this.yieldKeyword);
-            writer.WriteValue(this.returnOrBreakKeyword);
-            writer.WriteValue(this.expression);
-            writer.WriteValue(this.semicolonToken);
-        }
-
-        static YieldStatementSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(YieldStatementSyntax), r => new YieldStatementSyntax(r));
-        }
     }
 
     internal sealed partial class WhileStatementSyntax : StatementSyntax
@@ -15758,7 +11941,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             this.statement = statement;
         }
 
-        public override Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> AttributeLists => new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax>(this.attributeLists);
+        public override CoreSyntax.SyntaxList<AttributeListSyntax> AttributeLists => new CoreSyntax.SyntaxList<AttributeListSyntax>(this.attributeLists);
         public SyntaxToken WhileKeyword => this.whileKeyword;
         public SyntaxToken OpenParenToken => this.openParenToken;
         public ExpressionSyntax Condition => this.condition;
@@ -15782,7 +11965,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
         public override void Accept(CSharpSyntaxVisitor visitor) => visitor.VisitWhileStatement(this);
         public override TResult Accept<TResult>(CSharpSyntaxVisitor<TResult> visitor) => visitor.VisitWhileStatement(this);
 
-        public WhileStatementSyntax Update(Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> attributeLists, SyntaxToken whileKeyword, SyntaxToken openParenToken, ExpressionSyntax condition, SyntaxToken closeParenToken, StatementSyntax statement)
+        public WhileStatementSyntax Update(CoreSyntax.SyntaxList<AttributeListSyntax> attributeLists, SyntaxToken whileKeyword, SyntaxToken openParenToken, ExpressionSyntax condition, SyntaxToken closeParenToken, StatementSyntax statement)
         {
             if (attributeLists != this.AttributeLists || whileKeyword != this.WhileKeyword || openParenToken != this.OpenParenToken || condition != this.Condition || closeParenToken != this.CloseParenToken || statement != this.Statement)
             {
@@ -15804,49 +11987,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new WhileStatementSyntax(this.Kind, this.attributeLists, this.whileKeyword, this.openParenToken, this.condition, this.closeParenToken, this.statement, GetDiagnostics(), annotations);
-
-        internal WhileStatementSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 6;
-            var attributeLists = (GreenNode?)reader.ReadValue();
-            if (attributeLists != null)
-            {
-                AdjustFlagsAndWidth(attributeLists);
-                this.attributeLists = attributeLists;
-            }
-            var whileKeyword = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(whileKeyword);
-            this.whileKeyword = whileKeyword;
-            var openParenToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(openParenToken);
-            this.openParenToken = openParenToken;
-            var condition = (ExpressionSyntax)reader.ReadValue();
-            AdjustFlagsAndWidth(condition);
-            this.condition = condition;
-            var closeParenToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(closeParenToken);
-            this.closeParenToken = closeParenToken;
-            var statement = (StatementSyntax)reader.ReadValue();
-            AdjustFlagsAndWidth(statement);
-            this.statement = statement;
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.attributeLists);
-            writer.WriteValue(this.whileKeyword);
-            writer.WriteValue(this.openParenToken);
-            writer.WriteValue(this.condition);
-            writer.WriteValue(this.closeParenToken);
-            writer.WriteValue(this.statement);
-        }
-
-        static WhileStatementSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(WhileStatementSyntax), r => new WhileStatementSyntax(r));
-        }
     }
 
     internal sealed partial class DoStatementSyntax : StatementSyntax
@@ -15936,7 +12076,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             this.semicolonToken = semicolonToken;
         }
 
-        public override Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> AttributeLists => new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax>(this.attributeLists);
+        public override CoreSyntax.SyntaxList<AttributeListSyntax> AttributeLists => new CoreSyntax.SyntaxList<AttributeListSyntax>(this.attributeLists);
         public SyntaxToken DoKeyword => this.doKeyword;
         public StatementSyntax Statement => this.statement;
         public SyntaxToken WhileKeyword => this.whileKeyword;
@@ -15964,7 +12104,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
         public override void Accept(CSharpSyntaxVisitor visitor) => visitor.VisitDoStatement(this);
         public override TResult Accept<TResult>(CSharpSyntaxVisitor<TResult> visitor) => visitor.VisitDoStatement(this);
 
-        public DoStatementSyntax Update(Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> attributeLists, SyntaxToken doKeyword, StatementSyntax statement, SyntaxToken whileKeyword, SyntaxToken openParenToken, ExpressionSyntax condition, SyntaxToken closeParenToken, SyntaxToken semicolonToken)
+        public DoStatementSyntax Update(CoreSyntax.SyntaxList<AttributeListSyntax> attributeLists, SyntaxToken doKeyword, StatementSyntax statement, SyntaxToken whileKeyword, SyntaxToken openParenToken, ExpressionSyntax condition, SyntaxToken closeParenToken, SyntaxToken semicolonToken)
         {
             if (attributeLists != this.AttributeLists || doKeyword != this.DoKeyword || statement != this.Statement || whileKeyword != this.WhileKeyword || openParenToken != this.OpenParenToken || condition != this.Condition || closeParenToken != this.CloseParenToken || semicolonToken != this.SemicolonToken)
             {
@@ -15986,57 +12126,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new DoStatementSyntax(this.Kind, this.attributeLists, this.doKeyword, this.statement, this.whileKeyword, this.openParenToken, this.condition, this.closeParenToken, this.semicolonToken, GetDiagnostics(), annotations);
-
-        internal DoStatementSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 8;
-            var attributeLists = (GreenNode?)reader.ReadValue();
-            if (attributeLists != null)
-            {
-                AdjustFlagsAndWidth(attributeLists);
-                this.attributeLists = attributeLists;
-            }
-            var doKeyword = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(doKeyword);
-            this.doKeyword = doKeyword;
-            var statement = (StatementSyntax)reader.ReadValue();
-            AdjustFlagsAndWidth(statement);
-            this.statement = statement;
-            var whileKeyword = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(whileKeyword);
-            this.whileKeyword = whileKeyword;
-            var openParenToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(openParenToken);
-            this.openParenToken = openParenToken;
-            var condition = (ExpressionSyntax)reader.ReadValue();
-            AdjustFlagsAndWidth(condition);
-            this.condition = condition;
-            var closeParenToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(closeParenToken);
-            this.closeParenToken = closeParenToken;
-            var semicolonToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(semicolonToken);
-            this.semicolonToken = semicolonToken;
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.attributeLists);
-            writer.WriteValue(this.doKeyword);
-            writer.WriteValue(this.statement);
-            writer.WriteValue(this.whileKeyword);
-            writer.WriteValue(this.openParenToken);
-            writer.WriteValue(this.condition);
-            writer.WriteValue(this.closeParenToken);
-            writer.WriteValue(this.semicolonToken);
-        }
-
-        static DoStatementSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(DoStatementSyntax), r => new DoStatementSyntax(r));
-        }
     }
 
     internal sealed partial class ForStatementSyntax : StatementSyntax
@@ -16183,15 +12272,15 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             this.statement = statement;
         }
 
-        public override Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> AttributeLists => new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax>(this.attributeLists);
+        public override CoreSyntax.SyntaxList<AttributeListSyntax> AttributeLists => new CoreSyntax.SyntaxList<AttributeListSyntax>(this.attributeLists);
         public SyntaxToken ForKeyword => this.forKeyword;
         public SyntaxToken OpenParenToken => this.openParenToken;
         public VariableDeclarationSyntax? Declaration => this.declaration;
-        public Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<ExpressionSyntax> Initializers => new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<ExpressionSyntax>(new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<CSharpSyntaxNode>(this.initializers));
+        public CoreSyntax.SeparatedSyntaxList<ExpressionSyntax> Initializers => new CoreSyntax.SeparatedSyntaxList<ExpressionSyntax>(new CoreSyntax.SyntaxList<CSharpSyntaxNode>(this.initializers));
         public SyntaxToken FirstSemicolonToken => this.firstSemicolonToken;
         public ExpressionSyntax? Condition => this.condition;
         public SyntaxToken SecondSemicolonToken => this.secondSemicolonToken;
-        public Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<ExpressionSyntax> Incrementors => new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<ExpressionSyntax>(new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<CSharpSyntaxNode>(this.incrementors));
+        public CoreSyntax.SeparatedSyntaxList<ExpressionSyntax> Incrementors => new CoreSyntax.SeparatedSyntaxList<ExpressionSyntax>(new CoreSyntax.SyntaxList<CSharpSyntaxNode>(this.incrementors));
         public SyntaxToken CloseParenToken => this.closeParenToken;
         public StatementSyntax Statement => this.statement;
 
@@ -16217,7 +12306,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
         public override void Accept(CSharpSyntaxVisitor visitor) => visitor.VisitForStatement(this);
         public override TResult Accept<TResult>(CSharpSyntaxVisitor<TResult> visitor) => visitor.VisitForStatement(this);
 
-        public ForStatementSyntax Update(Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> attributeLists, SyntaxToken forKeyword, SyntaxToken openParenToken, VariableDeclarationSyntax declaration, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<ExpressionSyntax> initializers, SyntaxToken firstSemicolonToken, ExpressionSyntax condition, SyntaxToken secondSemicolonToken, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<ExpressionSyntax> incrementors, SyntaxToken closeParenToken, StatementSyntax statement)
+        public ForStatementSyntax Update(CoreSyntax.SyntaxList<AttributeListSyntax> attributeLists, SyntaxToken forKeyword, SyntaxToken openParenToken, VariableDeclarationSyntax declaration, CoreSyntax.SeparatedSyntaxList<ExpressionSyntax> initializers, SyntaxToken firstSemicolonToken, ExpressionSyntax condition, SyntaxToken secondSemicolonToken, CoreSyntax.SeparatedSyntaxList<ExpressionSyntax> incrementors, SyntaxToken closeParenToken, StatementSyntax statement)
         {
             if (attributeLists != this.AttributeLists || forKeyword != this.ForKeyword || openParenToken != this.OpenParenToken || declaration != this.Declaration || initializers != this.Initializers || firstSemicolonToken != this.FirstSemicolonToken || condition != this.Condition || secondSemicolonToken != this.SecondSemicolonToken || incrementors != this.Incrementors || closeParenToken != this.CloseParenToken || statement != this.Statement)
             {
@@ -16239,81 +12328,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new ForStatementSyntax(this.Kind, this.attributeLists, this.forKeyword, this.openParenToken, this.declaration, this.initializers, this.firstSemicolonToken, this.condition, this.secondSemicolonToken, this.incrementors, this.closeParenToken, this.statement, GetDiagnostics(), annotations);
-
-        internal ForStatementSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 11;
-            var attributeLists = (GreenNode?)reader.ReadValue();
-            if (attributeLists != null)
-            {
-                AdjustFlagsAndWidth(attributeLists);
-                this.attributeLists = attributeLists;
-            }
-            var forKeyword = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(forKeyword);
-            this.forKeyword = forKeyword;
-            var openParenToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(openParenToken);
-            this.openParenToken = openParenToken;
-            var declaration = (VariableDeclarationSyntax?)reader.ReadValue();
-            if (declaration != null)
-            {
-                AdjustFlagsAndWidth(declaration);
-                this.declaration = declaration;
-            }
-            var initializers = (GreenNode?)reader.ReadValue();
-            if (initializers != null)
-            {
-                AdjustFlagsAndWidth(initializers);
-                this.initializers = initializers;
-            }
-            var firstSemicolonToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(firstSemicolonToken);
-            this.firstSemicolonToken = firstSemicolonToken;
-            var condition = (ExpressionSyntax?)reader.ReadValue();
-            if (condition != null)
-            {
-                AdjustFlagsAndWidth(condition);
-                this.condition = condition;
-            }
-            var secondSemicolonToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(secondSemicolonToken);
-            this.secondSemicolonToken = secondSemicolonToken;
-            var incrementors = (GreenNode?)reader.ReadValue();
-            if (incrementors != null)
-            {
-                AdjustFlagsAndWidth(incrementors);
-                this.incrementors = incrementors;
-            }
-            var closeParenToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(closeParenToken);
-            this.closeParenToken = closeParenToken;
-            var statement = (StatementSyntax)reader.ReadValue();
-            AdjustFlagsAndWidth(statement);
-            this.statement = statement;
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.attributeLists);
-            writer.WriteValue(this.forKeyword);
-            writer.WriteValue(this.openParenToken);
-            writer.WriteValue(this.declaration);
-            writer.WriteValue(this.initializers);
-            writer.WriteValue(this.firstSemicolonToken);
-            writer.WriteValue(this.condition);
-            writer.WriteValue(this.secondSemicolonToken);
-            writer.WriteValue(this.incrementors);
-            writer.WriteValue(this.closeParenToken);
-            writer.WriteValue(this.statement);
-        }
-
-        static ForStatementSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(ForStatementSyntax), r => new ForStatementSyntax(r));
-        }
     }
 
     internal abstract partial class CommonForEachStatementSyntax : StatementSyntax
@@ -16325,11 +12339,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal CommonForEachStatementSyntax(SyntaxKind kind)
           : base(kind)
-        {
-        }
-
-        protected CommonForEachStatementSyntax(ObjectReader reader)
-          : base(reader)
         {
         }
 
@@ -16458,7 +12467,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             this.statement = statement;
         }
 
-        public override Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> AttributeLists => new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax>(this.attributeLists);
+        public override CoreSyntax.SyntaxList<AttributeListSyntax> AttributeLists => new CoreSyntax.SyntaxList<AttributeListSyntax>(this.attributeLists);
         public override SyntaxToken? AwaitKeyword => this.awaitKeyword;
         public override SyntaxToken ForEachKeyword => this.forEachKeyword;
         public override SyntaxToken OpenParenToken => this.openParenToken;
@@ -16491,7 +12500,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
         public override void Accept(CSharpSyntaxVisitor visitor) => visitor.VisitForEachStatement(this);
         public override TResult Accept<TResult>(CSharpSyntaxVisitor<TResult> visitor) => visitor.VisitForEachStatement(this);
 
-        public ForEachStatementSyntax Update(Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> attributeLists, SyntaxToken awaitKeyword, SyntaxToken forEachKeyword, SyntaxToken openParenToken, TypeSyntax type, SyntaxToken identifier, SyntaxToken inKeyword, ExpressionSyntax expression, SyntaxToken closeParenToken, StatementSyntax statement)
+        public ForEachStatementSyntax Update(CoreSyntax.SyntaxList<AttributeListSyntax> attributeLists, SyntaxToken awaitKeyword, SyntaxToken forEachKeyword, SyntaxToken openParenToken, TypeSyntax type, SyntaxToken identifier, SyntaxToken inKeyword, ExpressionSyntax expression, SyntaxToken closeParenToken, StatementSyntax statement)
         {
             if (attributeLists != this.AttributeLists || awaitKeyword != this.AwaitKeyword || forEachKeyword != this.ForEachKeyword || openParenToken != this.OpenParenToken || type != this.Type || identifier != this.Identifier || inKeyword != this.InKeyword || expression != this.Expression || closeParenToken != this.CloseParenToken || statement != this.Statement)
             {
@@ -16513,68 +12522,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new ForEachStatementSyntax(this.Kind, this.attributeLists, this.awaitKeyword, this.forEachKeyword, this.openParenToken, this.type, this.identifier, this.inKeyword, this.expression, this.closeParenToken, this.statement, GetDiagnostics(), annotations);
-
-        internal ForEachStatementSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 10;
-            var attributeLists = (GreenNode?)reader.ReadValue();
-            if (attributeLists != null)
-            {
-                AdjustFlagsAndWidth(attributeLists);
-                this.attributeLists = attributeLists;
-            }
-            var awaitKeyword = (SyntaxToken?)reader.ReadValue();
-            if (awaitKeyword != null)
-            {
-                AdjustFlagsAndWidth(awaitKeyword);
-                this.awaitKeyword = awaitKeyword;
-            }
-            var forEachKeyword = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(forEachKeyword);
-            this.forEachKeyword = forEachKeyword;
-            var openParenToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(openParenToken);
-            this.openParenToken = openParenToken;
-            var type = (TypeSyntax)reader.ReadValue();
-            AdjustFlagsAndWidth(type);
-            this.type = type;
-            var identifier = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(identifier);
-            this.identifier = identifier;
-            var inKeyword = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(inKeyword);
-            this.inKeyword = inKeyword;
-            var expression = (ExpressionSyntax)reader.ReadValue();
-            AdjustFlagsAndWidth(expression);
-            this.expression = expression;
-            var closeParenToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(closeParenToken);
-            this.closeParenToken = closeParenToken;
-            var statement = (StatementSyntax)reader.ReadValue();
-            AdjustFlagsAndWidth(statement);
-            this.statement = statement;
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.attributeLists);
-            writer.WriteValue(this.awaitKeyword);
-            writer.WriteValue(this.forEachKeyword);
-            writer.WriteValue(this.openParenToken);
-            writer.WriteValue(this.type);
-            writer.WriteValue(this.identifier);
-            writer.WriteValue(this.inKeyword);
-            writer.WriteValue(this.expression);
-            writer.WriteValue(this.closeParenToken);
-            writer.WriteValue(this.statement);
-        }
-
-        static ForEachStatementSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(ForEachStatementSyntax), r => new ForEachStatementSyntax(r));
-        }
     }
 
     internal sealed partial class ForEachVariableStatementSyntax : CommonForEachStatementSyntax
@@ -16680,7 +12627,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             this.statement = statement;
         }
 
-        public override Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> AttributeLists => new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax>(this.attributeLists);
+        public override CoreSyntax.SyntaxList<AttributeListSyntax> AttributeLists => new CoreSyntax.SyntaxList<AttributeListSyntax>(this.attributeLists);
         public override SyntaxToken? AwaitKeyword => this.awaitKeyword;
         public override SyntaxToken ForEachKeyword => this.forEachKeyword;
         public override SyntaxToken OpenParenToken => this.openParenToken;
@@ -16716,7 +12663,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
         public override void Accept(CSharpSyntaxVisitor visitor) => visitor.VisitForEachVariableStatement(this);
         public override TResult Accept<TResult>(CSharpSyntaxVisitor<TResult> visitor) => visitor.VisitForEachVariableStatement(this);
 
-        public ForEachVariableStatementSyntax Update(Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> attributeLists, SyntaxToken awaitKeyword, SyntaxToken forEachKeyword, SyntaxToken openParenToken, ExpressionSyntax variable, SyntaxToken inKeyword, ExpressionSyntax expression, SyntaxToken closeParenToken, StatementSyntax statement)
+        public ForEachVariableStatementSyntax Update(CoreSyntax.SyntaxList<AttributeListSyntax> attributeLists, SyntaxToken awaitKeyword, SyntaxToken forEachKeyword, SyntaxToken openParenToken, ExpressionSyntax variable, SyntaxToken inKeyword, ExpressionSyntax expression, SyntaxToken closeParenToken, StatementSyntax statement)
         {
             if (attributeLists != this.AttributeLists || awaitKeyword != this.AwaitKeyword || forEachKeyword != this.ForEachKeyword || openParenToken != this.OpenParenToken || variable != this.Variable || inKeyword != this.InKeyword || expression != this.Expression || closeParenToken != this.CloseParenToken || statement != this.Statement)
             {
@@ -16738,64 +12685,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new ForEachVariableStatementSyntax(this.Kind, this.attributeLists, this.awaitKeyword, this.forEachKeyword, this.openParenToken, this.variable, this.inKeyword, this.expression, this.closeParenToken, this.statement, GetDiagnostics(), annotations);
-
-        internal ForEachVariableStatementSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 9;
-            var attributeLists = (GreenNode?)reader.ReadValue();
-            if (attributeLists != null)
-            {
-                AdjustFlagsAndWidth(attributeLists);
-                this.attributeLists = attributeLists;
-            }
-            var awaitKeyword = (SyntaxToken?)reader.ReadValue();
-            if (awaitKeyword != null)
-            {
-                AdjustFlagsAndWidth(awaitKeyword);
-                this.awaitKeyword = awaitKeyword;
-            }
-            var forEachKeyword = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(forEachKeyword);
-            this.forEachKeyword = forEachKeyword;
-            var openParenToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(openParenToken);
-            this.openParenToken = openParenToken;
-            var variable = (ExpressionSyntax)reader.ReadValue();
-            AdjustFlagsAndWidth(variable);
-            this.variable = variable;
-            var inKeyword = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(inKeyword);
-            this.inKeyword = inKeyword;
-            var expression = (ExpressionSyntax)reader.ReadValue();
-            AdjustFlagsAndWidth(expression);
-            this.expression = expression;
-            var closeParenToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(closeParenToken);
-            this.closeParenToken = closeParenToken;
-            var statement = (StatementSyntax)reader.ReadValue();
-            AdjustFlagsAndWidth(statement);
-            this.statement = statement;
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.attributeLists);
-            writer.WriteValue(this.awaitKeyword);
-            writer.WriteValue(this.forEachKeyword);
-            writer.WriteValue(this.openParenToken);
-            writer.WriteValue(this.variable);
-            writer.WriteValue(this.inKeyword);
-            writer.WriteValue(this.expression);
-            writer.WriteValue(this.closeParenToken);
-            writer.WriteValue(this.statement);
-        }
-
-        static ForEachVariableStatementSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(ForEachVariableStatementSyntax), r => new ForEachVariableStatementSyntax(r));
-        }
     }
 
     internal sealed partial class UsingStatementSyntax : StatementSyntax
@@ -16912,7 +12801,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             this.statement = statement;
         }
 
-        public override Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> AttributeLists => new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax>(this.attributeLists);
+        public override CoreSyntax.SyntaxList<AttributeListSyntax> AttributeLists => new CoreSyntax.SyntaxList<AttributeListSyntax>(this.attributeLists);
         public SyntaxToken? AwaitKeyword => this.awaitKeyword;
         public SyntaxToken UsingKeyword => this.usingKeyword;
         public SyntaxToken OpenParenToken => this.openParenToken;
@@ -16940,7 +12829,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
         public override void Accept(CSharpSyntaxVisitor visitor) => visitor.VisitUsingStatement(this);
         public override TResult Accept<TResult>(CSharpSyntaxVisitor<TResult> visitor) => visitor.VisitUsingStatement(this);
 
-        public UsingStatementSyntax Update(Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> attributeLists, SyntaxToken awaitKeyword, SyntaxToken usingKeyword, SyntaxToken openParenToken, VariableDeclarationSyntax declaration, ExpressionSyntax expression, SyntaxToken closeParenToken, StatementSyntax statement)
+        public UsingStatementSyntax Update(CoreSyntax.SyntaxList<AttributeListSyntax> attributeLists, SyntaxToken awaitKeyword, SyntaxToken usingKeyword, SyntaxToken openParenToken, VariableDeclarationSyntax declaration, ExpressionSyntax expression, SyntaxToken closeParenToken, StatementSyntax statement)
         {
             if (attributeLists != this.AttributeLists || awaitKeyword != this.AwaitKeyword || usingKeyword != this.UsingKeyword || openParenToken != this.OpenParenToken || declaration != this.Declaration || expression != this.Expression || closeParenToken != this.CloseParenToken || statement != this.Statement)
             {
@@ -16962,66 +12851,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new UsingStatementSyntax(this.Kind, this.attributeLists, this.awaitKeyword, this.usingKeyword, this.openParenToken, this.declaration, this.expression, this.closeParenToken, this.statement, GetDiagnostics(), annotations);
-
-        internal UsingStatementSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 8;
-            var attributeLists = (GreenNode?)reader.ReadValue();
-            if (attributeLists != null)
-            {
-                AdjustFlagsAndWidth(attributeLists);
-                this.attributeLists = attributeLists;
-            }
-            var awaitKeyword = (SyntaxToken?)reader.ReadValue();
-            if (awaitKeyword != null)
-            {
-                AdjustFlagsAndWidth(awaitKeyword);
-                this.awaitKeyword = awaitKeyword;
-            }
-            var usingKeyword = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(usingKeyword);
-            this.usingKeyword = usingKeyword;
-            var openParenToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(openParenToken);
-            this.openParenToken = openParenToken;
-            var declaration = (VariableDeclarationSyntax?)reader.ReadValue();
-            if (declaration != null)
-            {
-                AdjustFlagsAndWidth(declaration);
-                this.declaration = declaration;
-            }
-            var expression = (ExpressionSyntax?)reader.ReadValue();
-            if (expression != null)
-            {
-                AdjustFlagsAndWidth(expression);
-                this.expression = expression;
-            }
-            var closeParenToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(closeParenToken);
-            this.closeParenToken = closeParenToken;
-            var statement = (StatementSyntax)reader.ReadValue();
-            AdjustFlagsAndWidth(statement);
-            this.statement = statement;
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.attributeLists);
-            writer.WriteValue(this.awaitKeyword);
-            writer.WriteValue(this.usingKeyword);
-            writer.WriteValue(this.openParenToken);
-            writer.WriteValue(this.declaration);
-            writer.WriteValue(this.expression);
-            writer.WriteValue(this.closeParenToken);
-            writer.WriteValue(this.statement);
-        }
-
-        static UsingStatementSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(UsingStatementSyntax), r => new UsingStatementSyntax(r));
-        }
     }
 
     internal sealed partial class FixedStatementSyntax : StatementSyntax
@@ -17097,7 +12926,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             this.statement = statement;
         }
 
-        public override Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> AttributeLists => new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax>(this.attributeLists);
+        public override CoreSyntax.SyntaxList<AttributeListSyntax> AttributeLists => new CoreSyntax.SyntaxList<AttributeListSyntax>(this.attributeLists);
         public SyntaxToken FixedKeyword => this.fixedKeyword;
         public SyntaxToken OpenParenToken => this.openParenToken;
         public VariableDeclarationSyntax Declaration => this.declaration;
@@ -17121,7 +12950,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
         public override void Accept(CSharpSyntaxVisitor visitor) => visitor.VisitFixedStatement(this);
         public override TResult Accept<TResult>(CSharpSyntaxVisitor<TResult> visitor) => visitor.VisitFixedStatement(this);
 
-        public FixedStatementSyntax Update(Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> attributeLists, SyntaxToken fixedKeyword, SyntaxToken openParenToken, VariableDeclarationSyntax declaration, SyntaxToken closeParenToken, StatementSyntax statement)
+        public FixedStatementSyntax Update(CoreSyntax.SyntaxList<AttributeListSyntax> attributeLists, SyntaxToken fixedKeyword, SyntaxToken openParenToken, VariableDeclarationSyntax declaration, SyntaxToken closeParenToken, StatementSyntax statement)
         {
             if (attributeLists != this.AttributeLists || fixedKeyword != this.FixedKeyword || openParenToken != this.OpenParenToken || declaration != this.Declaration || closeParenToken != this.CloseParenToken || statement != this.Statement)
             {
@@ -17143,49 +12972,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new FixedStatementSyntax(this.Kind, this.attributeLists, this.fixedKeyword, this.openParenToken, this.declaration, this.closeParenToken, this.statement, GetDiagnostics(), annotations);
-
-        internal FixedStatementSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 6;
-            var attributeLists = (GreenNode?)reader.ReadValue();
-            if (attributeLists != null)
-            {
-                AdjustFlagsAndWidth(attributeLists);
-                this.attributeLists = attributeLists;
-            }
-            var fixedKeyword = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(fixedKeyword);
-            this.fixedKeyword = fixedKeyword;
-            var openParenToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(openParenToken);
-            this.openParenToken = openParenToken;
-            var declaration = (VariableDeclarationSyntax)reader.ReadValue();
-            AdjustFlagsAndWidth(declaration);
-            this.declaration = declaration;
-            var closeParenToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(closeParenToken);
-            this.closeParenToken = closeParenToken;
-            var statement = (StatementSyntax)reader.ReadValue();
-            AdjustFlagsAndWidth(statement);
-            this.statement = statement;
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.attributeLists);
-            writer.WriteValue(this.fixedKeyword);
-            writer.WriteValue(this.openParenToken);
-            writer.WriteValue(this.declaration);
-            writer.WriteValue(this.closeParenToken);
-            writer.WriteValue(this.statement);
-        }
-
-        static FixedStatementSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(FixedStatementSyntax), r => new FixedStatementSyntax(r));
-        }
     }
 
     internal sealed partial class CheckedStatementSyntax : StatementSyntax
@@ -17240,7 +13026,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             this.block = block;
         }
 
-        public override Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> AttributeLists => new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax>(this.attributeLists);
+        public override CoreSyntax.SyntaxList<AttributeListSyntax> AttributeLists => new CoreSyntax.SyntaxList<AttributeListSyntax>(this.attributeLists);
         public SyntaxToken Keyword => this.keyword;
         public BlockSyntax Block => this.block;
 
@@ -17258,7 +13044,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
         public override void Accept(CSharpSyntaxVisitor visitor) => visitor.VisitCheckedStatement(this);
         public override TResult Accept<TResult>(CSharpSyntaxVisitor<TResult> visitor) => visitor.VisitCheckedStatement(this);
 
-        public CheckedStatementSyntax Update(Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> attributeLists, SyntaxToken keyword, BlockSyntax block)
+        public CheckedStatementSyntax Update(CoreSyntax.SyntaxList<AttributeListSyntax> attributeLists, SyntaxToken keyword, BlockSyntax block)
         {
             if (attributeLists != this.AttributeLists || keyword != this.Keyword || block != this.Block)
             {
@@ -17280,37 +13066,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new CheckedStatementSyntax(this.Kind, this.attributeLists, this.keyword, this.block, GetDiagnostics(), annotations);
-
-        internal CheckedStatementSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 3;
-            var attributeLists = (GreenNode?)reader.ReadValue();
-            if (attributeLists != null)
-            {
-                AdjustFlagsAndWidth(attributeLists);
-                this.attributeLists = attributeLists;
-            }
-            var keyword = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(keyword);
-            this.keyword = keyword;
-            var block = (BlockSyntax)reader.ReadValue();
-            AdjustFlagsAndWidth(block);
-            this.block = block;
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.attributeLists);
-            writer.WriteValue(this.keyword);
-            writer.WriteValue(this.block);
-        }
-
-        static CheckedStatementSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(CheckedStatementSyntax), r => new CheckedStatementSyntax(r));
-        }
     }
 
     internal sealed partial class UnsafeStatementSyntax : StatementSyntax
@@ -17365,7 +13120,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             this.block = block;
         }
 
-        public override Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> AttributeLists => new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax>(this.attributeLists);
+        public override CoreSyntax.SyntaxList<AttributeListSyntax> AttributeLists => new CoreSyntax.SyntaxList<AttributeListSyntax>(this.attributeLists);
         public SyntaxToken UnsafeKeyword => this.unsafeKeyword;
         public BlockSyntax Block => this.block;
 
@@ -17383,7 +13138,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
         public override void Accept(CSharpSyntaxVisitor visitor) => visitor.VisitUnsafeStatement(this);
         public override TResult Accept<TResult>(CSharpSyntaxVisitor<TResult> visitor) => visitor.VisitUnsafeStatement(this);
 
-        public UnsafeStatementSyntax Update(Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> attributeLists, SyntaxToken unsafeKeyword, BlockSyntax block)
+        public UnsafeStatementSyntax Update(CoreSyntax.SyntaxList<AttributeListSyntax> attributeLists, SyntaxToken unsafeKeyword, BlockSyntax block)
         {
             if (attributeLists != this.AttributeLists || unsafeKeyword != this.UnsafeKeyword || block != this.Block)
             {
@@ -17405,37 +13160,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new UnsafeStatementSyntax(this.Kind, this.attributeLists, this.unsafeKeyword, this.block, GetDiagnostics(), annotations);
-
-        internal UnsafeStatementSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 3;
-            var attributeLists = (GreenNode?)reader.ReadValue();
-            if (attributeLists != null)
-            {
-                AdjustFlagsAndWidth(attributeLists);
-                this.attributeLists = attributeLists;
-            }
-            var unsafeKeyword = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(unsafeKeyword);
-            this.unsafeKeyword = unsafeKeyword;
-            var block = (BlockSyntax)reader.ReadValue();
-            AdjustFlagsAndWidth(block);
-            this.block = block;
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.attributeLists);
-            writer.WriteValue(this.unsafeKeyword);
-            writer.WriteValue(this.block);
-        }
-
-        static UnsafeStatementSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(UnsafeStatementSyntax), r => new UnsafeStatementSyntax(r));
-        }
     }
 
     internal sealed partial class LockStatementSyntax : StatementSyntax
@@ -17511,7 +13235,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             this.statement = statement;
         }
 
-        public override Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> AttributeLists => new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax>(this.attributeLists);
+        public override CoreSyntax.SyntaxList<AttributeListSyntax> AttributeLists => new CoreSyntax.SyntaxList<AttributeListSyntax>(this.attributeLists);
         public SyntaxToken LockKeyword => this.lockKeyword;
         public SyntaxToken OpenParenToken => this.openParenToken;
         public ExpressionSyntax Expression => this.expression;
@@ -17535,7 +13259,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
         public override void Accept(CSharpSyntaxVisitor visitor) => visitor.VisitLockStatement(this);
         public override TResult Accept<TResult>(CSharpSyntaxVisitor<TResult> visitor) => visitor.VisitLockStatement(this);
 
-        public LockStatementSyntax Update(Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> attributeLists, SyntaxToken lockKeyword, SyntaxToken openParenToken, ExpressionSyntax expression, SyntaxToken closeParenToken, StatementSyntax statement)
+        public LockStatementSyntax Update(CoreSyntax.SyntaxList<AttributeListSyntax> attributeLists, SyntaxToken lockKeyword, SyntaxToken openParenToken, ExpressionSyntax expression, SyntaxToken closeParenToken, StatementSyntax statement)
         {
             if (attributeLists != this.AttributeLists || lockKeyword != this.LockKeyword || openParenToken != this.OpenParenToken || expression != this.Expression || closeParenToken != this.CloseParenToken || statement != this.Statement)
             {
@@ -17557,49 +13281,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new LockStatementSyntax(this.Kind, this.attributeLists, this.lockKeyword, this.openParenToken, this.expression, this.closeParenToken, this.statement, GetDiagnostics(), annotations);
-
-        internal LockStatementSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 6;
-            var attributeLists = (GreenNode?)reader.ReadValue();
-            if (attributeLists != null)
-            {
-                AdjustFlagsAndWidth(attributeLists);
-                this.attributeLists = attributeLists;
-            }
-            var lockKeyword = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(lockKeyword);
-            this.lockKeyword = lockKeyword;
-            var openParenToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(openParenToken);
-            this.openParenToken = openParenToken;
-            var expression = (ExpressionSyntax)reader.ReadValue();
-            AdjustFlagsAndWidth(expression);
-            this.expression = expression;
-            var closeParenToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(closeParenToken);
-            this.closeParenToken = closeParenToken;
-            var statement = (StatementSyntax)reader.ReadValue();
-            AdjustFlagsAndWidth(statement);
-            this.statement = statement;
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.attributeLists);
-            writer.WriteValue(this.lockKeyword);
-            writer.WriteValue(this.openParenToken);
-            writer.WriteValue(this.expression);
-            writer.WriteValue(this.closeParenToken);
-            writer.WriteValue(this.statement);
-        }
-
-        static LockStatementSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(LockStatementSyntax), r => new LockStatementSyntax(r));
-        }
     }
 
     /// <summary>
@@ -17694,7 +13375,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             }
         }
 
-        public override Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> AttributeLists => new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax>(this.attributeLists);
+        public override CoreSyntax.SyntaxList<AttributeListSyntax> AttributeLists => new CoreSyntax.SyntaxList<AttributeListSyntax>(this.attributeLists);
         /// <summary>
         /// Gets a SyntaxToken that represents the if keyword.
         /// </summary>
@@ -17738,7 +13419,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
         public override void Accept(CSharpSyntaxVisitor visitor) => visitor.VisitIfStatement(this);
         public override TResult Accept<TResult>(CSharpSyntaxVisitor<TResult> visitor) => visitor.VisitIfStatement(this);
 
-        public IfStatementSyntax Update(Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> attributeLists, SyntaxToken ifKeyword, SyntaxToken openParenToken, ExpressionSyntax condition, SyntaxToken closeParenToken, StatementSyntax statement, ElseClauseSyntax @else)
+        public IfStatementSyntax Update(CoreSyntax.SyntaxList<AttributeListSyntax> attributeLists, SyntaxToken ifKeyword, SyntaxToken openParenToken, ExpressionSyntax condition, SyntaxToken closeParenToken, StatementSyntax statement, ElseClauseSyntax @else)
         {
             if (attributeLists != this.AttributeLists || ifKeyword != this.IfKeyword || openParenToken != this.OpenParenToken || condition != this.Condition || closeParenToken != this.CloseParenToken || statement != this.Statement || @else != this.Else)
             {
@@ -17760,56 +13441,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new IfStatementSyntax(this.Kind, this.attributeLists, this.ifKeyword, this.openParenToken, this.condition, this.closeParenToken, this.statement, this.@else, GetDiagnostics(), annotations);
-
-        internal IfStatementSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 7;
-            var attributeLists = (GreenNode?)reader.ReadValue();
-            if (attributeLists != null)
-            {
-                AdjustFlagsAndWidth(attributeLists);
-                this.attributeLists = attributeLists;
-            }
-            var ifKeyword = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(ifKeyword);
-            this.ifKeyword = ifKeyword;
-            var openParenToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(openParenToken);
-            this.openParenToken = openParenToken;
-            var condition = (ExpressionSyntax)reader.ReadValue();
-            AdjustFlagsAndWidth(condition);
-            this.condition = condition;
-            var closeParenToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(closeParenToken);
-            this.closeParenToken = closeParenToken;
-            var statement = (StatementSyntax)reader.ReadValue();
-            AdjustFlagsAndWidth(statement);
-            this.statement = statement;
-            var @else = (ElseClauseSyntax?)reader.ReadValue();
-            if (@else != null)
-            {
-                AdjustFlagsAndWidth(@else);
-                this.@else = @else;
-            }
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.attributeLists);
-            writer.WriteValue(this.ifKeyword);
-            writer.WriteValue(this.openParenToken);
-            writer.WriteValue(this.condition);
-            writer.WriteValue(this.closeParenToken);
-            writer.WriteValue(this.statement);
-            writer.WriteValue(this.@else);
-        }
-
-        static IfStatementSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(IfStatementSyntax), r => new IfStatementSyntax(r));
-        }
     }
 
     /// <summary>Represents an else statement syntax.</summary>
@@ -17890,30 +13521,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new ElseClauseSyntax(this.Kind, this.elseKeyword, this.statement, GetDiagnostics(), annotations);
-
-        internal ElseClauseSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 2;
-            var elseKeyword = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(elseKeyword);
-            this.elseKeyword = elseKeyword;
-            var statement = (StatementSyntax)reader.ReadValue();
-            AdjustFlagsAndWidth(statement);
-            this.statement = statement;
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.elseKeyword);
-            writer.WriteValue(this.statement);
-        }
-
-        static ElseClauseSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(ElseClauseSyntax), r => new ElseClauseSyntax(r));
-        }
     }
 
     /// <summary>Represents a switch statement syntax.</summary>
@@ -18031,7 +13638,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             this.closeBraceToken = closeBraceToken;
         }
 
-        public override Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> AttributeLists => new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax>(this.attributeLists);
+        public override CoreSyntax.SyntaxList<AttributeListSyntax> AttributeLists => new CoreSyntax.SyntaxList<AttributeListSyntax>(this.attributeLists);
         /// <summary>
         /// Gets a SyntaxToken that represents the switch keyword.
         /// </summary>
@@ -18055,7 +13662,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
         /// <summary>
         /// Gets a SyntaxList of SwitchSectionSyntax's that represents the switch sections of the switch statement.
         /// </summary>
-        public Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SwitchSectionSyntax> Sections => new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SwitchSectionSyntax>(this.sections);
+        public CoreSyntax.SyntaxList<SwitchSectionSyntax> Sections => new CoreSyntax.SyntaxList<SwitchSectionSyntax>(this.sections);
         /// <summary>
         /// Gets a SyntaxToken that represents the open braces following the switch sections.
         /// </summary>
@@ -18080,7 +13687,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
         public override void Accept(CSharpSyntaxVisitor visitor) => visitor.VisitSwitchStatement(this);
         public override TResult Accept<TResult>(CSharpSyntaxVisitor<TResult> visitor) => visitor.VisitSwitchStatement(this);
 
-        public SwitchStatementSyntax Update(Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> attributeLists, SyntaxToken switchKeyword, SyntaxToken openParenToken, ExpressionSyntax expression, SyntaxToken closeParenToken, SyntaxToken openBraceToken, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SwitchSectionSyntax> sections, SyntaxToken closeBraceToken)
+        public SwitchStatementSyntax Update(CoreSyntax.SyntaxList<AttributeListSyntax> attributeLists, SyntaxToken switchKeyword, SyntaxToken openParenToken, ExpressionSyntax expression, SyntaxToken closeParenToken, SyntaxToken openBraceToken, CoreSyntax.SyntaxList<SwitchSectionSyntax> sections, SyntaxToken closeBraceToken)
         {
             if (attributeLists != this.AttributeLists || switchKeyword != this.SwitchKeyword || openParenToken != this.OpenParenToken || expression != this.Expression || closeParenToken != this.CloseParenToken || openBraceToken != this.OpenBraceToken || sections != this.Sections || closeBraceToken != this.CloseBraceToken)
             {
@@ -18102,66 +13709,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new SwitchStatementSyntax(this.Kind, this.attributeLists, this.switchKeyword, this.openParenToken, this.expression, this.closeParenToken, this.openBraceToken, this.sections, this.closeBraceToken, GetDiagnostics(), annotations);
-
-        internal SwitchStatementSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 8;
-            var attributeLists = (GreenNode?)reader.ReadValue();
-            if (attributeLists != null)
-            {
-                AdjustFlagsAndWidth(attributeLists);
-                this.attributeLists = attributeLists;
-            }
-            var switchKeyword = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(switchKeyword);
-            this.switchKeyword = switchKeyword;
-            var openParenToken = (SyntaxToken?)reader.ReadValue();
-            if (openParenToken != null)
-            {
-                AdjustFlagsAndWidth(openParenToken);
-                this.openParenToken = openParenToken;
-            }
-            var expression = (ExpressionSyntax)reader.ReadValue();
-            AdjustFlagsAndWidth(expression);
-            this.expression = expression;
-            var closeParenToken = (SyntaxToken?)reader.ReadValue();
-            if (closeParenToken != null)
-            {
-                AdjustFlagsAndWidth(closeParenToken);
-                this.closeParenToken = closeParenToken;
-            }
-            var openBraceToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(openBraceToken);
-            this.openBraceToken = openBraceToken;
-            var sections = (GreenNode?)reader.ReadValue();
-            if (sections != null)
-            {
-                AdjustFlagsAndWidth(sections);
-                this.sections = sections;
-            }
-            var closeBraceToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(closeBraceToken);
-            this.closeBraceToken = closeBraceToken;
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.attributeLists);
-            writer.WriteValue(this.switchKeyword);
-            writer.WriteValue(this.openParenToken);
-            writer.WriteValue(this.expression);
-            writer.WriteValue(this.closeParenToken);
-            writer.WriteValue(this.openBraceToken);
-            writer.WriteValue(this.sections);
-            writer.WriteValue(this.closeBraceToken);
-        }
-
-        static SwitchStatementSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(SwitchStatementSyntax), r => new SwitchStatementSyntax(r));
-        }
     }
 
     /// <summary>Represents a switch section syntax of a switch statement.</summary>
@@ -18222,11 +13769,11 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
         /// <summary>
         /// Gets a SyntaxList of SwitchLabelSyntax's the represents the possible labels that control can transfer to within the section.
         /// </summary>
-        public Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SwitchLabelSyntax> Labels => new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SwitchLabelSyntax>(this.labels);
+        public CoreSyntax.SyntaxList<SwitchLabelSyntax> Labels => new CoreSyntax.SyntaxList<SwitchLabelSyntax>(this.labels);
         /// <summary>
         /// Gets a SyntaxList of StatementSyntax's the represents the statements to be executed when control transfer to a label the belongs to the section.
         /// </summary>
-        public Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<StatementSyntax> Statements => new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<StatementSyntax>(this.statements);
+        public CoreSyntax.SyntaxList<StatementSyntax> Statements => new CoreSyntax.SyntaxList<StatementSyntax>(this.statements);
 
         internal override GreenNode? GetSlot(int index)
             => index switch
@@ -18241,7 +13788,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
         public override void Accept(CSharpSyntaxVisitor visitor) => visitor.VisitSwitchSection(this);
         public override TResult Accept<TResult>(CSharpSyntaxVisitor<TResult> visitor) => visitor.VisitSwitchSection(this);
 
-        public SwitchSectionSyntax Update(Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SwitchLabelSyntax> labels, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<StatementSyntax> statements)
+        public SwitchSectionSyntax Update(CoreSyntax.SyntaxList<SwitchLabelSyntax> labels, CoreSyntax.SyntaxList<StatementSyntax> statements)
         {
             if (labels != this.Labels || statements != this.Statements)
             {
@@ -18263,36 +13810,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new SwitchSectionSyntax(this.Kind, this.labels, this.statements, GetDiagnostics(), annotations);
-
-        internal SwitchSectionSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 2;
-            var labels = (GreenNode?)reader.ReadValue();
-            if (labels != null)
-            {
-                AdjustFlagsAndWidth(labels);
-                this.labels = labels;
-            }
-            var statements = (GreenNode?)reader.ReadValue();
-            if (statements != null)
-            {
-                AdjustFlagsAndWidth(statements);
-                this.statements = statements;
-            }
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.labels);
-            writer.WriteValue(this.statements);
-        }
-
-        static SwitchSectionSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(SwitchSectionSyntax), r => new SwitchSectionSyntax(r));
-        }
     }
 
     /// <summary>Represents a switch label within a switch statement.</summary>
@@ -18305,11 +13822,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal SwitchLabelSyntax(SyntaxKind kind)
           : base(kind)
-        {
-        }
-
-        protected SwitchLabelSyntax(ObjectReader reader)
-          : base(reader)
         {
         }
 
@@ -18430,41 +13942,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new CasePatternSwitchLabelSyntax(this.Kind, this.keyword, this.pattern, this.whenClause, this.colonToken, GetDiagnostics(), annotations);
-
-        internal CasePatternSwitchLabelSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 4;
-            var keyword = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(keyword);
-            this.keyword = keyword;
-            var pattern = (PatternSyntax)reader.ReadValue();
-            AdjustFlagsAndWidth(pattern);
-            this.pattern = pattern;
-            var whenClause = (WhenClauseSyntax?)reader.ReadValue();
-            if (whenClause != null)
-            {
-                AdjustFlagsAndWidth(whenClause);
-                this.whenClause = whenClause;
-            }
-            var colonToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(colonToken);
-            this.colonToken = colonToken;
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.keyword);
-            writer.WriteValue(this.pattern);
-            writer.WriteValue(this.whenClause);
-            writer.WriteValue(this.colonToken);
-        }
-
-        static CasePatternSwitchLabelSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(CasePatternSwitchLabelSyntax), r => new CasePatternSwitchLabelSyntax(r));
-        }
     }
 
     /// <summary>Represents a case label within a switch statement.</summary>
@@ -18555,34 +14032,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new CaseSwitchLabelSyntax(this.Kind, this.keyword, this.value, this.colonToken, GetDiagnostics(), annotations);
-
-        internal CaseSwitchLabelSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 3;
-            var keyword = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(keyword);
-            this.keyword = keyword;
-            var value = (ExpressionSyntax)reader.ReadValue();
-            AdjustFlagsAndWidth(value);
-            this.value = value;
-            var colonToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(colonToken);
-            this.colonToken = colonToken;
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.keyword);
-            writer.WriteValue(this.value);
-            writer.WriteValue(this.colonToken);
-        }
-
-        static CaseSwitchLabelSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(CaseSwitchLabelSyntax), r => new CaseSwitchLabelSyntax(r));
-        }
     }
 
     /// <summary>Represents a default label within a switch statement.</summary>
@@ -18661,30 +14110,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new DefaultSwitchLabelSyntax(this.Kind, this.keyword, this.colonToken, GetDiagnostics(), annotations);
-
-        internal DefaultSwitchLabelSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 2;
-            var keyword = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(keyword);
-            this.keyword = keyword;
-            var colonToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(colonToken);
-            this.colonToken = colonToken;
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.keyword);
-            writer.WriteValue(this.colonToken);
-        }
-
-        static DefaultSwitchLabelSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(DefaultSwitchLabelSyntax), r => new DefaultSwitchLabelSyntax(r));
-        }
     }
 
     internal sealed partial class SwitchExpressionSyntax : ExpressionSyntax
@@ -18756,7 +14181,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
         public ExpressionSyntax GoverningExpression => this.governingExpression;
         public SyntaxToken SwitchKeyword => this.switchKeyword;
         public SyntaxToken OpenBraceToken => this.openBraceToken;
-        public Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<SwitchExpressionArmSyntax> Arms => new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<SwitchExpressionArmSyntax>(new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<CSharpSyntaxNode>(this.arms));
+        public CoreSyntax.SeparatedSyntaxList<SwitchExpressionArmSyntax> Arms => new CoreSyntax.SeparatedSyntaxList<SwitchExpressionArmSyntax>(new CoreSyntax.SyntaxList<CSharpSyntaxNode>(this.arms));
         public SyntaxToken CloseBraceToken => this.closeBraceToken;
 
         internal override GreenNode? GetSlot(int index)
@@ -18775,7 +14200,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
         public override void Accept(CSharpSyntaxVisitor visitor) => visitor.VisitSwitchExpression(this);
         public override TResult Accept<TResult>(CSharpSyntaxVisitor<TResult> visitor) => visitor.VisitSwitchExpression(this);
 
-        public SwitchExpressionSyntax Update(ExpressionSyntax governingExpression, SyntaxToken switchKeyword, SyntaxToken openBraceToken, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<SwitchExpressionArmSyntax> arms, SyntaxToken closeBraceToken)
+        public SwitchExpressionSyntax Update(ExpressionSyntax governingExpression, SyntaxToken switchKeyword, SyntaxToken openBraceToken, CoreSyntax.SeparatedSyntaxList<SwitchExpressionArmSyntax> arms, SyntaxToken closeBraceToken)
         {
             if (governingExpression != this.GoverningExpression || switchKeyword != this.SwitchKeyword || openBraceToken != this.OpenBraceToken || arms != this.Arms || closeBraceToken != this.CloseBraceToken)
             {
@@ -18797,45 +14222,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new SwitchExpressionSyntax(this.Kind, this.governingExpression, this.switchKeyword, this.openBraceToken, this.arms, this.closeBraceToken, GetDiagnostics(), annotations);
-
-        internal SwitchExpressionSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 5;
-            var governingExpression = (ExpressionSyntax)reader.ReadValue();
-            AdjustFlagsAndWidth(governingExpression);
-            this.governingExpression = governingExpression;
-            var switchKeyword = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(switchKeyword);
-            this.switchKeyword = switchKeyword;
-            var openBraceToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(openBraceToken);
-            this.openBraceToken = openBraceToken;
-            var arms = (GreenNode?)reader.ReadValue();
-            if (arms != null)
-            {
-                AdjustFlagsAndWidth(arms);
-                this.arms = arms;
-            }
-            var closeBraceToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(closeBraceToken);
-            this.closeBraceToken = closeBraceToken;
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.governingExpression);
-            writer.WriteValue(this.switchKeyword);
-            writer.WriteValue(this.openBraceToken);
-            writer.WriteValue(this.arms);
-            writer.WriteValue(this.closeBraceToken);
-        }
-
-        static SwitchExpressionSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(SwitchExpressionSyntax), r => new SwitchExpressionSyntax(r));
-        }
     }
 
     internal sealed partial class SwitchExpressionArmSyntax : CSharpSyntaxNode
@@ -18939,41 +14325,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new SwitchExpressionArmSyntax(this.Kind, this.pattern, this.whenClause, this.equalsGreaterThanToken, this.expression, GetDiagnostics(), annotations);
-
-        internal SwitchExpressionArmSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 4;
-            var pattern = (PatternSyntax)reader.ReadValue();
-            AdjustFlagsAndWidth(pattern);
-            this.pattern = pattern;
-            var whenClause = (WhenClauseSyntax?)reader.ReadValue();
-            if (whenClause != null)
-            {
-                AdjustFlagsAndWidth(whenClause);
-                this.whenClause = whenClause;
-            }
-            var equalsGreaterThanToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(equalsGreaterThanToken);
-            this.equalsGreaterThanToken = equalsGreaterThanToken;
-            var expression = (ExpressionSyntax)reader.ReadValue();
-            AdjustFlagsAndWidth(expression);
-            this.expression = expression;
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.pattern);
-            writer.WriteValue(this.whenClause);
-            writer.WriteValue(this.equalsGreaterThanToken);
-            writer.WriteValue(this.expression);
-        }
-
-        static SwitchExpressionArmSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(SwitchExpressionArmSyntax), r => new SwitchExpressionArmSyntax(r));
-        }
     }
 
     internal sealed partial class TryStatementSyntax : StatementSyntax
@@ -19060,10 +14411,10 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             }
         }
 
-        public override Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> AttributeLists => new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax>(this.attributeLists);
+        public override CoreSyntax.SyntaxList<AttributeListSyntax> AttributeLists => new CoreSyntax.SyntaxList<AttributeListSyntax>(this.attributeLists);
         public SyntaxToken TryKeyword => this.tryKeyword;
         public BlockSyntax Block => this.block;
-        public Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<CatchClauseSyntax> Catches => new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<CatchClauseSyntax>(this.catches);
+        public CoreSyntax.SyntaxList<CatchClauseSyntax> Catches => new CoreSyntax.SyntaxList<CatchClauseSyntax>(this.catches);
         public FinallyClauseSyntax? Finally => this.@finally;
 
         internal override GreenNode? GetSlot(int index)
@@ -19082,7 +14433,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
         public override void Accept(CSharpSyntaxVisitor visitor) => visitor.VisitTryStatement(this);
         public override TResult Accept<TResult>(CSharpSyntaxVisitor<TResult> visitor) => visitor.VisitTryStatement(this);
 
-        public TryStatementSyntax Update(Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> attributeLists, SyntaxToken tryKeyword, BlockSyntax block, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<CatchClauseSyntax> catches, FinallyClauseSyntax @finally)
+        public TryStatementSyntax Update(CoreSyntax.SyntaxList<AttributeListSyntax> attributeLists, SyntaxToken tryKeyword, BlockSyntax block, CoreSyntax.SyntaxList<CatchClauseSyntax> catches, FinallyClauseSyntax @finally)
         {
             if (attributeLists != this.AttributeLists || tryKeyword != this.TryKeyword || block != this.Block || catches != this.Catches || @finally != this.Finally)
             {
@@ -19104,51 +14455,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new TryStatementSyntax(this.Kind, this.attributeLists, this.tryKeyword, this.block, this.catches, this.@finally, GetDiagnostics(), annotations);
-
-        internal TryStatementSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 5;
-            var attributeLists = (GreenNode?)reader.ReadValue();
-            if (attributeLists != null)
-            {
-                AdjustFlagsAndWidth(attributeLists);
-                this.attributeLists = attributeLists;
-            }
-            var tryKeyword = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(tryKeyword);
-            this.tryKeyword = tryKeyword;
-            var block = (BlockSyntax)reader.ReadValue();
-            AdjustFlagsAndWidth(block);
-            this.block = block;
-            var catches = (GreenNode?)reader.ReadValue();
-            if (catches != null)
-            {
-                AdjustFlagsAndWidth(catches);
-                this.catches = catches;
-            }
-            var @finally = (FinallyClauseSyntax?)reader.ReadValue();
-            if (@finally != null)
-            {
-                AdjustFlagsAndWidth(@finally);
-                this.@finally = @finally;
-            }
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.attributeLists);
-            writer.WriteValue(this.tryKeyword);
-            writer.WriteValue(this.block);
-            writer.WriteValue(this.catches);
-            writer.WriteValue(this.@finally);
-        }
-
-        static TryStatementSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(TryStatementSyntax), r => new TryStatementSyntax(r));
-        }
     }
 
     internal sealed partial class CatchClauseSyntax : CSharpSyntaxNode
@@ -19261,44 +14567,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new CatchClauseSyntax(this.Kind, this.catchKeyword, this.declaration, this.filter, this.block, GetDiagnostics(), annotations);
-
-        internal CatchClauseSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 4;
-            var catchKeyword = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(catchKeyword);
-            this.catchKeyword = catchKeyword;
-            var declaration = (CatchDeclarationSyntax?)reader.ReadValue();
-            if (declaration != null)
-            {
-                AdjustFlagsAndWidth(declaration);
-                this.declaration = declaration;
-            }
-            var filter = (CatchFilterClauseSyntax?)reader.ReadValue();
-            if (filter != null)
-            {
-                AdjustFlagsAndWidth(filter);
-                this.filter = filter;
-            }
-            var block = (BlockSyntax)reader.ReadValue();
-            AdjustFlagsAndWidth(block);
-            this.block = block;
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.catchKeyword);
-            writer.WriteValue(this.declaration);
-            writer.WriteValue(this.filter);
-            writer.WriteValue(this.block);
-        }
-
-        static CatchClauseSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(CatchClauseSyntax), r => new CatchClauseSyntax(r));
-        }
     }
 
     internal sealed partial class CatchDeclarationSyntax : CSharpSyntaxNode
@@ -19402,41 +14670,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new CatchDeclarationSyntax(this.Kind, this.openParenToken, this.type, this.identifier, this.closeParenToken, GetDiagnostics(), annotations);
-
-        internal CatchDeclarationSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 4;
-            var openParenToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(openParenToken);
-            this.openParenToken = openParenToken;
-            var type = (TypeSyntax)reader.ReadValue();
-            AdjustFlagsAndWidth(type);
-            this.type = type;
-            var identifier = (SyntaxToken?)reader.ReadValue();
-            if (identifier != null)
-            {
-                AdjustFlagsAndWidth(identifier);
-                this.identifier = identifier;
-            }
-            var closeParenToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(closeParenToken);
-            this.closeParenToken = closeParenToken;
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.openParenToken);
-            writer.WriteValue(this.type);
-            writer.WriteValue(this.identifier);
-            writer.WriteValue(this.closeParenToken);
-        }
-
-        static CatchDeclarationSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(CatchDeclarationSyntax), r => new CatchDeclarationSyntax(r));
-        }
     }
 
     internal sealed partial class CatchFilterClauseSyntax : CSharpSyntaxNode
@@ -19531,38 +14764,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new CatchFilterClauseSyntax(this.Kind, this.whenKeyword, this.openParenToken, this.filterExpression, this.closeParenToken, GetDiagnostics(), annotations);
-
-        internal CatchFilterClauseSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 4;
-            var whenKeyword = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(whenKeyword);
-            this.whenKeyword = whenKeyword;
-            var openParenToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(openParenToken);
-            this.openParenToken = openParenToken;
-            var filterExpression = (ExpressionSyntax)reader.ReadValue();
-            AdjustFlagsAndWidth(filterExpression);
-            this.filterExpression = filterExpression;
-            var closeParenToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(closeParenToken);
-            this.closeParenToken = closeParenToken;
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.whenKeyword);
-            writer.WriteValue(this.openParenToken);
-            writer.WriteValue(this.filterExpression);
-            writer.WriteValue(this.closeParenToken);
-        }
-
-        static CatchFilterClauseSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(CatchFilterClauseSyntax), r => new CatchFilterClauseSyntax(r));
-        }
     }
 
     internal sealed partial class FinallyClauseSyntax : CSharpSyntaxNode
@@ -19639,30 +14840,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new FinallyClauseSyntax(this.Kind, this.finallyKeyword, this.block, GetDiagnostics(), annotations);
-
-        internal FinallyClauseSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 2;
-            var finallyKeyword = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(finallyKeyword);
-            this.finallyKeyword = finallyKeyword;
-            var block = (BlockSyntax)reader.ReadValue();
-            AdjustFlagsAndWidth(block);
-            this.block = block;
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.finallyKeyword);
-            writer.WriteValue(this.block);
-        }
-
-        static FinallyClauseSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(FinallyClauseSyntax), r => new FinallyClauseSyntax(r));
-        }
     }
 
     internal sealed partial class CompilationUnitSyntax : CSharpSyntaxNode
@@ -19758,11 +14935,11 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             this.endOfFileToken = endOfFileToken;
         }
 
-        public Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<ExternAliasDirectiveSyntax> Externs => new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<ExternAliasDirectiveSyntax>(this.externs);
-        public Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<UsingDirectiveSyntax> Usings => new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<UsingDirectiveSyntax>(this.usings);
+        public CoreSyntax.SyntaxList<ExternAliasDirectiveSyntax> Externs => new CoreSyntax.SyntaxList<ExternAliasDirectiveSyntax>(this.externs);
+        public CoreSyntax.SyntaxList<UsingDirectiveSyntax> Usings => new CoreSyntax.SyntaxList<UsingDirectiveSyntax>(this.usings);
         /// <summary>Gets the attribute declaration list.</summary>
-        public Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> AttributeLists => new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax>(this.attributeLists);
-        public Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<MemberDeclarationSyntax> Members => new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<MemberDeclarationSyntax>(this.members);
+        public CoreSyntax.SyntaxList<AttributeListSyntax> AttributeLists => new CoreSyntax.SyntaxList<AttributeListSyntax>(this.attributeLists);
+        public CoreSyntax.SyntaxList<MemberDeclarationSyntax> Members => new CoreSyntax.SyntaxList<MemberDeclarationSyntax>(this.members);
         public SyntaxToken EndOfFileToken => this.endOfFileToken;
 
         internal override GreenNode? GetSlot(int index)
@@ -19781,7 +14958,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
         public override void Accept(CSharpSyntaxVisitor visitor) => visitor.VisitCompilationUnit(this);
         public override TResult Accept<TResult>(CSharpSyntaxVisitor<TResult> visitor) => visitor.VisitCompilationUnit(this);
 
-        public CompilationUnitSyntax Update(Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<ExternAliasDirectiveSyntax> externs, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<UsingDirectiveSyntax> usings, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> attributeLists, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<MemberDeclarationSyntax> members, SyntaxToken endOfFileToken)
+        public CompilationUnitSyntax Update(CoreSyntax.SyntaxList<ExternAliasDirectiveSyntax> externs, CoreSyntax.SyntaxList<UsingDirectiveSyntax> usings, CoreSyntax.SyntaxList<AttributeListSyntax> attributeLists, CoreSyntax.SyntaxList<MemberDeclarationSyntax> members, SyntaxToken endOfFileToken)
         {
             if (externs != this.Externs || usings != this.Usings || attributeLists != this.AttributeLists || members != this.Members || endOfFileToken != this.EndOfFileToken)
             {
@@ -19803,54 +14980,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new CompilationUnitSyntax(this.Kind, this.externs, this.usings, this.attributeLists, this.members, this.endOfFileToken, GetDiagnostics(), annotations);
-
-        internal CompilationUnitSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 5;
-            var externs = (GreenNode?)reader.ReadValue();
-            if (externs != null)
-            {
-                AdjustFlagsAndWidth(externs);
-                this.externs = externs;
-            }
-            var usings = (GreenNode?)reader.ReadValue();
-            if (usings != null)
-            {
-                AdjustFlagsAndWidth(usings);
-                this.usings = usings;
-            }
-            var attributeLists = (GreenNode?)reader.ReadValue();
-            if (attributeLists != null)
-            {
-                AdjustFlagsAndWidth(attributeLists);
-                this.attributeLists = attributeLists;
-            }
-            var members = (GreenNode?)reader.ReadValue();
-            if (members != null)
-            {
-                AdjustFlagsAndWidth(members);
-                this.members = members;
-            }
-            var endOfFileToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(endOfFileToken);
-            this.endOfFileToken = endOfFileToken;
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.externs);
-            writer.WriteValue(this.usings);
-            writer.WriteValue(this.attributeLists);
-            writer.WriteValue(this.members);
-            writer.WriteValue(this.endOfFileToken);
-        }
-
-        static CompilationUnitSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(CompilationUnitSyntax), r => new CompilationUnitSyntax(r));
-        }
     }
 
     /// <summary>
@@ -19952,38 +15081,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new ExternAliasDirectiveSyntax(this.Kind, this.externKeyword, this.aliasKeyword, this.identifier, this.semicolonToken, GetDiagnostics(), annotations);
-
-        internal ExternAliasDirectiveSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 4;
-            var externKeyword = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(externKeyword);
-            this.externKeyword = externKeyword;
-            var aliasKeyword = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(aliasKeyword);
-            this.aliasKeyword = aliasKeyword;
-            var identifier = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(identifier);
-            this.identifier = identifier;
-            var semicolonToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(semicolonToken);
-            this.semicolonToken = semicolonToken;
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.externKeyword);
-            writer.WriteValue(this.aliasKeyword);
-            writer.WriteValue(this.identifier);
-            writer.WriteValue(this.semicolonToken);
-        }
-
-        static ExternAliasDirectiveSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(ExternAliasDirectiveSyntax), r => new ExternAliasDirectiveSyntax(r));
-        }
     }
 
     internal sealed partial class UsingDirectiveSyntax : CSharpSyntaxNode
@@ -20141,62 +15238,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new UsingDirectiveSyntax(this.Kind, this.globalKeyword, this.usingKeyword, this.staticKeyword, this.unsafeKeyword, this.alias, this.namespaceOrType, this.semicolonToken, GetDiagnostics(), annotations);
-
-        internal UsingDirectiveSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 7;
-            var globalKeyword = (SyntaxToken?)reader.ReadValue();
-            if (globalKeyword != null)
-            {
-                AdjustFlagsAndWidth(globalKeyword);
-                this.globalKeyword = globalKeyword;
-            }
-            var usingKeyword = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(usingKeyword);
-            this.usingKeyword = usingKeyword;
-            var staticKeyword = (SyntaxToken?)reader.ReadValue();
-            if (staticKeyword != null)
-            {
-                AdjustFlagsAndWidth(staticKeyword);
-                this.staticKeyword = staticKeyword;
-            }
-            var unsafeKeyword = (SyntaxToken?)reader.ReadValue();
-            if (unsafeKeyword != null)
-            {
-                AdjustFlagsAndWidth(unsafeKeyword);
-                this.unsafeKeyword = unsafeKeyword;
-            }
-            var alias = (NameEqualsSyntax?)reader.ReadValue();
-            if (alias != null)
-            {
-                AdjustFlagsAndWidth(alias);
-                this.alias = alias;
-            }
-            var namespaceOrType = (TypeSyntax)reader.ReadValue();
-            AdjustFlagsAndWidth(namespaceOrType);
-            this.namespaceOrType = namespaceOrType;
-            var semicolonToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(semicolonToken);
-            this.semicolonToken = semicolonToken;
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.globalKeyword);
-            writer.WriteValue(this.usingKeyword);
-            writer.WriteValue(this.staticKeyword);
-            writer.WriteValue(this.unsafeKeyword);
-            writer.WriteValue(this.alias);
-            writer.WriteValue(this.namespaceOrType);
-            writer.WriteValue(this.semicolonToken);
-        }
-
-        static UsingDirectiveSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(UsingDirectiveSyntax), r => new UsingDirectiveSyntax(r));
-        }
     }
 
     /// <summary>Member declaration syntax.</summary>
@@ -20212,16 +15253,11 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
         {
         }
 
-        protected MemberDeclarationSyntax(ObjectReader reader)
-          : base(reader)
-        {
-        }
-
         /// <summary>Gets the attribute declaration list.</summary>
-        public abstract Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> AttributeLists { get; }
+        public abstract CoreSyntax.SyntaxList<AttributeListSyntax> AttributeLists { get; }
 
         /// <summary>Gets the modifier list.</summary>
-        public abstract Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SyntaxToken> Modifiers { get; }
+        public abstract CoreSyntax.SyntaxList<SyntaxToken> Modifiers { get; }
     }
 
     internal abstract partial class BaseNamespaceDeclarationSyntax : MemberDeclarationSyntax
@@ -20236,20 +15272,15 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
         {
         }
 
-        protected BaseNamespaceDeclarationSyntax(ObjectReader reader)
-          : base(reader)
-        {
-        }
-
         public abstract SyntaxToken NamespaceKeyword { get; }
 
         public abstract NameSyntax Name { get; }
 
-        public abstract Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<ExternAliasDirectiveSyntax> Externs { get; }
+        public abstract CoreSyntax.SyntaxList<ExternAliasDirectiveSyntax> Externs { get; }
 
-        public abstract Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<UsingDirectiveSyntax> Usings { get; }
+        public abstract CoreSyntax.SyntaxList<UsingDirectiveSyntax> Usings { get; }
 
-        public abstract Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<MemberDeclarationSyntax> Members { get; }
+        public abstract CoreSyntax.SyntaxList<MemberDeclarationSyntax> Members { get; }
     }
 
     internal sealed partial class NamespaceDeclarationSyntax : BaseNamespaceDeclarationSyntax
@@ -20398,14 +15429,14 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             }
         }
 
-        public override Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> AttributeLists => new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax>(this.attributeLists);
-        public override Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SyntaxToken> Modifiers => new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SyntaxToken>(this.modifiers);
+        public override CoreSyntax.SyntaxList<AttributeListSyntax> AttributeLists => new CoreSyntax.SyntaxList<AttributeListSyntax>(this.attributeLists);
+        public override CoreSyntax.SyntaxList<SyntaxToken> Modifiers => new CoreSyntax.SyntaxList<SyntaxToken>(this.modifiers);
         public override SyntaxToken NamespaceKeyword => this.namespaceKeyword;
         public override NameSyntax Name => this.name;
         public SyntaxToken OpenBraceToken => this.openBraceToken;
-        public override Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<ExternAliasDirectiveSyntax> Externs => new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<ExternAliasDirectiveSyntax>(this.externs);
-        public override Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<UsingDirectiveSyntax> Usings => new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<UsingDirectiveSyntax>(this.usings);
-        public override Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<MemberDeclarationSyntax> Members => new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<MemberDeclarationSyntax>(this.members);
+        public override CoreSyntax.SyntaxList<ExternAliasDirectiveSyntax> Externs => new CoreSyntax.SyntaxList<ExternAliasDirectiveSyntax>(this.externs);
+        public override CoreSyntax.SyntaxList<UsingDirectiveSyntax> Usings => new CoreSyntax.SyntaxList<UsingDirectiveSyntax>(this.usings);
+        public override CoreSyntax.SyntaxList<MemberDeclarationSyntax> Members => new CoreSyntax.SyntaxList<MemberDeclarationSyntax>(this.members);
         public SyntaxToken CloseBraceToken => this.closeBraceToken;
         /// <summary>Gets the optional semicolon token.</summary>
         public SyntaxToken? SemicolonToken => this.semicolonToken;
@@ -20431,7 +15462,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
         public override void Accept(CSharpSyntaxVisitor visitor) => visitor.VisitNamespaceDeclaration(this);
         public override TResult Accept<TResult>(CSharpSyntaxVisitor<TResult> visitor) => visitor.VisitNamespaceDeclaration(this);
 
-        public NamespaceDeclarationSyntax Update(Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> attributeLists, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SyntaxToken> modifiers, SyntaxToken namespaceKeyword, NameSyntax name, SyntaxToken openBraceToken, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<ExternAliasDirectiveSyntax> externs, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<UsingDirectiveSyntax> usings, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<MemberDeclarationSyntax> members, SyntaxToken closeBraceToken, SyntaxToken semicolonToken)
+        public NamespaceDeclarationSyntax Update(CoreSyntax.SyntaxList<AttributeListSyntax> attributeLists, CoreSyntax.SyntaxList<SyntaxToken> modifiers, SyntaxToken namespaceKeyword, NameSyntax name, SyntaxToken openBraceToken, CoreSyntax.SyntaxList<ExternAliasDirectiveSyntax> externs, CoreSyntax.SyntaxList<UsingDirectiveSyntax> usings, CoreSyntax.SyntaxList<MemberDeclarationSyntax> members, SyntaxToken closeBraceToken, SyntaxToken semicolonToken)
         {
             if (attributeLists != this.AttributeLists || modifiers != this.Modifiers || namespaceKeyword != this.NamespaceKeyword || name != this.Name || openBraceToken != this.OpenBraceToken || externs != this.Externs || usings != this.Usings || members != this.Members || closeBraceToken != this.CloseBraceToken || semicolonToken != this.SemicolonToken)
             {
@@ -20453,80 +15484,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new NamespaceDeclarationSyntax(this.Kind, this.attributeLists, this.modifiers, this.namespaceKeyword, this.name, this.openBraceToken, this.externs, this.usings, this.members, this.closeBraceToken, this.semicolonToken, GetDiagnostics(), annotations);
-
-        internal NamespaceDeclarationSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 10;
-            var attributeLists = (GreenNode?)reader.ReadValue();
-            if (attributeLists != null)
-            {
-                AdjustFlagsAndWidth(attributeLists);
-                this.attributeLists = attributeLists;
-            }
-            var modifiers = (GreenNode?)reader.ReadValue();
-            if (modifiers != null)
-            {
-                AdjustFlagsAndWidth(modifiers);
-                this.modifiers = modifiers;
-            }
-            var namespaceKeyword = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(namespaceKeyword);
-            this.namespaceKeyword = namespaceKeyword;
-            var name = (NameSyntax)reader.ReadValue();
-            AdjustFlagsAndWidth(name);
-            this.name = name;
-            var openBraceToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(openBraceToken);
-            this.openBraceToken = openBraceToken;
-            var externs = (GreenNode?)reader.ReadValue();
-            if (externs != null)
-            {
-                AdjustFlagsAndWidth(externs);
-                this.externs = externs;
-            }
-            var usings = (GreenNode?)reader.ReadValue();
-            if (usings != null)
-            {
-                AdjustFlagsAndWidth(usings);
-                this.usings = usings;
-            }
-            var members = (GreenNode?)reader.ReadValue();
-            if (members != null)
-            {
-                AdjustFlagsAndWidth(members);
-                this.members = members;
-            }
-            var closeBraceToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(closeBraceToken);
-            this.closeBraceToken = closeBraceToken;
-            var semicolonToken = (SyntaxToken?)reader.ReadValue();
-            if (semicolonToken != null)
-            {
-                AdjustFlagsAndWidth(semicolonToken);
-                this.semicolonToken = semicolonToken;
-            }
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.attributeLists);
-            writer.WriteValue(this.modifiers);
-            writer.WriteValue(this.namespaceKeyword);
-            writer.WriteValue(this.name);
-            writer.WriteValue(this.openBraceToken);
-            writer.WriteValue(this.externs);
-            writer.WriteValue(this.usings);
-            writer.WriteValue(this.members);
-            writer.WriteValue(this.closeBraceToken);
-            writer.WriteValue(this.semicolonToken);
-        }
-
-        static NamespaceDeclarationSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(NamespaceDeclarationSyntax), r => new NamespaceDeclarationSyntax(r));
-        }
     }
 
     internal sealed partial class FileScopedNamespaceDeclarationSyntax : BaseNamespaceDeclarationSyntax
@@ -20652,14 +15609,14 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             }
         }
 
-        public override Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> AttributeLists => new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax>(this.attributeLists);
-        public override Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SyntaxToken> Modifiers => new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SyntaxToken>(this.modifiers);
+        public override CoreSyntax.SyntaxList<AttributeListSyntax> AttributeLists => new CoreSyntax.SyntaxList<AttributeListSyntax>(this.attributeLists);
+        public override CoreSyntax.SyntaxList<SyntaxToken> Modifiers => new CoreSyntax.SyntaxList<SyntaxToken>(this.modifiers);
         public override SyntaxToken NamespaceKeyword => this.namespaceKeyword;
         public override NameSyntax Name => this.name;
         public SyntaxToken SemicolonToken => this.semicolonToken;
-        public override Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<ExternAliasDirectiveSyntax> Externs => new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<ExternAliasDirectiveSyntax>(this.externs);
-        public override Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<UsingDirectiveSyntax> Usings => new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<UsingDirectiveSyntax>(this.usings);
-        public override Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<MemberDeclarationSyntax> Members => new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<MemberDeclarationSyntax>(this.members);
+        public override CoreSyntax.SyntaxList<ExternAliasDirectiveSyntax> Externs => new CoreSyntax.SyntaxList<ExternAliasDirectiveSyntax>(this.externs);
+        public override CoreSyntax.SyntaxList<UsingDirectiveSyntax> Usings => new CoreSyntax.SyntaxList<UsingDirectiveSyntax>(this.usings);
+        public override CoreSyntax.SyntaxList<MemberDeclarationSyntax> Members => new CoreSyntax.SyntaxList<MemberDeclarationSyntax>(this.members);
 
         internal override GreenNode? GetSlot(int index)
             => index switch
@@ -20680,7 +15637,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
         public override void Accept(CSharpSyntaxVisitor visitor) => visitor.VisitFileScopedNamespaceDeclaration(this);
         public override TResult Accept<TResult>(CSharpSyntaxVisitor<TResult> visitor) => visitor.VisitFileScopedNamespaceDeclaration(this);
 
-        public FileScopedNamespaceDeclarationSyntax Update(Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> attributeLists, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SyntaxToken> modifiers, SyntaxToken namespaceKeyword, NameSyntax name, SyntaxToken semicolonToken, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<ExternAliasDirectiveSyntax> externs, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<UsingDirectiveSyntax> usings, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<MemberDeclarationSyntax> members)
+        public FileScopedNamespaceDeclarationSyntax Update(CoreSyntax.SyntaxList<AttributeListSyntax> attributeLists, CoreSyntax.SyntaxList<SyntaxToken> modifiers, SyntaxToken namespaceKeyword, NameSyntax name, SyntaxToken semicolonToken, CoreSyntax.SyntaxList<ExternAliasDirectiveSyntax> externs, CoreSyntax.SyntaxList<UsingDirectiveSyntax> usings, CoreSyntax.SyntaxList<MemberDeclarationSyntax> members)
         {
             if (attributeLists != this.AttributeLists || modifiers != this.Modifiers || namespaceKeyword != this.NamespaceKeyword || name != this.Name || semicolonToken != this.SemicolonToken || externs != this.Externs || usings != this.Usings || members != this.Members)
             {
@@ -20702,69 +15659,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new FileScopedNamespaceDeclarationSyntax(this.Kind, this.attributeLists, this.modifiers, this.namespaceKeyword, this.name, this.semicolonToken, this.externs, this.usings, this.members, GetDiagnostics(), annotations);
-
-        internal FileScopedNamespaceDeclarationSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 8;
-            var attributeLists = (GreenNode?)reader.ReadValue();
-            if (attributeLists != null)
-            {
-                AdjustFlagsAndWidth(attributeLists);
-                this.attributeLists = attributeLists;
-            }
-            var modifiers = (GreenNode?)reader.ReadValue();
-            if (modifiers != null)
-            {
-                AdjustFlagsAndWidth(modifiers);
-                this.modifiers = modifiers;
-            }
-            var namespaceKeyword = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(namespaceKeyword);
-            this.namespaceKeyword = namespaceKeyword;
-            var name = (NameSyntax)reader.ReadValue();
-            AdjustFlagsAndWidth(name);
-            this.name = name;
-            var semicolonToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(semicolonToken);
-            this.semicolonToken = semicolonToken;
-            var externs = (GreenNode?)reader.ReadValue();
-            if (externs != null)
-            {
-                AdjustFlagsAndWidth(externs);
-                this.externs = externs;
-            }
-            var usings = (GreenNode?)reader.ReadValue();
-            if (usings != null)
-            {
-                AdjustFlagsAndWidth(usings);
-                this.usings = usings;
-            }
-            var members = (GreenNode?)reader.ReadValue();
-            if (members != null)
-            {
-                AdjustFlagsAndWidth(members);
-                this.members = members;
-            }
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.attributeLists);
-            writer.WriteValue(this.modifiers);
-            writer.WriteValue(this.namespaceKeyword);
-            writer.WriteValue(this.name);
-            writer.WriteValue(this.semicolonToken);
-            writer.WriteValue(this.externs);
-            writer.WriteValue(this.usings);
-            writer.WriteValue(this.members);
-        }
-
-        static FileScopedNamespaceDeclarationSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(FileScopedNamespaceDeclarationSyntax), r => new FileScopedNamespaceDeclarationSyntax(r));
-        }
     }
 
     /// <summary>Class representing one or more attributes applied to a language construct.</summary>
@@ -20841,7 +15735,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
         /// <summary>Gets the optional construct targeted by the attribute.</summary>
         public AttributeTargetSpecifierSyntax? Target => this.target;
         /// <summary>Gets the attribute declaration list.</summary>
-        public Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<AttributeSyntax> Attributes => new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<AttributeSyntax>(new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<CSharpSyntaxNode>(this.attributes));
+        public CoreSyntax.SeparatedSyntaxList<AttributeSyntax> Attributes => new CoreSyntax.SeparatedSyntaxList<AttributeSyntax>(new CoreSyntax.SyntaxList<CSharpSyntaxNode>(this.attributes));
         /// <summary>Gets the close bracket token.</summary>
         public SyntaxToken CloseBracketToken => this.closeBracketToken;
 
@@ -20860,7 +15754,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
         public override void Accept(CSharpSyntaxVisitor visitor) => visitor.VisitAttributeList(this);
         public override TResult Accept<TResult>(CSharpSyntaxVisitor<TResult> visitor) => visitor.VisitAttributeList(this);
 
-        public AttributeListSyntax Update(SyntaxToken openBracketToken, AttributeTargetSpecifierSyntax target, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<AttributeSyntax> attributes, SyntaxToken closeBracketToken)
+        public AttributeListSyntax Update(SyntaxToken openBracketToken, AttributeTargetSpecifierSyntax target, CoreSyntax.SeparatedSyntaxList<AttributeSyntax> attributes, SyntaxToken closeBracketToken)
         {
             if (openBracketToken != this.OpenBracketToken || target != this.Target || attributes != this.Attributes || closeBracketToken != this.CloseBracketToken)
             {
@@ -20882,44 +15776,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new AttributeListSyntax(this.Kind, this.openBracketToken, this.target, this.attributes, this.closeBracketToken, GetDiagnostics(), annotations);
-
-        internal AttributeListSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 4;
-            var openBracketToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(openBracketToken);
-            this.openBracketToken = openBracketToken;
-            var target = (AttributeTargetSpecifierSyntax?)reader.ReadValue();
-            if (target != null)
-            {
-                AdjustFlagsAndWidth(target);
-                this.target = target;
-            }
-            var attributes = (GreenNode?)reader.ReadValue();
-            if (attributes != null)
-            {
-                AdjustFlagsAndWidth(attributes);
-                this.attributes = attributes;
-            }
-            var closeBracketToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(closeBracketToken);
-            this.closeBracketToken = closeBracketToken;
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.openBracketToken);
-            writer.WriteValue(this.target);
-            writer.WriteValue(this.attributes);
-            writer.WriteValue(this.closeBracketToken);
-        }
-
-        static AttributeListSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(AttributeListSyntax), r => new AttributeListSyntax(r));
-        }
     }
 
     /// <summary>Class representing what language construct an attribute targets.</summary>
@@ -20999,30 +15855,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new AttributeTargetSpecifierSyntax(this.Kind, this.identifier, this.colonToken, GetDiagnostics(), annotations);
-
-        internal AttributeTargetSpecifierSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 2;
-            var identifier = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(identifier);
-            this.identifier = identifier;
-            var colonToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(colonToken);
-            this.colonToken = colonToken;
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.identifier);
-            writer.WriteValue(this.colonToken);
-        }
-
-        static AttributeTargetSpecifierSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(AttributeTargetSpecifierSyntax), r => new AttributeTargetSpecifierSyntax(r));
-        }
     }
 
     /// <summary>Attribute syntax.</summary>
@@ -21110,33 +15942,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new AttributeSyntax(this.Kind, this.name, this.argumentList, GetDiagnostics(), annotations);
-
-        internal AttributeSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 2;
-            var name = (NameSyntax)reader.ReadValue();
-            AdjustFlagsAndWidth(name);
-            this.name = name;
-            var argumentList = (AttributeArgumentListSyntax?)reader.ReadValue();
-            if (argumentList != null)
-            {
-                AdjustFlagsAndWidth(argumentList);
-                this.argumentList = argumentList;
-            }
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.name);
-            writer.WriteValue(this.argumentList);
-        }
-
-        static AttributeSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(AttributeSyntax), r => new AttributeSyntax(r));
-        }
     }
 
     /// <summary>Attribute argument list syntax.</summary>
@@ -21195,7 +16000,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
         /// <summary>Gets the open paren token.</summary>
         public SyntaxToken OpenParenToken => this.openParenToken;
         /// <summary>Gets the arguments syntax list.</summary>
-        public Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<AttributeArgumentSyntax> Arguments => new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<AttributeArgumentSyntax>(new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<CSharpSyntaxNode>(this.arguments));
+        public CoreSyntax.SeparatedSyntaxList<AttributeArgumentSyntax> Arguments => new CoreSyntax.SeparatedSyntaxList<AttributeArgumentSyntax>(new CoreSyntax.SyntaxList<CSharpSyntaxNode>(this.arguments));
         /// <summary>Gets the close paren token.</summary>
         public SyntaxToken CloseParenToken => this.closeParenToken;
 
@@ -21213,7 +16018,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
         public override void Accept(CSharpSyntaxVisitor visitor) => visitor.VisitAttributeArgumentList(this);
         public override TResult Accept<TResult>(CSharpSyntaxVisitor<TResult> visitor) => visitor.VisitAttributeArgumentList(this);
 
-        public AttributeArgumentListSyntax Update(SyntaxToken openParenToken, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<AttributeArgumentSyntax> arguments, SyntaxToken closeParenToken)
+        public AttributeArgumentListSyntax Update(SyntaxToken openParenToken, CoreSyntax.SeparatedSyntaxList<AttributeArgumentSyntax> arguments, SyntaxToken closeParenToken)
         {
             if (openParenToken != this.OpenParenToken || arguments != this.Arguments || closeParenToken != this.CloseParenToken)
             {
@@ -21235,37 +16040,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new AttributeArgumentListSyntax(this.Kind, this.openParenToken, this.arguments, this.closeParenToken, GetDiagnostics(), annotations);
-
-        internal AttributeArgumentListSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 3;
-            var openParenToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(openParenToken);
-            this.openParenToken = openParenToken;
-            var arguments = (GreenNode?)reader.ReadValue();
-            if (arguments != null)
-            {
-                AdjustFlagsAndWidth(arguments);
-                this.arguments = arguments;
-            }
-            var closeParenToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(closeParenToken);
-            this.closeParenToken = closeParenToken;
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.openParenToken);
-            writer.WriteValue(this.arguments);
-            writer.WriteValue(this.closeParenToken);
-        }
-
-        static AttributeArgumentListSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(AttributeArgumentListSyntax), r => new AttributeArgumentListSyntax(r));
-        }
     }
 
     /// <summary>Attribute argument syntax.</summary>
@@ -21371,40 +16145,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new AttributeArgumentSyntax(this.Kind, this.nameEquals, this.nameColon, this.expression, GetDiagnostics(), annotations);
-
-        internal AttributeArgumentSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 3;
-            var nameEquals = (NameEqualsSyntax?)reader.ReadValue();
-            if (nameEquals != null)
-            {
-                AdjustFlagsAndWidth(nameEquals);
-                this.nameEquals = nameEquals;
-            }
-            var nameColon = (NameColonSyntax?)reader.ReadValue();
-            if (nameColon != null)
-            {
-                AdjustFlagsAndWidth(nameColon);
-                this.nameColon = nameColon;
-            }
-            var expression = (ExpressionSyntax)reader.ReadValue();
-            AdjustFlagsAndWidth(expression);
-            this.expression = expression;
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.nameEquals);
-            writer.WriteValue(this.nameColon);
-            writer.WriteValue(this.expression);
-        }
-
-        static AttributeArgumentSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(AttributeArgumentSyntax), r => new AttributeArgumentSyntax(r));
-        }
     }
 
     /// <summary>Class representing an identifier name followed by an equals token.</summary>
@@ -21483,30 +16223,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new NameEqualsSyntax(this.Kind, this.name, this.equalsToken, GetDiagnostics(), annotations);
-
-        internal NameEqualsSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 2;
-            var name = (IdentifierNameSyntax)reader.ReadValue();
-            AdjustFlagsAndWidth(name);
-            this.name = name;
-            var equalsToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(equalsToken);
-            this.equalsToken = equalsToken;
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.name);
-            writer.WriteValue(this.equalsToken);
-        }
-
-        static NameEqualsSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(NameEqualsSyntax), r => new NameEqualsSyntax(r));
-        }
     }
 
     /// <summary>Type parameter list syntax.</summary>
@@ -21565,7 +16281,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
         /// <summary>Gets the &lt; token.</summary>
         public SyntaxToken LessThanToken => this.lessThanToken;
         /// <summary>Gets the parameter list.</summary>
-        public Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<TypeParameterSyntax> Parameters => new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<TypeParameterSyntax>(new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<CSharpSyntaxNode>(this.parameters));
+        public CoreSyntax.SeparatedSyntaxList<TypeParameterSyntax> Parameters => new CoreSyntax.SeparatedSyntaxList<TypeParameterSyntax>(new CoreSyntax.SyntaxList<CSharpSyntaxNode>(this.parameters));
         /// <summary>Gets the &gt; token.</summary>
         public SyntaxToken GreaterThanToken => this.greaterThanToken;
 
@@ -21583,7 +16299,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
         public override void Accept(CSharpSyntaxVisitor visitor) => visitor.VisitTypeParameterList(this);
         public override TResult Accept<TResult>(CSharpSyntaxVisitor<TResult> visitor) => visitor.VisitTypeParameterList(this);
 
-        public TypeParameterListSyntax Update(SyntaxToken lessThanToken, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<TypeParameterSyntax> parameters, SyntaxToken greaterThanToken)
+        public TypeParameterListSyntax Update(SyntaxToken lessThanToken, CoreSyntax.SeparatedSyntaxList<TypeParameterSyntax> parameters, SyntaxToken greaterThanToken)
         {
             if (lessThanToken != this.LessThanToken || parameters != this.Parameters || greaterThanToken != this.GreaterThanToken)
             {
@@ -21605,37 +16321,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new TypeParameterListSyntax(this.Kind, this.lessThanToken, this.parameters, this.greaterThanToken, GetDiagnostics(), annotations);
-
-        internal TypeParameterListSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 3;
-            var lessThanToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(lessThanToken);
-            this.lessThanToken = lessThanToken;
-            var parameters = (GreenNode?)reader.ReadValue();
-            if (parameters != null)
-            {
-                AdjustFlagsAndWidth(parameters);
-                this.parameters = parameters;
-            }
-            var greaterThanToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(greaterThanToken);
-            this.greaterThanToken = greaterThanToken;
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.lessThanToken);
-            writer.WriteValue(this.parameters);
-            writer.WriteValue(this.greaterThanToken);
-        }
-
-        static TypeParameterListSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(TypeParameterListSyntax), r => new TypeParameterListSyntax(r));
-        }
     }
 
     /// <summary>Type parameter syntax.</summary>
@@ -21701,7 +16386,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
         }
 
         /// <summary>Gets the attribute declaration list.</summary>
-        public Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> AttributeLists => new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax>(this.attributeLists);
+        public CoreSyntax.SyntaxList<AttributeListSyntax> AttributeLists => new CoreSyntax.SyntaxList<AttributeListSyntax>(this.attributeLists);
         public SyntaxToken? VarianceKeyword => this.varianceKeyword;
         /// <summary>Gets the identifier.</summary>
         public SyntaxToken Identifier => this.identifier;
@@ -21720,7 +16405,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
         public override void Accept(CSharpSyntaxVisitor visitor) => visitor.VisitTypeParameter(this);
         public override TResult Accept<TResult>(CSharpSyntaxVisitor<TResult> visitor) => visitor.VisitTypeParameter(this);
 
-        public TypeParameterSyntax Update(Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> attributeLists, SyntaxToken varianceKeyword, SyntaxToken identifier)
+        public TypeParameterSyntax Update(CoreSyntax.SyntaxList<AttributeListSyntax> attributeLists, SyntaxToken varianceKeyword, SyntaxToken identifier)
         {
             if (attributeLists != this.AttributeLists || varianceKeyword != this.VarianceKeyword || identifier != this.Identifier)
             {
@@ -21742,40 +16427,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new TypeParameterSyntax(this.Kind, this.attributeLists, this.varianceKeyword, this.identifier, GetDiagnostics(), annotations);
-
-        internal TypeParameterSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 3;
-            var attributeLists = (GreenNode?)reader.ReadValue();
-            if (attributeLists != null)
-            {
-                AdjustFlagsAndWidth(attributeLists);
-                this.attributeLists = attributeLists;
-            }
-            var varianceKeyword = (SyntaxToken?)reader.ReadValue();
-            if (varianceKeyword != null)
-            {
-                AdjustFlagsAndWidth(varianceKeyword);
-                this.varianceKeyword = varianceKeyword;
-            }
-            var identifier = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(identifier);
-            this.identifier = identifier;
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.attributeLists);
-            writer.WriteValue(this.varianceKeyword);
-            writer.WriteValue(this.identifier);
-        }
-
-        static TypeParameterSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(TypeParameterSyntax), r => new TypeParameterSyntax(r));
-        }
     }
 
     /// <summary>Base class for type declaration syntax.</summary>
@@ -21788,11 +16439,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal BaseTypeDeclarationSyntax(SyntaxKind kind)
           : base(kind)
-        {
-        }
-
-        protected BaseTypeDeclarationSyntax(ObjectReader reader)
-          : base(reader)
         {
         }
 
@@ -21825,11 +16471,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
         {
         }
 
-        protected TypeDeclarationSyntax(ObjectReader reader)
-          : base(reader)
-        {
-        }
-
         /// <summary>Gets the type keyword token ("class", "struct", "interface", "record").</summary>
         public abstract SyntaxToken Keyword { get; }
 
@@ -21838,10 +16479,10 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
         public abstract ParameterListSyntax? ParameterList { get; }
 
         /// <summary>Gets the type constraint list.</summary>
-        public abstract Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<TypeParameterConstraintClauseSyntax> ConstraintClauses { get; }
+        public abstract CoreSyntax.SyntaxList<TypeParameterConstraintClauseSyntax> ConstraintClauses { get; }
 
         /// <summary>Gets the member declarations.</summary>
-        public abstract Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<MemberDeclarationSyntax> Members { get; }
+        public abstract CoreSyntax.SyntaxList<MemberDeclarationSyntax> Members { get; }
     }
 
     /// <summary>Class type declaration syntax.</summary>
@@ -22041,17 +16682,17 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             }
         }
 
-        public override Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> AttributeLists => new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax>(this.attributeLists);
-        public override Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SyntaxToken> Modifiers => new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SyntaxToken>(this.modifiers);
+        public override CoreSyntax.SyntaxList<AttributeListSyntax> AttributeLists => new CoreSyntax.SyntaxList<AttributeListSyntax>(this.attributeLists);
+        public override CoreSyntax.SyntaxList<SyntaxToken> Modifiers => new CoreSyntax.SyntaxList<SyntaxToken>(this.modifiers);
         /// <summary>Gets the class keyword token.</summary>
         public override SyntaxToken Keyword => this.keyword;
         public override SyntaxToken Identifier => this.identifier;
         public override TypeParameterListSyntax? TypeParameterList => this.typeParameterList;
         public override ParameterListSyntax? ParameterList => this.parameterList;
         public override BaseListSyntax? BaseList => this.baseList;
-        public override Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<TypeParameterConstraintClauseSyntax> ConstraintClauses => new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<TypeParameterConstraintClauseSyntax>(this.constraintClauses);
+        public override CoreSyntax.SyntaxList<TypeParameterConstraintClauseSyntax> ConstraintClauses => new CoreSyntax.SyntaxList<TypeParameterConstraintClauseSyntax>(this.constraintClauses);
         public override SyntaxToken? OpenBraceToken => this.openBraceToken;
-        public override Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<MemberDeclarationSyntax> Members => new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<MemberDeclarationSyntax>(this.members);
+        public override CoreSyntax.SyntaxList<MemberDeclarationSyntax> Members => new CoreSyntax.SyntaxList<MemberDeclarationSyntax>(this.members);
         public override SyntaxToken? CloseBraceToken => this.closeBraceToken;
         public override SyntaxToken? SemicolonToken => this.semicolonToken;
 
@@ -22078,7 +16719,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
         public override void Accept(CSharpSyntaxVisitor visitor) => visitor.VisitClassDeclaration(this);
         public override TResult Accept<TResult>(CSharpSyntaxVisitor<TResult> visitor) => visitor.VisitClassDeclaration(this);
 
-        public ClassDeclarationSyntax Update(Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> attributeLists, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SyntaxToken> modifiers, SyntaxToken keyword, SyntaxToken identifier, TypeParameterListSyntax typeParameterList, ParameterListSyntax parameterList, BaseListSyntax baseList, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<TypeParameterConstraintClauseSyntax> constraintClauses, SyntaxToken openBraceToken, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<MemberDeclarationSyntax> members, SyntaxToken closeBraceToken, SyntaxToken semicolonToken)
+        public ClassDeclarationSyntax Update(CoreSyntax.SyntaxList<AttributeListSyntax> attributeLists, CoreSyntax.SyntaxList<SyntaxToken> modifiers, SyntaxToken keyword, SyntaxToken identifier, TypeParameterListSyntax typeParameterList, ParameterListSyntax parameterList, BaseListSyntax baseList, CoreSyntax.SyntaxList<TypeParameterConstraintClauseSyntax> constraintClauses, SyntaxToken openBraceToken, CoreSyntax.SyntaxList<MemberDeclarationSyntax> members, SyntaxToken closeBraceToken, SyntaxToken semicolonToken)
         {
             if (attributeLists != this.AttributeLists || modifiers != this.Modifiers || keyword != this.Keyword || identifier != this.Identifier || typeParameterList != this.TypeParameterList || parameterList != this.ParameterList || baseList != this.BaseList || constraintClauses != this.ConstraintClauses || openBraceToken != this.OpenBraceToken || members != this.Members || closeBraceToken != this.CloseBraceToken || semicolonToken != this.SemicolonToken)
             {
@@ -22100,100 +16741,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new ClassDeclarationSyntax(this.Kind, this.attributeLists, this.modifiers, this.keyword, this.identifier, this.typeParameterList, this.parameterList, this.baseList, this.constraintClauses, this.openBraceToken, this.members, this.closeBraceToken, this.semicolonToken, GetDiagnostics(), annotations);
-
-        internal ClassDeclarationSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 12;
-            var attributeLists = (GreenNode?)reader.ReadValue();
-            if (attributeLists != null)
-            {
-                AdjustFlagsAndWidth(attributeLists);
-                this.attributeLists = attributeLists;
-            }
-            var modifiers = (GreenNode?)reader.ReadValue();
-            if (modifiers != null)
-            {
-                AdjustFlagsAndWidth(modifiers);
-                this.modifiers = modifiers;
-            }
-            var keyword = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(keyword);
-            this.keyword = keyword;
-            var identifier = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(identifier);
-            this.identifier = identifier;
-            var typeParameterList = (TypeParameterListSyntax?)reader.ReadValue();
-            if (typeParameterList != null)
-            {
-                AdjustFlagsAndWidth(typeParameterList);
-                this.typeParameterList = typeParameterList;
-            }
-            var parameterList = (ParameterListSyntax?)reader.ReadValue();
-            if (parameterList != null)
-            {
-                AdjustFlagsAndWidth(parameterList);
-                this.parameterList = parameterList;
-            }
-            var baseList = (BaseListSyntax?)reader.ReadValue();
-            if (baseList != null)
-            {
-                AdjustFlagsAndWidth(baseList);
-                this.baseList = baseList;
-            }
-            var constraintClauses = (GreenNode?)reader.ReadValue();
-            if (constraintClauses != null)
-            {
-                AdjustFlagsAndWidth(constraintClauses);
-                this.constraintClauses = constraintClauses;
-            }
-            var openBraceToken = (SyntaxToken?)reader.ReadValue();
-            if (openBraceToken != null)
-            {
-                AdjustFlagsAndWidth(openBraceToken);
-                this.openBraceToken = openBraceToken;
-            }
-            var members = (GreenNode?)reader.ReadValue();
-            if (members != null)
-            {
-                AdjustFlagsAndWidth(members);
-                this.members = members;
-            }
-            var closeBraceToken = (SyntaxToken?)reader.ReadValue();
-            if (closeBraceToken != null)
-            {
-                AdjustFlagsAndWidth(closeBraceToken);
-                this.closeBraceToken = closeBraceToken;
-            }
-            var semicolonToken = (SyntaxToken?)reader.ReadValue();
-            if (semicolonToken != null)
-            {
-                AdjustFlagsAndWidth(semicolonToken);
-                this.semicolonToken = semicolonToken;
-            }
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.attributeLists);
-            writer.WriteValue(this.modifiers);
-            writer.WriteValue(this.keyword);
-            writer.WriteValue(this.identifier);
-            writer.WriteValue(this.typeParameterList);
-            writer.WriteValue(this.parameterList);
-            writer.WriteValue(this.baseList);
-            writer.WriteValue(this.constraintClauses);
-            writer.WriteValue(this.openBraceToken);
-            writer.WriteValue(this.members);
-            writer.WriteValue(this.closeBraceToken);
-            writer.WriteValue(this.semicolonToken);
-        }
-
-        static ClassDeclarationSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(ClassDeclarationSyntax), r => new ClassDeclarationSyntax(r));
-        }
     }
 
     /// <summary>Struct type declaration syntax.</summary>
@@ -22393,17 +16940,17 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             }
         }
 
-        public override Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> AttributeLists => new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax>(this.attributeLists);
-        public override Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SyntaxToken> Modifiers => new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SyntaxToken>(this.modifiers);
+        public override CoreSyntax.SyntaxList<AttributeListSyntax> AttributeLists => new CoreSyntax.SyntaxList<AttributeListSyntax>(this.attributeLists);
+        public override CoreSyntax.SyntaxList<SyntaxToken> Modifiers => new CoreSyntax.SyntaxList<SyntaxToken>(this.modifiers);
         /// <summary>Gets the struct keyword token.</summary>
         public override SyntaxToken Keyword => this.keyword;
         public override SyntaxToken Identifier => this.identifier;
         public override TypeParameterListSyntax? TypeParameterList => this.typeParameterList;
         public override ParameterListSyntax? ParameterList => this.parameterList;
         public override BaseListSyntax? BaseList => this.baseList;
-        public override Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<TypeParameterConstraintClauseSyntax> ConstraintClauses => new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<TypeParameterConstraintClauseSyntax>(this.constraintClauses);
+        public override CoreSyntax.SyntaxList<TypeParameterConstraintClauseSyntax> ConstraintClauses => new CoreSyntax.SyntaxList<TypeParameterConstraintClauseSyntax>(this.constraintClauses);
         public override SyntaxToken? OpenBraceToken => this.openBraceToken;
-        public override Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<MemberDeclarationSyntax> Members => new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<MemberDeclarationSyntax>(this.members);
+        public override CoreSyntax.SyntaxList<MemberDeclarationSyntax> Members => new CoreSyntax.SyntaxList<MemberDeclarationSyntax>(this.members);
         public override SyntaxToken? CloseBraceToken => this.closeBraceToken;
         public override SyntaxToken? SemicolonToken => this.semicolonToken;
 
@@ -22430,7 +16977,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
         public override void Accept(CSharpSyntaxVisitor visitor) => visitor.VisitStructDeclaration(this);
         public override TResult Accept<TResult>(CSharpSyntaxVisitor<TResult> visitor) => visitor.VisitStructDeclaration(this);
 
-        public StructDeclarationSyntax Update(Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> attributeLists, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SyntaxToken> modifiers, SyntaxToken keyword, SyntaxToken identifier, TypeParameterListSyntax typeParameterList, ParameterListSyntax parameterList, BaseListSyntax baseList, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<TypeParameterConstraintClauseSyntax> constraintClauses, SyntaxToken openBraceToken, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<MemberDeclarationSyntax> members, SyntaxToken closeBraceToken, SyntaxToken semicolonToken)
+        public StructDeclarationSyntax Update(CoreSyntax.SyntaxList<AttributeListSyntax> attributeLists, CoreSyntax.SyntaxList<SyntaxToken> modifiers, SyntaxToken keyword, SyntaxToken identifier, TypeParameterListSyntax typeParameterList, ParameterListSyntax parameterList, BaseListSyntax baseList, CoreSyntax.SyntaxList<TypeParameterConstraintClauseSyntax> constraintClauses, SyntaxToken openBraceToken, CoreSyntax.SyntaxList<MemberDeclarationSyntax> members, SyntaxToken closeBraceToken, SyntaxToken semicolonToken)
         {
             if (attributeLists != this.AttributeLists || modifiers != this.Modifiers || keyword != this.Keyword || identifier != this.Identifier || typeParameterList != this.TypeParameterList || parameterList != this.ParameterList || baseList != this.BaseList || constraintClauses != this.ConstraintClauses || openBraceToken != this.OpenBraceToken || members != this.Members || closeBraceToken != this.CloseBraceToken || semicolonToken != this.SemicolonToken)
             {
@@ -22452,100 +16999,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new StructDeclarationSyntax(this.Kind, this.attributeLists, this.modifiers, this.keyword, this.identifier, this.typeParameterList, this.parameterList, this.baseList, this.constraintClauses, this.openBraceToken, this.members, this.closeBraceToken, this.semicolonToken, GetDiagnostics(), annotations);
-
-        internal StructDeclarationSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 12;
-            var attributeLists = (GreenNode?)reader.ReadValue();
-            if (attributeLists != null)
-            {
-                AdjustFlagsAndWidth(attributeLists);
-                this.attributeLists = attributeLists;
-            }
-            var modifiers = (GreenNode?)reader.ReadValue();
-            if (modifiers != null)
-            {
-                AdjustFlagsAndWidth(modifiers);
-                this.modifiers = modifiers;
-            }
-            var keyword = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(keyword);
-            this.keyword = keyword;
-            var identifier = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(identifier);
-            this.identifier = identifier;
-            var typeParameterList = (TypeParameterListSyntax?)reader.ReadValue();
-            if (typeParameterList != null)
-            {
-                AdjustFlagsAndWidth(typeParameterList);
-                this.typeParameterList = typeParameterList;
-            }
-            var parameterList = (ParameterListSyntax?)reader.ReadValue();
-            if (parameterList != null)
-            {
-                AdjustFlagsAndWidth(parameterList);
-                this.parameterList = parameterList;
-            }
-            var baseList = (BaseListSyntax?)reader.ReadValue();
-            if (baseList != null)
-            {
-                AdjustFlagsAndWidth(baseList);
-                this.baseList = baseList;
-            }
-            var constraintClauses = (GreenNode?)reader.ReadValue();
-            if (constraintClauses != null)
-            {
-                AdjustFlagsAndWidth(constraintClauses);
-                this.constraintClauses = constraintClauses;
-            }
-            var openBraceToken = (SyntaxToken?)reader.ReadValue();
-            if (openBraceToken != null)
-            {
-                AdjustFlagsAndWidth(openBraceToken);
-                this.openBraceToken = openBraceToken;
-            }
-            var members = (GreenNode?)reader.ReadValue();
-            if (members != null)
-            {
-                AdjustFlagsAndWidth(members);
-                this.members = members;
-            }
-            var closeBraceToken = (SyntaxToken?)reader.ReadValue();
-            if (closeBraceToken != null)
-            {
-                AdjustFlagsAndWidth(closeBraceToken);
-                this.closeBraceToken = closeBraceToken;
-            }
-            var semicolonToken = (SyntaxToken?)reader.ReadValue();
-            if (semicolonToken != null)
-            {
-                AdjustFlagsAndWidth(semicolonToken);
-                this.semicolonToken = semicolonToken;
-            }
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.attributeLists);
-            writer.WriteValue(this.modifiers);
-            writer.WriteValue(this.keyword);
-            writer.WriteValue(this.identifier);
-            writer.WriteValue(this.typeParameterList);
-            writer.WriteValue(this.parameterList);
-            writer.WriteValue(this.baseList);
-            writer.WriteValue(this.constraintClauses);
-            writer.WriteValue(this.openBraceToken);
-            writer.WriteValue(this.members);
-            writer.WriteValue(this.closeBraceToken);
-            writer.WriteValue(this.semicolonToken);
-        }
-
-        static StructDeclarationSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(StructDeclarationSyntax), r => new StructDeclarationSyntax(r));
-        }
     }
 
     /// <summary>Interface type declaration syntax.</summary>
@@ -22745,17 +17198,17 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             }
         }
 
-        public override Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> AttributeLists => new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax>(this.attributeLists);
-        public override Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SyntaxToken> Modifiers => new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SyntaxToken>(this.modifiers);
+        public override CoreSyntax.SyntaxList<AttributeListSyntax> AttributeLists => new CoreSyntax.SyntaxList<AttributeListSyntax>(this.attributeLists);
+        public override CoreSyntax.SyntaxList<SyntaxToken> Modifiers => new CoreSyntax.SyntaxList<SyntaxToken>(this.modifiers);
         /// <summary>Gets the interface keyword token.</summary>
         public override SyntaxToken Keyword => this.keyword;
         public override SyntaxToken Identifier => this.identifier;
         public override TypeParameterListSyntax? TypeParameterList => this.typeParameterList;
         public override ParameterListSyntax? ParameterList => this.parameterList;
         public override BaseListSyntax? BaseList => this.baseList;
-        public override Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<TypeParameterConstraintClauseSyntax> ConstraintClauses => new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<TypeParameterConstraintClauseSyntax>(this.constraintClauses);
+        public override CoreSyntax.SyntaxList<TypeParameterConstraintClauseSyntax> ConstraintClauses => new CoreSyntax.SyntaxList<TypeParameterConstraintClauseSyntax>(this.constraintClauses);
         public override SyntaxToken? OpenBraceToken => this.openBraceToken;
-        public override Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<MemberDeclarationSyntax> Members => new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<MemberDeclarationSyntax>(this.members);
+        public override CoreSyntax.SyntaxList<MemberDeclarationSyntax> Members => new CoreSyntax.SyntaxList<MemberDeclarationSyntax>(this.members);
         public override SyntaxToken? CloseBraceToken => this.closeBraceToken;
         public override SyntaxToken? SemicolonToken => this.semicolonToken;
 
@@ -22782,7 +17235,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
         public override void Accept(CSharpSyntaxVisitor visitor) => visitor.VisitInterfaceDeclaration(this);
         public override TResult Accept<TResult>(CSharpSyntaxVisitor<TResult> visitor) => visitor.VisitInterfaceDeclaration(this);
 
-        public InterfaceDeclarationSyntax Update(Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> attributeLists, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SyntaxToken> modifiers, SyntaxToken keyword, SyntaxToken identifier, TypeParameterListSyntax typeParameterList, ParameterListSyntax parameterList, BaseListSyntax baseList, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<TypeParameterConstraintClauseSyntax> constraintClauses, SyntaxToken openBraceToken, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<MemberDeclarationSyntax> members, SyntaxToken closeBraceToken, SyntaxToken semicolonToken)
+        public InterfaceDeclarationSyntax Update(CoreSyntax.SyntaxList<AttributeListSyntax> attributeLists, CoreSyntax.SyntaxList<SyntaxToken> modifiers, SyntaxToken keyword, SyntaxToken identifier, TypeParameterListSyntax typeParameterList, ParameterListSyntax parameterList, BaseListSyntax baseList, CoreSyntax.SyntaxList<TypeParameterConstraintClauseSyntax> constraintClauses, SyntaxToken openBraceToken, CoreSyntax.SyntaxList<MemberDeclarationSyntax> members, SyntaxToken closeBraceToken, SyntaxToken semicolonToken)
         {
             if (attributeLists != this.AttributeLists || modifiers != this.Modifiers || keyword != this.Keyword || identifier != this.Identifier || typeParameterList != this.TypeParameterList || parameterList != this.ParameterList || baseList != this.BaseList || constraintClauses != this.ConstraintClauses || openBraceToken != this.OpenBraceToken || members != this.Members || closeBraceToken != this.CloseBraceToken || semicolonToken != this.SemicolonToken)
             {
@@ -22804,100 +17257,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new InterfaceDeclarationSyntax(this.Kind, this.attributeLists, this.modifiers, this.keyword, this.identifier, this.typeParameterList, this.parameterList, this.baseList, this.constraintClauses, this.openBraceToken, this.members, this.closeBraceToken, this.semicolonToken, GetDiagnostics(), annotations);
-
-        internal InterfaceDeclarationSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 12;
-            var attributeLists = (GreenNode?)reader.ReadValue();
-            if (attributeLists != null)
-            {
-                AdjustFlagsAndWidth(attributeLists);
-                this.attributeLists = attributeLists;
-            }
-            var modifiers = (GreenNode?)reader.ReadValue();
-            if (modifiers != null)
-            {
-                AdjustFlagsAndWidth(modifiers);
-                this.modifiers = modifiers;
-            }
-            var keyword = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(keyword);
-            this.keyword = keyword;
-            var identifier = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(identifier);
-            this.identifier = identifier;
-            var typeParameterList = (TypeParameterListSyntax?)reader.ReadValue();
-            if (typeParameterList != null)
-            {
-                AdjustFlagsAndWidth(typeParameterList);
-                this.typeParameterList = typeParameterList;
-            }
-            var parameterList = (ParameterListSyntax?)reader.ReadValue();
-            if (parameterList != null)
-            {
-                AdjustFlagsAndWidth(parameterList);
-                this.parameterList = parameterList;
-            }
-            var baseList = (BaseListSyntax?)reader.ReadValue();
-            if (baseList != null)
-            {
-                AdjustFlagsAndWidth(baseList);
-                this.baseList = baseList;
-            }
-            var constraintClauses = (GreenNode?)reader.ReadValue();
-            if (constraintClauses != null)
-            {
-                AdjustFlagsAndWidth(constraintClauses);
-                this.constraintClauses = constraintClauses;
-            }
-            var openBraceToken = (SyntaxToken?)reader.ReadValue();
-            if (openBraceToken != null)
-            {
-                AdjustFlagsAndWidth(openBraceToken);
-                this.openBraceToken = openBraceToken;
-            }
-            var members = (GreenNode?)reader.ReadValue();
-            if (members != null)
-            {
-                AdjustFlagsAndWidth(members);
-                this.members = members;
-            }
-            var closeBraceToken = (SyntaxToken?)reader.ReadValue();
-            if (closeBraceToken != null)
-            {
-                AdjustFlagsAndWidth(closeBraceToken);
-                this.closeBraceToken = closeBraceToken;
-            }
-            var semicolonToken = (SyntaxToken?)reader.ReadValue();
-            if (semicolonToken != null)
-            {
-                AdjustFlagsAndWidth(semicolonToken);
-                this.semicolonToken = semicolonToken;
-            }
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.attributeLists);
-            writer.WriteValue(this.modifiers);
-            writer.WriteValue(this.keyword);
-            writer.WriteValue(this.identifier);
-            writer.WriteValue(this.typeParameterList);
-            writer.WriteValue(this.parameterList);
-            writer.WriteValue(this.baseList);
-            writer.WriteValue(this.constraintClauses);
-            writer.WriteValue(this.openBraceToken);
-            writer.WriteValue(this.members);
-            writer.WriteValue(this.closeBraceToken);
-            writer.WriteValue(this.semicolonToken);
-        }
-
-        static InterfaceDeclarationSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(InterfaceDeclarationSyntax), r => new InterfaceDeclarationSyntax(r));
-        }
     }
 
     internal sealed partial class RecordDeclarationSyntax : TypeDeclarationSyntax
@@ -23112,17 +17471,17 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             }
         }
 
-        public override Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> AttributeLists => new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax>(this.attributeLists);
-        public override Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SyntaxToken> Modifiers => new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SyntaxToken>(this.modifiers);
+        public override CoreSyntax.SyntaxList<AttributeListSyntax> AttributeLists => new CoreSyntax.SyntaxList<AttributeListSyntax>(this.attributeLists);
+        public override CoreSyntax.SyntaxList<SyntaxToken> Modifiers => new CoreSyntax.SyntaxList<SyntaxToken>(this.modifiers);
         public override SyntaxToken Keyword => this.keyword;
         public SyntaxToken? ClassOrStructKeyword => this.classOrStructKeyword;
         public override SyntaxToken Identifier => this.identifier;
         public override TypeParameterListSyntax? TypeParameterList => this.typeParameterList;
         public override ParameterListSyntax? ParameterList => this.parameterList;
         public override BaseListSyntax? BaseList => this.baseList;
-        public override Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<TypeParameterConstraintClauseSyntax> ConstraintClauses => new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<TypeParameterConstraintClauseSyntax>(this.constraintClauses);
+        public override CoreSyntax.SyntaxList<TypeParameterConstraintClauseSyntax> ConstraintClauses => new CoreSyntax.SyntaxList<TypeParameterConstraintClauseSyntax>(this.constraintClauses);
         public override SyntaxToken? OpenBraceToken => this.openBraceToken;
-        public override Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<MemberDeclarationSyntax> Members => new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<MemberDeclarationSyntax>(this.members);
+        public override CoreSyntax.SyntaxList<MemberDeclarationSyntax> Members => new CoreSyntax.SyntaxList<MemberDeclarationSyntax>(this.members);
         public override SyntaxToken? CloseBraceToken => this.closeBraceToken;
         public override SyntaxToken? SemicolonToken => this.semicolonToken;
 
@@ -23150,7 +17509,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
         public override void Accept(CSharpSyntaxVisitor visitor) => visitor.VisitRecordDeclaration(this);
         public override TResult Accept<TResult>(CSharpSyntaxVisitor<TResult> visitor) => visitor.VisitRecordDeclaration(this);
 
-        public RecordDeclarationSyntax Update(Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> attributeLists, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SyntaxToken> modifiers, SyntaxToken keyword, SyntaxToken classOrStructKeyword, SyntaxToken identifier, TypeParameterListSyntax typeParameterList, ParameterListSyntax parameterList, BaseListSyntax baseList, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<TypeParameterConstraintClauseSyntax> constraintClauses, SyntaxToken openBraceToken, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<MemberDeclarationSyntax> members, SyntaxToken closeBraceToken, SyntaxToken semicolonToken)
+        public RecordDeclarationSyntax Update(CoreSyntax.SyntaxList<AttributeListSyntax> attributeLists, CoreSyntax.SyntaxList<SyntaxToken> modifiers, SyntaxToken keyword, SyntaxToken classOrStructKeyword, SyntaxToken identifier, TypeParameterListSyntax typeParameterList, ParameterListSyntax parameterList, BaseListSyntax baseList, CoreSyntax.SyntaxList<TypeParameterConstraintClauseSyntax> constraintClauses, SyntaxToken openBraceToken, CoreSyntax.SyntaxList<MemberDeclarationSyntax> members, SyntaxToken closeBraceToken, SyntaxToken semicolonToken)
         {
             if (attributeLists != this.AttributeLists || modifiers != this.Modifiers || keyword != this.Keyword || classOrStructKeyword != this.ClassOrStructKeyword || identifier != this.Identifier || typeParameterList != this.TypeParameterList || parameterList != this.ParameterList || baseList != this.BaseList || constraintClauses != this.ConstraintClauses || openBraceToken != this.OpenBraceToken || members != this.Members || closeBraceToken != this.CloseBraceToken || semicolonToken != this.SemicolonToken)
             {
@@ -23172,107 +17531,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new RecordDeclarationSyntax(this.Kind, this.attributeLists, this.modifiers, this.keyword, this.classOrStructKeyword, this.identifier, this.typeParameterList, this.parameterList, this.baseList, this.constraintClauses, this.openBraceToken, this.members, this.closeBraceToken, this.semicolonToken, GetDiagnostics(), annotations);
-
-        internal RecordDeclarationSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 13;
-            var attributeLists = (GreenNode?)reader.ReadValue();
-            if (attributeLists != null)
-            {
-                AdjustFlagsAndWidth(attributeLists);
-                this.attributeLists = attributeLists;
-            }
-            var modifiers = (GreenNode?)reader.ReadValue();
-            if (modifiers != null)
-            {
-                AdjustFlagsAndWidth(modifiers);
-                this.modifiers = modifiers;
-            }
-            var keyword = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(keyword);
-            this.keyword = keyword;
-            var classOrStructKeyword = (SyntaxToken?)reader.ReadValue();
-            if (classOrStructKeyword != null)
-            {
-                AdjustFlagsAndWidth(classOrStructKeyword);
-                this.classOrStructKeyword = classOrStructKeyword;
-            }
-            var identifier = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(identifier);
-            this.identifier = identifier;
-            var typeParameterList = (TypeParameterListSyntax?)reader.ReadValue();
-            if (typeParameterList != null)
-            {
-                AdjustFlagsAndWidth(typeParameterList);
-                this.typeParameterList = typeParameterList;
-            }
-            var parameterList = (ParameterListSyntax?)reader.ReadValue();
-            if (parameterList != null)
-            {
-                AdjustFlagsAndWidth(parameterList);
-                this.parameterList = parameterList;
-            }
-            var baseList = (BaseListSyntax?)reader.ReadValue();
-            if (baseList != null)
-            {
-                AdjustFlagsAndWidth(baseList);
-                this.baseList = baseList;
-            }
-            var constraintClauses = (GreenNode?)reader.ReadValue();
-            if (constraintClauses != null)
-            {
-                AdjustFlagsAndWidth(constraintClauses);
-                this.constraintClauses = constraintClauses;
-            }
-            var openBraceToken = (SyntaxToken?)reader.ReadValue();
-            if (openBraceToken != null)
-            {
-                AdjustFlagsAndWidth(openBraceToken);
-                this.openBraceToken = openBraceToken;
-            }
-            var members = (GreenNode?)reader.ReadValue();
-            if (members != null)
-            {
-                AdjustFlagsAndWidth(members);
-                this.members = members;
-            }
-            var closeBraceToken = (SyntaxToken?)reader.ReadValue();
-            if (closeBraceToken != null)
-            {
-                AdjustFlagsAndWidth(closeBraceToken);
-                this.closeBraceToken = closeBraceToken;
-            }
-            var semicolonToken = (SyntaxToken?)reader.ReadValue();
-            if (semicolonToken != null)
-            {
-                AdjustFlagsAndWidth(semicolonToken);
-                this.semicolonToken = semicolonToken;
-            }
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.attributeLists);
-            writer.WriteValue(this.modifiers);
-            writer.WriteValue(this.keyword);
-            writer.WriteValue(this.classOrStructKeyword);
-            writer.WriteValue(this.identifier);
-            writer.WriteValue(this.typeParameterList);
-            writer.WriteValue(this.parameterList);
-            writer.WriteValue(this.baseList);
-            writer.WriteValue(this.constraintClauses);
-            writer.WriteValue(this.openBraceToken);
-            writer.WriteValue(this.members);
-            writer.WriteValue(this.closeBraceToken);
-            writer.WriteValue(this.semicolonToken);
-        }
-
-        static RecordDeclarationSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(RecordDeclarationSyntax), r => new RecordDeclarationSyntax(r));
-        }
     }
 
     /// <summary>Enum type declaration syntax.</summary>
@@ -23424,15 +17682,15 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             }
         }
 
-        public override Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> AttributeLists => new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax>(this.attributeLists);
-        public override Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SyntaxToken> Modifiers => new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SyntaxToken>(this.modifiers);
+        public override CoreSyntax.SyntaxList<AttributeListSyntax> AttributeLists => new CoreSyntax.SyntaxList<AttributeListSyntax>(this.attributeLists);
+        public override CoreSyntax.SyntaxList<SyntaxToken> Modifiers => new CoreSyntax.SyntaxList<SyntaxToken>(this.modifiers);
         /// <summary>Gets the enum keyword token.</summary>
         public SyntaxToken EnumKeyword => this.enumKeyword;
         public override SyntaxToken Identifier => this.identifier;
         public override BaseListSyntax? BaseList => this.baseList;
         public override SyntaxToken? OpenBraceToken => this.openBraceToken;
         /// <summary>Gets the members declaration list.</summary>
-        public Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<EnumMemberDeclarationSyntax> Members => new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<EnumMemberDeclarationSyntax>(new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<CSharpSyntaxNode>(this.members));
+        public CoreSyntax.SeparatedSyntaxList<EnumMemberDeclarationSyntax> Members => new CoreSyntax.SeparatedSyntaxList<EnumMemberDeclarationSyntax>(new CoreSyntax.SyntaxList<CSharpSyntaxNode>(this.members));
         public override SyntaxToken? CloseBraceToken => this.closeBraceToken;
         /// <summary>Gets the optional semicolon token.</summary>
         public override SyntaxToken? SemicolonToken => this.semicolonToken;
@@ -23457,7 +17715,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
         public override void Accept(CSharpSyntaxVisitor visitor) => visitor.VisitEnumDeclaration(this);
         public override TResult Accept<TResult>(CSharpSyntaxVisitor<TResult> visitor) => visitor.VisitEnumDeclaration(this);
 
-        public EnumDeclarationSyntax Update(Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> attributeLists, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SyntaxToken> modifiers, SyntaxToken enumKeyword, SyntaxToken identifier, BaseListSyntax baseList, SyntaxToken openBraceToken, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<EnumMemberDeclarationSyntax> members, SyntaxToken closeBraceToken, SyntaxToken semicolonToken)
+        public EnumDeclarationSyntax Update(CoreSyntax.SyntaxList<AttributeListSyntax> attributeLists, CoreSyntax.SyntaxList<SyntaxToken> modifiers, SyntaxToken enumKeyword, SyntaxToken identifier, BaseListSyntax baseList, SyntaxToken openBraceToken, CoreSyntax.SeparatedSyntaxList<EnumMemberDeclarationSyntax> members, SyntaxToken closeBraceToken, SyntaxToken semicolonToken)
         {
             if (attributeLists != this.AttributeLists || modifiers != this.Modifiers || enumKeyword != this.EnumKeyword || identifier != this.Identifier || baseList != this.BaseList || openBraceToken != this.OpenBraceToken || members != this.Members || closeBraceToken != this.CloseBraceToken || semicolonToken != this.SemicolonToken)
             {
@@ -23479,79 +17737,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new EnumDeclarationSyntax(this.Kind, this.attributeLists, this.modifiers, this.enumKeyword, this.identifier, this.baseList, this.openBraceToken, this.members, this.closeBraceToken, this.semicolonToken, GetDiagnostics(), annotations);
-
-        internal EnumDeclarationSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 9;
-            var attributeLists = (GreenNode?)reader.ReadValue();
-            if (attributeLists != null)
-            {
-                AdjustFlagsAndWidth(attributeLists);
-                this.attributeLists = attributeLists;
-            }
-            var modifiers = (GreenNode?)reader.ReadValue();
-            if (modifiers != null)
-            {
-                AdjustFlagsAndWidth(modifiers);
-                this.modifiers = modifiers;
-            }
-            var enumKeyword = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(enumKeyword);
-            this.enumKeyword = enumKeyword;
-            var identifier = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(identifier);
-            this.identifier = identifier;
-            var baseList = (BaseListSyntax?)reader.ReadValue();
-            if (baseList != null)
-            {
-                AdjustFlagsAndWidth(baseList);
-                this.baseList = baseList;
-            }
-            var openBraceToken = (SyntaxToken?)reader.ReadValue();
-            if (openBraceToken != null)
-            {
-                AdjustFlagsAndWidth(openBraceToken);
-                this.openBraceToken = openBraceToken;
-            }
-            var members = (GreenNode?)reader.ReadValue();
-            if (members != null)
-            {
-                AdjustFlagsAndWidth(members);
-                this.members = members;
-            }
-            var closeBraceToken = (SyntaxToken?)reader.ReadValue();
-            if (closeBraceToken != null)
-            {
-                AdjustFlagsAndWidth(closeBraceToken);
-                this.closeBraceToken = closeBraceToken;
-            }
-            var semicolonToken = (SyntaxToken?)reader.ReadValue();
-            if (semicolonToken != null)
-            {
-                AdjustFlagsAndWidth(semicolonToken);
-                this.semicolonToken = semicolonToken;
-            }
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.attributeLists);
-            writer.WriteValue(this.modifiers);
-            writer.WriteValue(this.enumKeyword);
-            writer.WriteValue(this.identifier);
-            writer.WriteValue(this.baseList);
-            writer.WriteValue(this.openBraceToken);
-            writer.WriteValue(this.members);
-            writer.WriteValue(this.closeBraceToken);
-            writer.WriteValue(this.semicolonToken);
-        }
-
-        static EnumDeclarationSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(EnumDeclarationSyntax), r => new EnumDeclarationSyntax(r));
-        }
     }
 
     /// <summary>Delegate declaration syntax.</summary>
@@ -23676,8 +17861,8 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             this.semicolonToken = semicolonToken;
         }
 
-        public override Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> AttributeLists => new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax>(this.attributeLists);
-        public override Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SyntaxToken> Modifiers => new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SyntaxToken>(this.modifiers);
+        public override CoreSyntax.SyntaxList<AttributeListSyntax> AttributeLists => new CoreSyntax.SyntaxList<AttributeListSyntax>(this.attributeLists);
+        public override CoreSyntax.SyntaxList<SyntaxToken> Modifiers => new CoreSyntax.SyntaxList<SyntaxToken>(this.modifiers);
         /// <summary>Gets the "delegate" keyword.</summary>
         public SyntaxToken DelegateKeyword => this.delegateKeyword;
         /// <summary>Gets the return type.</summary>
@@ -23688,7 +17873,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
         /// <summary>Gets the parameter list.</summary>
         public ParameterListSyntax ParameterList => this.parameterList;
         /// <summary>Gets the constraint clause list.</summary>
-        public Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<TypeParameterConstraintClauseSyntax> ConstraintClauses => new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<TypeParameterConstraintClauseSyntax>(this.constraintClauses);
+        public CoreSyntax.SyntaxList<TypeParameterConstraintClauseSyntax> ConstraintClauses => new CoreSyntax.SyntaxList<TypeParameterConstraintClauseSyntax>(this.constraintClauses);
         /// <summary>Gets the semicolon token.</summary>
         public SyntaxToken SemicolonToken => this.semicolonToken;
 
@@ -23712,7 +17897,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
         public override void Accept(CSharpSyntaxVisitor visitor) => visitor.VisitDelegateDeclaration(this);
         public override TResult Accept<TResult>(CSharpSyntaxVisitor<TResult> visitor) => visitor.VisitDelegateDeclaration(this);
 
-        public DelegateDeclarationSyntax Update(Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> attributeLists, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SyntaxToken> modifiers, SyntaxToken delegateKeyword, TypeSyntax returnType, SyntaxToken identifier, TypeParameterListSyntax typeParameterList, ParameterListSyntax parameterList, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<TypeParameterConstraintClauseSyntax> constraintClauses, SyntaxToken semicolonToken)
+        public DelegateDeclarationSyntax Update(CoreSyntax.SyntaxList<AttributeListSyntax> attributeLists, CoreSyntax.SyntaxList<SyntaxToken> modifiers, SyntaxToken delegateKeyword, TypeSyntax returnType, SyntaxToken identifier, TypeParameterListSyntax typeParameterList, ParameterListSyntax parameterList, CoreSyntax.SyntaxList<TypeParameterConstraintClauseSyntax> constraintClauses, SyntaxToken semicolonToken)
         {
             if (attributeLists != this.AttributeLists || modifiers != this.Modifiers || delegateKeyword != this.DelegateKeyword || returnType != this.ReturnType || identifier != this.Identifier || typeParameterList != this.TypeParameterList || parameterList != this.ParameterList || constraintClauses != this.ConstraintClauses || semicolonToken != this.SemicolonToken)
             {
@@ -23734,70 +17919,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new DelegateDeclarationSyntax(this.Kind, this.attributeLists, this.modifiers, this.delegateKeyword, this.returnType, this.identifier, this.typeParameterList, this.parameterList, this.constraintClauses, this.semicolonToken, GetDiagnostics(), annotations);
-
-        internal DelegateDeclarationSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 9;
-            var attributeLists = (GreenNode?)reader.ReadValue();
-            if (attributeLists != null)
-            {
-                AdjustFlagsAndWidth(attributeLists);
-                this.attributeLists = attributeLists;
-            }
-            var modifiers = (GreenNode?)reader.ReadValue();
-            if (modifiers != null)
-            {
-                AdjustFlagsAndWidth(modifiers);
-                this.modifiers = modifiers;
-            }
-            var delegateKeyword = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(delegateKeyword);
-            this.delegateKeyword = delegateKeyword;
-            var returnType = (TypeSyntax)reader.ReadValue();
-            AdjustFlagsAndWidth(returnType);
-            this.returnType = returnType;
-            var identifier = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(identifier);
-            this.identifier = identifier;
-            var typeParameterList = (TypeParameterListSyntax?)reader.ReadValue();
-            if (typeParameterList != null)
-            {
-                AdjustFlagsAndWidth(typeParameterList);
-                this.typeParameterList = typeParameterList;
-            }
-            var parameterList = (ParameterListSyntax)reader.ReadValue();
-            AdjustFlagsAndWidth(parameterList);
-            this.parameterList = parameterList;
-            var constraintClauses = (GreenNode?)reader.ReadValue();
-            if (constraintClauses != null)
-            {
-                AdjustFlagsAndWidth(constraintClauses);
-                this.constraintClauses = constraintClauses;
-            }
-            var semicolonToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(semicolonToken);
-            this.semicolonToken = semicolonToken;
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.attributeLists);
-            writer.WriteValue(this.modifiers);
-            writer.WriteValue(this.delegateKeyword);
-            writer.WriteValue(this.returnType);
-            writer.WriteValue(this.identifier);
-            writer.WriteValue(this.typeParameterList);
-            writer.WriteValue(this.parameterList);
-            writer.WriteValue(this.constraintClauses);
-            writer.WriteValue(this.semicolonToken);
-        }
-
-        static DelegateDeclarationSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(DelegateDeclarationSyntax), r => new DelegateDeclarationSyntax(r));
-        }
     }
 
     internal sealed partial class EnumMemberDeclarationSyntax : MemberDeclarationSyntax
@@ -23877,8 +17998,8 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             }
         }
 
-        public override Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> AttributeLists => new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax>(this.attributeLists);
-        public override Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SyntaxToken> Modifiers => new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SyntaxToken>(this.modifiers);
+        public override CoreSyntax.SyntaxList<AttributeListSyntax> AttributeLists => new CoreSyntax.SyntaxList<AttributeListSyntax>(this.attributeLists);
+        public override CoreSyntax.SyntaxList<SyntaxToken> Modifiers => new CoreSyntax.SyntaxList<SyntaxToken>(this.modifiers);
         /// <summary>Gets the identifier.</summary>
         public SyntaxToken Identifier => this.identifier;
         public EqualsValueClauseSyntax? EqualsValue => this.equalsValue;
@@ -23898,7 +18019,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
         public override void Accept(CSharpSyntaxVisitor visitor) => visitor.VisitEnumMemberDeclaration(this);
         public override TResult Accept<TResult>(CSharpSyntaxVisitor<TResult> visitor) => visitor.VisitEnumMemberDeclaration(this);
 
-        public EnumMemberDeclarationSyntax Update(Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> attributeLists, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SyntaxToken> modifiers, SyntaxToken identifier, EqualsValueClauseSyntax equalsValue)
+        public EnumMemberDeclarationSyntax Update(CoreSyntax.SyntaxList<AttributeListSyntax> attributeLists, CoreSyntax.SyntaxList<SyntaxToken> modifiers, SyntaxToken identifier, EqualsValueClauseSyntax equalsValue)
         {
             if (attributeLists != this.AttributeLists || modifiers != this.Modifiers || identifier != this.Identifier || equalsValue != this.EqualsValue)
             {
@@ -23920,47 +18041,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new EnumMemberDeclarationSyntax(this.Kind, this.attributeLists, this.modifiers, this.identifier, this.equalsValue, GetDiagnostics(), annotations);
-
-        internal EnumMemberDeclarationSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 4;
-            var attributeLists = (GreenNode?)reader.ReadValue();
-            if (attributeLists != null)
-            {
-                AdjustFlagsAndWidth(attributeLists);
-                this.attributeLists = attributeLists;
-            }
-            var modifiers = (GreenNode?)reader.ReadValue();
-            if (modifiers != null)
-            {
-                AdjustFlagsAndWidth(modifiers);
-                this.modifiers = modifiers;
-            }
-            var identifier = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(identifier);
-            this.identifier = identifier;
-            var equalsValue = (EqualsValueClauseSyntax?)reader.ReadValue();
-            if (equalsValue != null)
-            {
-                AdjustFlagsAndWidth(equalsValue);
-                this.equalsValue = equalsValue;
-            }
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.attributeLists);
-            writer.WriteValue(this.modifiers);
-            writer.WriteValue(this.identifier);
-            writer.WriteValue(this.equalsValue);
-        }
-
-        static EnumMemberDeclarationSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(EnumMemberDeclarationSyntax), r => new EnumMemberDeclarationSyntax(r));
-        }
     }
 
     /// <summary>Base list syntax.</summary>
@@ -24012,7 +18092,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
         /// <summary>Gets the colon token.</summary>
         public SyntaxToken ColonToken => this.colonToken;
         /// <summary>Gets the base type references.</summary>
-        public Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<BaseTypeSyntax> Types => new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<BaseTypeSyntax>(new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<CSharpSyntaxNode>(this.types));
+        public CoreSyntax.SeparatedSyntaxList<BaseTypeSyntax> Types => new CoreSyntax.SeparatedSyntaxList<BaseTypeSyntax>(new CoreSyntax.SyntaxList<CSharpSyntaxNode>(this.types));
 
         internal override GreenNode? GetSlot(int index)
             => index switch
@@ -24027,7 +18107,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
         public override void Accept(CSharpSyntaxVisitor visitor) => visitor.VisitBaseList(this);
         public override TResult Accept<TResult>(CSharpSyntaxVisitor<TResult> visitor) => visitor.VisitBaseList(this);
 
-        public BaseListSyntax Update(SyntaxToken colonToken, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<BaseTypeSyntax> types)
+        public BaseListSyntax Update(SyntaxToken colonToken, CoreSyntax.SeparatedSyntaxList<BaseTypeSyntax> types)
         {
             if (colonToken != this.ColonToken || types != this.Types)
             {
@@ -24049,33 +18129,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new BaseListSyntax(this.Kind, this.colonToken, this.types, GetDiagnostics(), annotations);
-
-        internal BaseListSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 2;
-            var colonToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(colonToken);
-            this.colonToken = colonToken;
-            var types = (GreenNode?)reader.ReadValue();
-            if (types != null)
-            {
-                AdjustFlagsAndWidth(types);
-                this.types = types;
-            }
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.colonToken);
-            writer.WriteValue(this.types);
-        }
-
-        static BaseListSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(BaseListSyntax), r => new BaseListSyntax(r));
-        }
     }
 
     /// <summary>Provides the base class from which the classes that represent base type syntax nodes are derived. This is an abstract class.</summary>
@@ -24088,11 +18141,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal BaseTypeSyntax(SyntaxKind kind)
           : base(kind)
-        {
-        }
-
-        protected BaseTypeSyntax(ObjectReader reader)
-          : base(reader)
         {
         }
 
@@ -24160,26 +18208,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new SimpleBaseTypeSyntax(this.Kind, this.type, GetDiagnostics(), annotations);
-
-        internal SimpleBaseTypeSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 1;
-            var type = (TypeSyntax)reader.ReadValue();
-            AdjustFlagsAndWidth(type);
-            this.type = type;
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.type);
-        }
-
-        static SimpleBaseTypeSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(SimpleBaseTypeSyntax), r => new SimpleBaseTypeSyntax(r));
-        }
     }
 
     internal sealed partial class PrimaryConstructorBaseTypeSyntax : BaseTypeSyntax
@@ -24256,30 +18284,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new PrimaryConstructorBaseTypeSyntax(this.Kind, this.type, this.argumentList, GetDiagnostics(), annotations);
-
-        internal PrimaryConstructorBaseTypeSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 2;
-            var type = (TypeSyntax)reader.ReadValue();
-            AdjustFlagsAndWidth(type);
-            this.type = type;
-            var argumentList = (ArgumentListSyntax)reader.ReadValue();
-            AdjustFlagsAndWidth(argumentList);
-            this.argumentList = argumentList;
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.type);
-            writer.WriteValue(this.argumentList);
-        }
-
-        static PrimaryConstructorBaseTypeSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(PrimaryConstructorBaseTypeSyntax), r => new PrimaryConstructorBaseTypeSyntax(r));
-        }
     }
 
     /// <summary>Type parameter constraint clause.</summary>
@@ -24348,7 +18352,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
         /// <summary>Gets the colon token.</summary>
         public SyntaxToken ColonToken => this.colonToken;
         /// <summary>Gets the constraints list.</summary>
-        public Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<TypeParameterConstraintSyntax> Constraints => new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<TypeParameterConstraintSyntax>(new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<CSharpSyntaxNode>(this.constraints));
+        public CoreSyntax.SeparatedSyntaxList<TypeParameterConstraintSyntax> Constraints => new CoreSyntax.SeparatedSyntaxList<TypeParameterConstraintSyntax>(new CoreSyntax.SyntaxList<CSharpSyntaxNode>(this.constraints));
 
         internal override GreenNode? GetSlot(int index)
             => index switch
@@ -24365,7 +18369,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
         public override void Accept(CSharpSyntaxVisitor visitor) => visitor.VisitTypeParameterConstraintClause(this);
         public override TResult Accept<TResult>(CSharpSyntaxVisitor<TResult> visitor) => visitor.VisitTypeParameterConstraintClause(this);
 
-        public TypeParameterConstraintClauseSyntax Update(SyntaxToken whereKeyword, IdentifierNameSyntax name, SyntaxToken colonToken, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<TypeParameterConstraintSyntax> constraints)
+        public TypeParameterConstraintClauseSyntax Update(SyntaxToken whereKeyword, IdentifierNameSyntax name, SyntaxToken colonToken, CoreSyntax.SeparatedSyntaxList<TypeParameterConstraintSyntax> constraints)
         {
             if (whereKeyword != this.WhereKeyword || name != this.Name || colonToken != this.ColonToken || constraints != this.Constraints)
             {
@@ -24387,41 +18391,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new TypeParameterConstraintClauseSyntax(this.Kind, this.whereKeyword, this.name, this.colonToken, this.constraints, GetDiagnostics(), annotations);
-
-        internal TypeParameterConstraintClauseSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 4;
-            var whereKeyword = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(whereKeyword);
-            this.whereKeyword = whereKeyword;
-            var name = (IdentifierNameSyntax)reader.ReadValue();
-            AdjustFlagsAndWidth(name);
-            this.name = name;
-            var colonToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(colonToken);
-            this.colonToken = colonToken;
-            var constraints = (GreenNode?)reader.ReadValue();
-            if (constraints != null)
-            {
-                AdjustFlagsAndWidth(constraints);
-                this.constraints = constraints;
-            }
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.whereKeyword);
-            writer.WriteValue(this.name);
-            writer.WriteValue(this.colonToken);
-            writer.WriteValue(this.constraints);
-        }
-
-        static TypeParameterConstraintClauseSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(TypeParameterConstraintClauseSyntax), r => new TypeParameterConstraintClauseSyntax(r));
-        }
     }
 
     /// <summary>Base type for type parameter constraint syntax.</summary>
@@ -24434,11 +18403,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal TypeParameterConstraintSyntax(SyntaxKind kind)
           : base(kind)
-        {
-        }
-
-        protected TypeParameterConstraintSyntax(ObjectReader reader)
-          : base(reader)
         {
         }
     }
@@ -24530,34 +18494,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new ConstructorConstraintSyntax(this.Kind, this.newKeyword, this.openParenToken, this.closeParenToken, GetDiagnostics(), annotations);
-
-        internal ConstructorConstraintSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 3;
-            var newKeyword = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(newKeyword);
-            this.newKeyword = newKeyword;
-            var openParenToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(openParenToken);
-            this.openParenToken = openParenToken;
-            var closeParenToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(closeParenToken);
-            this.closeParenToken = closeParenToken;
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.newKeyword);
-            writer.WriteValue(this.openParenToken);
-            writer.WriteValue(this.closeParenToken);
-        }
-
-        static ConstructorConstraintSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(ConstructorConstraintSyntax), r => new ConstructorConstraintSyntax(r));
-        }
     }
 
     /// <summary>Class or struct constraint syntax.</summary>
@@ -24646,33 +18582,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new ClassOrStructConstraintSyntax(this.Kind, this.classOrStructKeyword, this.questionToken, GetDiagnostics(), annotations);
-
-        internal ClassOrStructConstraintSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 2;
-            var classOrStructKeyword = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(classOrStructKeyword);
-            this.classOrStructKeyword = classOrStructKeyword;
-            var questionToken = (SyntaxToken?)reader.ReadValue();
-            if (questionToken != null)
-            {
-                AdjustFlagsAndWidth(questionToken);
-                this.questionToken = questionToken;
-            }
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.classOrStructKeyword);
-            writer.WriteValue(this.questionToken);
-        }
-
-        static ClassOrStructConstraintSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(ClassOrStructConstraintSyntax), r => new ClassOrStructConstraintSyntax(r));
-        }
     }
 
     /// <summary>Type constraint syntax.</summary>
@@ -24738,26 +18647,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new TypeConstraintSyntax(this.Kind, this.type, GetDiagnostics(), annotations);
-
-        internal TypeConstraintSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 1;
-            var type = (TypeSyntax)reader.ReadValue();
-            AdjustFlagsAndWidth(type);
-            this.type = type;
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.type);
-        }
-
-        static TypeConstraintSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(TypeConstraintSyntax), r => new TypeConstraintSyntax(r));
-        }
     }
 
     /// <summary>Default constraint syntax.</summary>
@@ -24823,26 +18712,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new DefaultConstraintSyntax(this.Kind, this.defaultKeyword, GetDiagnostics(), annotations);
-
-        internal DefaultConstraintSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 1;
-            var defaultKeyword = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(defaultKeyword);
-            this.defaultKeyword = defaultKeyword;
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.defaultKeyword);
-        }
-
-        static DefaultConstraintSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(DefaultConstraintSyntax), r => new DefaultConstraintSyntax(r));
-        }
     }
 
     internal abstract partial class BaseFieldDeclarationSyntax : MemberDeclarationSyntax
@@ -24854,11 +18723,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal BaseFieldDeclarationSyntax(SyntaxKind kind)
           : base(kind)
-        {
-        }
-
-        protected BaseFieldDeclarationSyntax(ObjectReader reader)
-          : base(reader)
         {
         }
 
@@ -24935,8 +18799,8 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             this.semicolonToken = semicolonToken;
         }
 
-        public override Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> AttributeLists => new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax>(this.attributeLists);
-        public override Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SyntaxToken> Modifiers => new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SyntaxToken>(this.modifiers);
+        public override CoreSyntax.SyntaxList<AttributeListSyntax> AttributeLists => new CoreSyntax.SyntaxList<AttributeListSyntax>(this.attributeLists);
+        public override CoreSyntax.SyntaxList<SyntaxToken> Modifiers => new CoreSyntax.SyntaxList<SyntaxToken>(this.modifiers);
         public override VariableDeclarationSyntax Declaration => this.declaration;
         public override SyntaxToken SemicolonToken => this.semicolonToken;
 
@@ -24955,7 +18819,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
         public override void Accept(CSharpSyntaxVisitor visitor) => visitor.VisitFieldDeclaration(this);
         public override TResult Accept<TResult>(CSharpSyntaxVisitor<TResult> visitor) => visitor.VisitFieldDeclaration(this);
 
-        public FieldDeclarationSyntax Update(Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> attributeLists, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SyntaxToken> modifiers, VariableDeclarationSyntax declaration, SyntaxToken semicolonToken)
+        public FieldDeclarationSyntax Update(CoreSyntax.SyntaxList<AttributeListSyntax> attributeLists, CoreSyntax.SyntaxList<SyntaxToken> modifiers, VariableDeclarationSyntax declaration, SyntaxToken semicolonToken)
         {
             if (attributeLists != this.AttributeLists || modifiers != this.Modifiers || declaration != this.Declaration || semicolonToken != this.SemicolonToken)
             {
@@ -24977,44 +18841,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new FieldDeclarationSyntax(this.Kind, this.attributeLists, this.modifiers, this.declaration, this.semicolonToken, GetDiagnostics(), annotations);
-
-        internal FieldDeclarationSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 4;
-            var attributeLists = (GreenNode?)reader.ReadValue();
-            if (attributeLists != null)
-            {
-                AdjustFlagsAndWidth(attributeLists);
-                this.attributeLists = attributeLists;
-            }
-            var modifiers = (GreenNode?)reader.ReadValue();
-            if (modifiers != null)
-            {
-                AdjustFlagsAndWidth(modifiers);
-                this.modifiers = modifiers;
-            }
-            var declaration = (VariableDeclarationSyntax)reader.ReadValue();
-            AdjustFlagsAndWidth(declaration);
-            this.declaration = declaration;
-            var semicolonToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(semicolonToken);
-            this.semicolonToken = semicolonToken;
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.attributeLists);
-            writer.WriteValue(this.modifiers);
-            writer.WriteValue(this.declaration);
-            writer.WriteValue(this.semicolonToken);
-        }
-
-        static FieldDeclarationSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(FieldDeclarationSyntax), r => new FieldDeclarationSyntax(r));
-        }
     }
 
     internal sealed partial class EventFieldDeclarationSyntax : BaseFieldDeclarationSyntax
@@ -25092,8 +18918,8 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             this.semicolonToken = semicolonToken;
         }
 
-        public override Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> AttributeLists => new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax>(this.attributeLists);
-        public override Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SyntaxToken> Modifiers => new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SyntaxToken>(this.modifiers);
+        public override CoreSyntax.SyntaxList<AttributeListSyntax> AttributeLists => new CoreSyntax.SyntaxList<AttributeListSyntax>(this.attributeLists);
+        public override CoreSyntax.SyntaxList<SyntaxToken> Modifiers => new CoreSyntax.SyntaxList<SyntaxToken>(this.modifiers);
         public SyntaxToken EventKeyword => this.eventKeyword;
         public override VariableDeclarationSyntax Declaration => this.declaration;
         public override SyntaxToken SemicolonToken => this.semicolonToken;
@@ -25114,7 +18940,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
         public override void Accept(CSharpSyntaxVisitor visitor) => visitor.VisitEventFieldDeclaration(this);
         public override TResult Accept<TResult>(CSharpSyntaxVisitor<TResult> visitor) => visitor.VisitEventFieldDeclaration(this);
 
-        public EventFieldDeclarationSyntax Update(Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> attributeLists, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SyntaxToken> modifiers, SyntaxToken eventKeyword, VariableDeclarationSyntax declaration, SyntaxToken semicolonToken)
+        public EventFieldDeclarationSyntax Update(CoreSyntax.SyntaxList<AttributeListSyntax> attributeLists, CoreSyntax.SyntaxList<SyntaxToken> modifiers, SyntaxToken eventKeyword, VariableDeclarationSyntax declaration, SyntaxToken semicolonToken)
         {
             if (attributeLists != this.AttributeLists || modifiers != this.Modifiers || eventKeyword != this.EventKeyword || declaration != this.Declaration || semicolonToken != this.SemicolonToken)
             {
@@ -25136,48 +18962,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new EventFieldDeclarationSyntax(this.Kind, this.attributeLists, this.modifiers, this.eventKeyword, this.declaration, this.semicolonToken, GetDiagnostics(), annotations);
-
-        internal EventFieldDeclarationSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 5;
-            var attributeLists = (GreenNode?)reader.ReadValue();
-            if (attributeLists != null)
-            {
-                AdjustFlagsAndWidth(attributeLists);
-                this.attributeLists = attributeLists;
-            }
-            var modifiers = (GreenNode?)reader.ReadValue();
-            if (modifiers != null)
-            {
-                AdjustFlagsAndWidth(modifiers);
-                this.modifiers = modifiers;
-            }
-            var eventKeyword = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(eventKeyword);
-            this.eventKeyword = eventKeyword;
-            var declaration = (VariableDeclarationSyntax)reader.ReadValue();
-            AdjustFlagsAndWidth(declaration);
-            this.declaration = declaration;
-            var semicolonToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(semicolonToken);
-            this.semicolonToken = semicolonToken;
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.attributeLists);
-            writer.WriteValue(this.modifiers);
-            writer.WriteValue(this.eventKeyword);
-            writer.WriteValue(this.declaration);
-            writer.WriteValue(this.semicolonToken);
-        }
-
-        static EventFieldDeclarationSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(EventFieldDeclarationSyntax), r => new EventFieldDeclarationSyntax(r));
-        }
     }
 
     internal sealed partial class ExplicitInterfaceSpecifierSyntax : CSharpSyntaxNode
@@ -25254,30 +19038,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new ExplicitInterfaceSpecifierSyntax(this.Kind, this.name, this.dotToken, GetDiagnostics(), annotations);
-
-        internal ExplicitInterfaceSpecifierSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 2;
-            var name = (NameSyntax)reader.ReadValue();
-            AdjustFlagsAndWidth(name);
-            this.name = name;
-            var dotToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(dotToken);
-            this.dotToken = dotToken;
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.name);
-            writer.WriteValue(this.dotToken);
-        }
-
-        static ExplicitInterfaceSpecifierSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(ExplicitInterfaceSpecifierSyntax), r => new ExplicitInterfaceSpecifierSyntax(r));
-        }
     }
 
     /// <summary>Base type for method declaration syntax.</summary>
@@ -25290,11 +19050,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal BaseMethodDeclarationSyntax(SyntaxKind kind)
           : base(kind)
-        {
-        }
-
-        protected BaseMethodDeclarationSyntax(ObjectReader reader)
-          : base(reader)
         {
         }
 
@@ -25481,8 +19236,8 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             }
         }
 
-        public override Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> AttributeLists => new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax>(this.attributeLists);
-        public override Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SyntaxToken> Modifiers => new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SyntaxToken>(this.modifiers);
+        public override CoreSyntax.SyntaxList<AttributeListSyntax> AttributeLists => new CoreSyntax.SyntaxList<AttributeListSyntax>(this.attributeLists);
+        public override CoreSyntax.SyntaxList<SyntaxToken> Modifiers => new CoreSyntax.SyntaxList<SyntaxToken>(this.modifiers);
         /// <summary>Gets the return type syntax.</summary>
         public TypeSyntax ReturnType => this.returnType;
         public ExplicitInterfaceSpecifierSyntax? ExplicitInterfaceSpecifier => this.explicitInterfaceSpecifier;
@@ -25491,7 +19246,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
         public TypeParameterListSyntax? TypeParameterList => this.typeParameterList;
         public override ParameterListSyntax ParameterList => this.parameterList;
         /// <summary>Gets the constraint clause list.</summary>
-        public Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<TypeParameterConstraintClauseSyntax> ConstraintClauses => new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<TypeParameterConstraintClauseSyntax>(this.constraintClauses);
+        public CoreSyntax.SyntaxList<TypeParameterConstraintClauseSyntax> ConstraintClauses => new CoreSyntax.SyntaxList<TypeParameterConstraintClauseSyntax>(this.constraintClauses);
         public override BlockSyntax? Body => this.body;
         public override ArrowExpressionClauseSyntax? ExpressionBody => this.expressionBody;
         /// <summary>Gets the optional semicolon token.</summary>
@@ -25519,7 +19274,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
         public override void Accept(CSharpSyntaxVisitor visitor) => visitor.VisitMethodDeclaration(this);
         public override TResult Accept<TResult>(CSharpSyntaxVisitor<TResult> visitor) => visitor.VisitMethodDeclaration(this);
 
-        public MethodDeclarationSyntax Update(Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> attributeLists, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SyntaxToken> modifiers, TypeSyntax returnType, ExplicitInterfaceSpecifierSyntax explicitInterfaceSpecifier, SyntaxToken identifier, TypeParameterListSyntax typeParameterList, ParameterListSyntax parameterList, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<TypeParameterConstraintClauseSyntax> constraintClauses, BlockSyntax body, ArrowExpressionClauseSyntax expressionBody, SyntaxToken semicolonToken)
+        public MethodDeclarationSyntax Update(CoreSyntax.SyntaxList<AttributeListSyntax> attributeLists, CoreSyntax.SyntaxList<SyntaxToken> modifiers, TypeSyntax returnType, ExplicitInterfaceSpecifierSyntax explicitInterfaceSpecifier, SyntaxToken identifier, TypeParameterListSyntax typeParameterList, ParameterListSyntax parameterList, CoreSyntax.SyntaxList<TypeParameterConstraintClauseSyntax> constraintClauses, BlockSyntax body, ArrowExpressionClauseSyntax expressionBody, SyntaxToken semicolonToken)
         {
             if (attributeLists != this.AttributeLists || modifiers != this.Modifiers || returnType != this.ReturnType || explicitInterfaceSpecifier != this.ExplicitInterfaceSpecifier || identifier != this.Identifier || typeParameterList != this.TypeParameterList || parameterList != this.ParameterList || constraintClauses != this.ConstraintClauses || body != this.Body || expressionBody != this.ExpressionBody || semicolonToken != this.SemicolonToken)
             {
@@ -25541,90 +19296,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new MethodDeclarationSyntax(this.Kind, this.attributeLists, this.modifiers, this.returnType, this.explicitInterfaceSpecifier, this.identifier, this.typeParameterList, this.parameterList, this.constraintClauses, this.body, this.expressionBody, this.semicolonToken, GetDiagnostics(), annotations);
-
-        internal MethodDeclarationSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 11;
-            var attributeLists = (GreenNode?)reader.ReadValue();
-            if (attributeLists != null)
-            {
-                AdjustFlagsAndWidth(attributeLists);
-                this.attributeLists = attributeLists;
-            }
-            var modifiers = (GreenNode?)reader.ReadValue();
-            if (modifiers != null)
-            {
-                AdjustFlagsAndWidth(modifiers);
-                this.modifiers = modifiers;
-            }
-            var returnType = (TypeSyntax)reader.ReadValue();
-            AdjustFlagsAndWidth(returnType);
-            this.returnType = returnType;
-            var explicitInterfaceSpecifier = (ExplicitInterfaceSpecifierSyntax?)reader.ReadValue();
-            if (explicitInterfaceSpecifier != null)
-            {
-                AdjustFlagsAndWidth(explicitInterfaceSpecifier);
-                this.explicitInterfaceSpecifier = explicitInterfaceSpecifier;
-            }
-            var identifier = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(identifier);
-            this.identifier = identifier;
-            var typeParameterList = (TypeParameterListSyntax?)reader.ReadValue();
-            if (typeParameterList != null)
-            {
-                AdjustFlagsAndWidth(typeParameterList);
-                this.typeParameterList = typeParameterList;
-            }
-            var parameterList = (ParameterListSyntax)reader.ReadValue();
-            AdjustFlagsAndWidth(parameterList);
-            this.parameterList = parameterList;
-            var constraintClauses = (GreenNode?)reader.ReadValue();
-            if (constraintClauses != null)
-            {
-                AdjustFlagsAndWidth(constraintClauses);
-                this.constraintClauses = constraintClauses;
-            }
-            var body = (BlockSyntax?)reader.ReadValue();
-            if (body != null)
-            {
-                AdjustFlagsAndWidth(body);
-                this.body = body;
-            }
-            var expressionBody = (ArrowExpressionClauseSyntax?)reader.ReadValue();
-            if (expressionBody != null)
-            {
-                AdjustFlagsAndWidth(expressionBody);
-                this.expressionBody = expressionBody;
-            }
-            var semicolonToken = (SyntaxToken?)reader.ReadValue();
-            if (semicolonToken != null)
-            {
-                AdjustFlagsAndWidth(semicolonToken);
-                this.semicolonToken = semicolonToken;
-            }
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.attributeLists);
-            writer.WriteValue(this.modifiers);
-            writer.WriteValue(this.returnType);
-            writer.WriteValue(this.explicitInterfaceSpecifier);
-            writer.WriteValue(this.identifier);
-            writer.WriteValue(this.typeParameterList);
-            writer.WriteValue(this.parameterList);
-            writer.WriteValue(this.constraintClauses);
-            writer.WriteValue(this.body);
-            writer.WriteValue(this.expressionBody);
-            writer.WriteValue(this.semicolonToken);
-        }
-
-        static MethodDeclarationSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(MethodDeclarationSyntax), r => new MethodDeclarationSyntax(r));
-        }
     }
 
     /// <summary>Operator declaration syntax.</summary>
@@ -25790,8 +19461,8 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             }
         }
 
-        public override Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> AttributeLists => new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax>(this.attributeLists);
-        public override Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SyntaxToken> Modifiers => new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SyntaxToken>(this.modifiers);
+        public override CoreSyntax.SyntaxList<AttributeListSyntax> AttributeLists => new CoreSyntax.SyntaxList<AttributeListSyntax>(this.attributeLists);
+        public override CoreSyntax.SyntaxList<SyntaxToken> Modifiers => new CoreSyntax.SyntaxList<SyntaxToken>(this.modifiers);
         /// <summary>Gets the return type.</summary>
         public TypeSyntax ReturnType => this.returnType;
         public ExplicitInterfaceSpecifierSyntax? ExplicitInterfaceSpecifier => this.explicitInterfaceSpecifier;
@@ -25829,7 +19500,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
         public override void Accept(CSharpSyntaxVisitor visitor) => visitor.VisitOperatorDeclaration(this);
         public override TResult Accept<TResult>(CSharpSyntaxVisitor<TResult> visitor) => visitor.VisitOperatorDeclaration(this);
 
-        public OperatorDeclarationSyntax Update(Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> attributeLists, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SyntaxToken> modifiers, TypeSyntax returnType, ExplicitInterfaceSpecifierSyntax explicitInterfaceSpecifier, SyntaxToken operatorKeyword, SyntaxToken checkedKeyword, SyntaxToken operatorToken, ParameterListSyntax parameterList, BlockSyntax body, ArrowExpressionClauseSyntax expressionBody, SyntaxToken semicolonToken)
+        public OperatorDeclarationSyntax Update(CoreSyntax.SyntaxList<AttributeListSyntax> attributeLists, CoreSyntax.SyntaxList<SyntaxToken> modifiers, TypeSyntax returnType, ExplicitInterfaceSpecifierSyntax explicitInterfaceSpecifier, SyntaxToken operatorKeyword, SyntaxToken checkedKeyword, SyntaxToken operatorToken, ParameterListSyntax parameterList, BlockSyntax body, ArrowExpressionClauseSyntax expressionBody, SyntaxToken semicolonToken)
         {
             if (attributeLists != this.AttributeLists || modifiers != this.Modifiers || returnType != this.ReturnType || explicitInterfaceSpecifier != this.ExplicitInterfaceSpecifier || operatorKeyword != this.OperatorKeyword || checkedKeyword != this.CheckedKeyword || operatorToken != this.OperatorToken || parameterList != this.ParameterList || body != this.Body || expressionBody != this.ExpressionBody || semicolonToken != this.SemicolonToken)
             {
@@ -25851,87 +19522,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new OperatorDeclarationSyntax(this.Kind, this.attributeLists, this.modifiers, this.returnType, this.explicitInterfaceSpecifier, this.operatorKeyword, this.checkedKeyword, this.operatorToken, this.parameterList, this.body, this.expressionBody, this.semicolonToken, GetDiagnostics(), annotations);
-
-        internal OperatorDeclarationSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 11;
-            var attributeLists = (GreenNode?)reader.ReadValue();
-            if (attributeLists != null)
-            {
-                AdjustFlagsAndWidth(attributeLists);
-                this.attributeLists = attributeLists;
-            }
-            var modifiers = (GreenNode?)reader.ReadValue();
-            if (modifiers != null)
-            {
-                AdjustFlagsAndWidth(modifiers);
-                this.modifiers = modifiers;
-            }
-            var returnType = (TypeSyntax)reader.ReadValue();
-            AdjustFlagsAndWidth(returnType);
-            this.returnType = returnType;
-            var explicitInterfaceSpecifier = (ExplicitInterfaceSpecifierSyntax?)reader.ReadValue();
-            if (explicitInterfaceSpecifier != null)
-            {
-                AdjustFlagsAndWidth(explicitInterfaceSpecifier);
-                this.explicitInterfaceSpecifier = explicitInterfaceSpecifier;
-            }
-            var operatorKeyword = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(operatorKeyword);
-            this.operatorKeyword = operatorKeyword;
-            var checkedKeyword = (SyntaxToken?)reader.ReadValue();
-            if (checkedKeyword != null)
-            {
-                AdjustFlagsAndWidth(checkedKeyword);
-                this.checkedKeyword = checkedKeyword;
-            }
-            var operatorToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(operatorToken);
-            this.operatorToken = operatorToken;
-            var parameterList = (ParameterListSyntax)reader.ReadValue();
-            AdjustFlagsAndWidth(parameterList);
-            this.parameterList = parameterList;
-            var body = (BlockSyntax?)reader.ReadValue();
-            if (body != null)
-            {
-                AdjustFlagsAndWidth(body);
-                this.body = body;
-            }
-            var expressionBody = (ArrowExpressionClauseSyntax?)reader.ReadValue();
-            if (expressionBody != null)
-            {
-                AdjustFlagsAndWidth(expressionBody);
-                this.expressionBody = expressionBody;
-            }
-            var semicolonToken = (SyntaxToken?)reader.ReadValue();
-            if (semicolonToken != null)
-            {
-                AdjustFlagsAndWidth(semicolonToken);
-                this.semicolonToken = semicolonToken;
-            }
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.attributeLists);
-            writer.WriteValue(this.modifiers);
-            writer.WriteValue(this.returnType);
-            writer.WriteValue(this.explicitInterfaceSpecifier);
-            writer.WriteValue(this.operatorKeyword);
-            writer.WriteValue(this.checkedKeyword);
-            writer.WriteValue(this.operatorToken);
-            writer.WriteValue(this.parameterList);
-            writer.WriteValue(this.body);
-            writer.WriteValue(this.expressionBody);
-            writer.WriteValue(this.semicolonToken);
-        }
-
-        static OperatorDeclarationSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(OperatorDeclarationSyntax), r => new OperatorDeclarationSyntax(r));
-        }
     }
 
     /// <summary>Conversion operator declaration syntax.</summary>
@@ -26097,8 +19687,8 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             }
         }
 
-        public override Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> AttributeLists => new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax>(this.attributeLists);
-        public override Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SyntaxToken> Modifiers => new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SyntaxToken>(this.modifiers);
+        public override CoreSyntax.SyntaxList<AttributeListSyntax> AttributeLists => new CoreSyntax.SyntaxList<AttributeListSyntax>(this.attributeLists);
+        public override CoreSyntax.SyntaxList<SyntaxToken> Modifiers => new CoreSyntax.SyntaxList<SyntaxToken>(this.modifiers);
         /// <summary>Gets the "implicit" or "explicit" token.</summary>
         public SyntaxToken ImplicitOrExplicitKeyword => this.implicitOrExplicitKeyword;
         public ExplicitInterfaceSpecifierSyntax? ExplicitInterfaceSpecifier => this.explicitInterfaceSpecifier;
@@ -26136,7 +19726,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
         public override void Accept(CSharpSyntaxVisitor visitor) => visitor.VisitConversionOperatorDeclaration(this);
         public override TResult Accept<TResult>(CSharpSyntaxVisitor<TResult> visitor) => visitor.VisitConversionOperatorDeclaration(this);
 
-        public ConversionOperatorDeclarationSyntax Update(Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> attributeLists, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SyntaxToken> modifiers, SyntaxToken implicitOrExplicitKeyword, ExplicitInterfaceSpecifierSyntax explicitInterfaceSpecifier, SyntaxToken operatorKeyword, SyntaxToken checkedKeyword, TypeSyntax type, ParameterListSyntax parameterList, BlockSyntax body, ArrowExpressionClauseSyntax expressionBody, SyntaxToken semicolonToken)
+        public ConversionOperatorDeclarationSyntax Update(CoreSyntax.SyntaxList<AttributeListSyntax> attributeLists, CoreSyntax.SyntaxList<SyntaxToken> modifiers, SyntaxToken implicitOrExplicitKeyword, ExplicitInterfaceSpecifierSyntax explicitInterfaceSpecifier, SyntaxToken operatorKeyword, SyntaxToken checkedKeyword, TypeSyntax type, ParameterListSyntax parameterList, BlockSyntax body, ArrowExpressionClauseSyntax expressionBody, SyntaxToken semicolonToken)
         {
             if (attributeLists != this.AttributeLists || modifiers != this.Modifiers || implicitOrExplicitKeyword != this.ImplicitOrExplicitKeyword || explicitInterfaceSpecifier != this.ExplicitInterfaceSpecifier || operatorKeyword != this.OperatorKeyword || checkedKeyword != this.CheckedKeyword || type != this.Type || parameterList != this.ParameterList || body != this.Body || expressionBody != this.ExpressionBody || semicolonToken != this.SemicolonToken)
             {
@@ -26158,87 +19748,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new ConversionOperatorDeclarationSyntax(this.Kind, this.attributeLists, this.modifiers, this.implicitOrExplicitKeyword, this.explicitInterfaceSpecifier, this.operatorKeyword, this.checkedKeyword, this.type, this.parameterList, this.body, this.expressionBody, this.semicolonToken, GetDiagnostics(), annotations);
-
-        internal ConversionOperatorDeclarationSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 11;
-            var attributeLists = (GreenNode?)reader.ReadValue();
-            if (attributeLists != null)
-            {
-                AdjustFlagsAndWidth(attributeLists);
-                this.attributeLists = attributeLists;
-            }
-            var modifiers = (GreenNode?)reader.ReadValue();
-            if (modifiers != null)
-            {
-                AdjustFlagsAndWidth(modifiers);
-                this.modifiers = modifiers;
-            }
-            var implicitOrExplicitKeyword = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(implicitOrExplicitKeyword);
-            this.implicitOrExplicitKeyword = implicitOrExplicitKeyword;
-            var explicitInterfaceSpecifier = (ExplicitInterfaceSpecifierSyntax?)reader.ReadValue();
-            if (explicitInterfaceSpecifier != null)
-            {
-                AdjustFlagsAndWidth(explicitInterfaceSpecifier);
-                this.explicitInterfaceSpecifier = explicitInterfaceSpecifier;
-            }
-            var operatorKeyword = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(operatorKeyword);
-            this.operatorKeyword = operatorKeyword;
-            var checkedKeyword = (SyntaxToken?)reader.ReadValue();
-            if (checkedKeyword != null)
-            {
-                AdjustFlagsAndWidth(checkedKeyword);
-                this.checkedKeyword = checkedKeyword;
-            }
-            var type = (TypeSyntax)reader.ReadValue();
-            AdjustFlagsAndWidth(type);
-            this.type = type;
-            var parameterList = (ParameterListSyntax)reader.ReadValue();
-            AdjustFlagsAndWidth(parameterList);
-            this.parameterList = parameterList;
-            var body = (BlockSyntax?)reader.ReadValue();
-            if (body != null)
-            {
-                AdjustFlagsAndWidth(body);
-                this.body = body;
-            }
-            var expressionBody = (ArrowExpressionClauseSyntax?)reader.ReadValue();
-            if (expressionBody != null)
-            {
-                AdjustFlagsAndWidth(expressionBody);
-                this.expressionBody = expressionBody;
-            }
-            var semicolonToken = (SyntaxToken?)reader.ReadValue();
-            if (semicolonToken != null)
-            {
-                AdjustFlagsAndWidth(semicolonToken);
-                this.semicolonToken = semicolonToken;
-            }
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.attributeLists);
-            writer.WriteValue(this.modifiers);
-            writer.WriteValue(this.implicitOrExplicitKeyword);
-            writer.WriteValue(this.explicitInterfaceSpecifier);
-            writer.WriteValue(this.operatorKeyword);
-            writer.WriteValue(this.checkedKeyword);
-            writer.WriteValue(this.type);
-            writer.WriteValue(this.parameterList);
-            writer.WriteValue(this.body);
-            writer.WriteValue(this.expressionBody);
-            writer.WriteValue(this.semicolonToken);
-        }
-
-        static ConversionOperatorDeclarationSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(ConversionOperatorDeclarationSyntax), r => new ConversionOperatorDeclarationSyntax(r));
-        }
     }
 
     /// <summary>Constructor declaration syntax.</summary>
@@ -26374,8 +19883,8 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             }
         }
 
-        public override Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> AttributeLists => new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax>(this.attributeLists);
-        public override Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SyntaxToken> Modifiers => new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SyntaxToken>(this.modifiers);
+        public override CoreSyntax.SyntaxList<AttributeListSyntax> AttributeLists => new CoreSyntax.SyntaxList<AttributeListSyntax>(this.attributeLists);
+        public override CoreSyntax.SyntaxList<SyntaxToken> Modifiers => new CoreSyntax.SyntaxList<SyntaxToken>(this.modifiers);
         /// <summary>Gets the identifier.</summary>
         public SyntaxToken Identifier => this.identifier;
         public override ParameterListSyntax ParameterList => this.parameterList;
@@ -26404,7 +19913,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
         public override void Accept(CSharpSyntaxVisitor visitor) => visitor.VisitConstructorDeclaration(this);
         public override TResult Accept<TResult>(CSharpSyntaxVisitor<TResult> visitor) => visitor.VisitConstructorDeclaration(this);
 
-        public ConstructorDeclarationSyntax Update(Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> attributeLists, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SyntaxToken> modifiers, SyntaxToken identifier, ParameterListSyntax parameterList, ConstructorInitializerSyntax initializer, BlockSyntax body, ArrowExpressionClauseSyntax expressionBody, SyntaxToken semicolonToken)
+        public ConstructorDeclarationSyntax Update(CoreSyntax.SyntaxList<AttributeListSyntax> attributeLists, CoreSyntax.SyntaxList<SyntaxToken> modifiers, SyntaxToken identifier, ParameterListSyntax parameterList, ConstructorInitializerSyntax initializer, BlockSyntax body, ArrowExpressionClauseSyntax expressionBody, SyntaxToken semicolonToken)
         {
             if (attributeLists != this.AttributeLists || modifiers != this.Modifiers || identifier != this.Identifier || parameterList != this.ParameterList || initializer != this.Initializer || body != this.Body || expressionBody != this.ExpressionBody || semicolonToken != this.SemicolonToken)
             {
@@ -26426,72 +19935,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new ConstructorDeclarationSyntax(this.Kind, this.attributeLists, this.modifiers, this.identifier, this.parameterList, this.initializer, this.body, this.expressionBody, this.semicolonToken, GetDiagnostics(), annotations);
-
-        internal ConstructorDeclarationSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 8;
-            var attributeLists = (GreenNode?)reader.ReadValue();
-            if (attributeLists != null)
-            {
-                AdjustFlagsAndWidth(attributeLists);
-                this.attributeLists = attributeLists;
-            }
-            var modifiers = (GreenNode?)reader.ReadValue();
-            if (modifiers != null)
-            {
-                AdjustFlagsAndWidth(modifiers);
-                this.modifiers = modifiers;
-            }
-            var identifier = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(identifier);
-            this.identifier = identifier;
-            var parameterList = (ParameterListSyntax)reader.ReadValue();
-            AdjustFlagsAndWidth(parameterList);
-            this.parameterList = parameterList;
-            var initializer = (ConstructorInitializerSyntax?)reader.ReadValue();
-            if (initializer != null)
-            {
-                AdjustFlagsAndWidth(initializer);
-                this.initializer = initializer;
-            }
-            var body = (BlockSyntax?)reader.ReadValue();
-            if (body != null)
-            {
-                AdjustFlagsAndWidth(body);
-                this.body = body;
-            }
-            var expressionBody = (ArrowExpressionClauseSyntax?)reader.ReadValue();
-            if (expressionBody != null)
-            {
-                AdjustFlagsAndWidth(expressionBody);
-                this.expressionBody = expressionBody;
-            }
-            var semicolonToken = (SyntaxToken?)reader.ReadValue();
-            if (semicolonToken != null)
-            {
-                AdjustFlagsAndWidth(semicolonToken);
-                this.semicolonToken = semicolonToken;
-            }
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.attributeLists);
-            writer.WriteValue(this.modifiers);
-            writer.WriteValue(this.identifier);
-            writer.WriteValue(this.parameterList);
-            writer.WriteValue(this.initializer);
-            writer.WriteValue(this.body);
-            writer.WriteValue(this.expressionBody);
-            writer.WriteValue(this.semicolonToken);
-        }
-
-        static ConstructorDeclarationSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(ConstructorDeclarationSyntax), r => new ConstructorDeclarationSyntax(r));
-        }
     }
 
     /// <summary>Constructor initializer syntax.</summary>
@@ -26580,34 +20023,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new ConstructorInitializerSyntax(this.Kind, this.colonToken, this.thisOrBaseKeyword, this.argumentList, GetDiagnostics(), annotations);
-
-        internal ConstructorInitializerSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 3;
-            var colonToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(colonToken);
-            this.colonToken = colonToken;
-            var thisOrBaseKeyword = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(thisOrBaseKeyword);
-            this.thisOrBaseKeyword = thisOrBaseKeyword;
-            var argumentList = (ArgumentListSyntax)reader.ReadValue();
-            AdjustFlagsAndWidth(argumentList);
-            this.argumentList = argumentList;
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.colonToken);
-            writer.WriteValue(this.thisOrBaseKeyword);
-            writer.WriteValue(this.argumentList);
-        }
-
-        static ConstructorInitializerSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(ConstructorInitializerSyntax), r => new ConstructorInitializerSyntax(r));
-        }
     }
 
     /// <summary>Destructor declaration syntax.</summary>
@@ -26734,8 +20149,8 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             }
         }
 
-        public override Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> AttributeLists => new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax>(this.attributeLists);
-        public override Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SyntaxToken> Modifiers => new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SyntaxToken>(this.modifiers);
+        public override CoreSyntax.SyntaxList<AttributeListSyntax> AttributeLists => new CoreSyntax.SyntaxList<AttributeListSyntax>(this.attributeLists);
+        public override CoreSyntax.SyntaxList<SyntaxToken> Modifiers => new CoreSyntax.SyntaxList<SyntaxToken>(this.modifiers);
         /// <summary>Gets the tilde token.</summary>
         public SyntaxToken TildeToken => this.tildeToken;
         /// <summary>Gets the identifier.</summary>
@@ -26765,7 +20180,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
         public override void Accept(CSharpSyntaxVisitor visitor) => visitor.VisitDestructorDeclaration(this);
         public override TResult Accept<TResult>(CSharpSyntaxVisitor<TResult> visitor) => visitor.VisitDestructorDeclaration(this);
 
-        public DestructorDeclarationSyntax Update(Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> attributeLists, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SyntaxToken> modifiers, SyntaxToken tildeToken, SyntaxToken identifier, ParameterListSyntax parameterList, BlockSyntax body, ArrowExpressionClauseSyntax expressionBody, SyntaxToken semicolonToken)
+        public DestructorDeclarationSyntax Update(CoreSyntax.SyntaxList<AttributeListSyntax> attributeLists, CoreSyntax.SyntaxList<SyntaxToken> modifiers, SyntaxToken tildeToken, SyntaxToken identifier, ParameterListSyntax parameterList, BlockSyntax body, ArrowExpressionClauseSyntax expressionBody, SyntaxToken semicolonToken)
         {
             if (attributeLists != this.AttributeLists || modifiers != this.Modifiers || tildeToken != this.TildeToken || identifier != this.Identifier || parameterList != this.ParameterList || body != this.Body || expressionBody != this.ExpressionBody || semicolonToken != this.SemicolonToken)
             {
@@ -26787,69 +20202,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new DestructorDeclarationSyntax(this.Kind, this.attributeLists, this.modifiers, this.tildeToken, this.identifier, this.parameterList, this.body, this.expressionBody, this.semicolonToken, GetDiagnostics(), annotations);
-
-        internal DestructorDeclarationSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 8;
-            var attributeLists = (GreenNode?)reader.ReadValue();
-            if (attributeLists != null)
-            {
-                AdjustFlagsAndWidth(attributeLists);
-                this.attributeLists = attributeLists;
-            }
-            var modifiers = (GreenNode?)reader.ReadValue();
-            if (modifiers != null)
-            {
-                AdjustFlagsAndWidth(modifiers);
-                this.modifiers = modifiers;
-            }
-            var tildeToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(tildeToken);
-            this.tildeToken = tildeToken;
-            var identifier = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(identifier);
-            this.identifier = identifier;
-            var parameterList = (ParameterListSyntax)reader.ReadValue();
-            AdjustFlagsAndWidth(parameterList);
-            this.parameterList = parameterList;
-            var body = (BlockSyntax?)reader.ReadValue();
-            if (body != null)
-            {
-                AdjustFlagsAndWidth(body);
-                this.body = body;
-            }
-            var expressionBody = (ArrowExpressionClauseSyntax?)reader.ReadValue();
-            if (expressionBody != null)
-            {
-                AdjustFlagsAndWidth(expressionBody);
-                this.expressionBody = expressionBody;
-            }
-            var semicolonToken = (SyntaxToken?)reader.ReadValue();
-            if (semicolonToken != null)
-            {
-                AdjustFlagsAndWidth(semicolonToken);
-                this.semicolonToken = semicolonToken;
-            }
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.attributeLists);
-            writer.WriteValue(this.modifiers);
-            writer.WriteValue(this.tildeToken);
-            writer.WriteValue(this.identifier);
-            writer.WriteValue(this.parameterList);
-            writer.WriteValue(this.body);
-            writer.WriteValue(this.expressionBody);
-            writer.WriteValue(this.semicolonToken);
-        }
-
-        static DestructorDeclarationSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(DestructorDeclarationSyntax), r => new DestructorDeclarationSyntax(r));
-        }
     }
 
     /// <summary>Base type for property declaration syntax.</summary>
@@ -26862,11 +20214,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal BasePropertyDeclarationSyntax(SyntaxKind kind)
           : base(kind)
-        {
-        }
-
-        protected BasePropertyDeclarationSyntax(ObjectReader reader)
-          : base(reader)
         {
         }
 
@@ -27027,8 +20374,8 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             }
         }
 
-        public override Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> AttributeLists => new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax>(this.attributeLists);
-        public override Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SyntaxToken> Modifiers => new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SyntaxToken>(this.modifiers);
+        public override CoreSyntax.SyntaxList<AttributeListSyntax> AttributeLists => new CoreSyntax.SyntaxList<AttributeListSyntax>(this.attributeLists);
+        public override CoreSyntax.SyntaxList<SyntaxToken> Modifiers => new CoreSyntax.SyntaxList<SyntaxToken>(this.modifiers);
         public override TypeSyntax Type => this.type;
         public override ExplicitInterfaceSpecifierSyntax? ExplicitInterfaceSpecifier => this.explicitInterfaceSpecifier;
         /// <summary>Gets the identifier.</summary>
@@ -27058,7 +20405,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
         public override void Accept(CSharpSyntaxVisitor visitor) => visitor.VisitPropertyDeclaration(this);
         public override TResult Accept<TResult>(CSharpSyntaxVisitor<TResult> visitor) => visitor.VisitPropertyDeclaration(this);
 
-        public PropertyDeclarationSyntax Update(Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> attributeLists, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SyntaxToken> modifiers, TypeSyntax type, ExplicitInterfaceSpecifierSyntax explicitInterfaceSpecifier, SyntaxToken identifier, AccessorListSyntax accessorList, ArrowExpressionClauseSyntax expressionBody, EqualsValueClauseSyntax initializer, SyntaxToken semicolonToken)
+        public PropertyDeclarationSyntax Update(CoreSyntax.SyntaxList<AttributeListSyntax> attributeLists, CoreSyntax.SyntaxList<SyntaxToken> modifiers, TypeSyntax type, ExplicitInterfaceSpecifierSyntax explicitInterfaceSpecifier, SyntaxToken identifier, AccessorListSyntax accessorList, ArrowExpressionClauseSyntax expressionBody, EqualsValueClauseSyntax initializer, SyntaxToken semicolonToken)
         {
             if (attributeLists != this.AttributeLists || modifiers != this.Modifiers || type != this.Type || explicitInterfaceSpecifier != this.ExplicitInterfaceSpecifier || identifier != this.Identifier || accessorList != this.AccessorList || expressionBody != this.ExpressionBody || initializer != this.Initializer || semicolonToken != this.SemicolonToken)
             {
@@ -27080,79 +20427,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new PropertyDeclarationSyntax(this.Kind, this.attributeLists, this.modifiers, this.type, this.explicitInterfaceSpecifier, this.identifier, this.accessorList, this.expressionBody, this.initializer, this.semicolonToken, GetDiagnostics(), annotations);
-
-        internal PropertyDeclarationSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 9;
-            var attributeLists = (GreenNode?)reader.ReadValue();
-            if (attributeLists != null)
-            {
-                AdjustFlagsAndWidth(attributeLists);
-                this.attributeLists = attributeLists;
-            }
-            var modifiers = (GreenNode?)reader.ReadValue();
-            if (modifiers != null)
-            {
-                AdjustFlagsAndWidth(modifiers);
-                this.modifiers = modifiers;
-            }
-            var type = (TypeSyntax)reader.ReadValue();
-            AdjustFlagsAndWidth(type);
-            this.type = type;
-            var explicitInterfaceSpecifier = (ExplicitInterfaceSpecifierSyntax?)reader.ReadValue();
-            if (explicitInterfaceSpecifier != null)
-            {
-                AdjustFlagsAndWidth(explicitInterfaceSpecifier);
-                this.explicitInterfaceSpecifier = explicitInterfaceSpecifier;
-            }
-            var identifier = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(identifier);
-            this.identifier = identifier;
-            var accessorList = (AccessorListSyntax?)reader.ReadValue();
-            if (accessorList != null)
-            {
-                AdjustFlagsAndWidth(accessorList);
-                this.accessorList = accessorList;
-            }
-            var expressionBody = (ArrowExpressionClauseSyntax?)reader.ReadValue();
-            if (expressionBody != null)
-            {
-                AdjustFlagsAndWidth(expressionBody);
-                this.expressionBody = expressionBody;
-            }
-            var initializer = (EqualsValueClauseSyntax?)reader.ReadValue();
-            if (initializer != null)
-            {
-                AdjustFlagsAndWidth(initializer);
-                this.initializer = initializer;
-            }
-            var semicolonToken = (SyntaxToken?)reader.ReadValue();
-            if (semicolonToken != null)
-            {
-                AdjustFlagsAndWidth(semicolonToken);
-                this.semicolonToken = semicolonToken;
-            }
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.attributeLists);
-            writer.WriteValue(this.modifiers);
-            writer.WriteValue(this.type);
-            writer.WriteValue(this.explicitInterfaceSpecifier);
-            writer.WriteValue(this.identifier);
-            writer.WriteValue(this.accessorList);
-            writer.WriteValue(this.expressionBody);
-            writer.WriteValue(this.initializer);
-            writer.WriteValue(this.semicolonToken);
-        }
-
-        static PropertyDeclarationSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(PropertyDeclarationSyntax), r => new PropertyDeclarationSyntax(r));
-        }
     }
 
     /// <summary>The syntax for the expression body of an expression-bodied member.</summary>
@@ -27230,30 +20504,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new ArrowExpressionClauseSyntax(this.Kind, this.arrowToken, this.expression, GetDiagnostics(), annotations);
-
-        internal ArrowExpressionClauseSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 2;
-            var arrowToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(arrowToken);
-            this.arrowToken = arrowToken;
-            var expression = (ExpressionSyntax)reader.ReadValue();
-            AdjustFlagsAndWidth(expression);
-            this.expression = expression;
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.arrowToken);
-            writer.WriteValue(this.expression);
-        }
-
-        static ArrowExpressionClauseSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(ArrowExpressionClauseSyntax), r => new ArrowExpressionClauseSyntax(r));
-        }
     }
 
     internal sealed partial class EventDeclarationSyntax : BasePropertyDeclarationSyntax
@@ -27379,8 +20629,8 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             }
         }
 
-        public override Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> AttributeLists => new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax>(this.attributeLists);
-        public override Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SyntaxToken> Modifiers => new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SyntaxToken>(this.modifiers);
+        public override CoreSyntax.SyntaxList<AttributeListSyntax> AttributeLists => new CoreSyntax.SyntaxList<AttributeListSyntax>(this.attributeLists);
+        public override CoreSyntax.SyntaxList<SyntaxToken> Modifiers => new CoreSyntax.SyntaxList<SyntaxToken>(this.modifiers);
         public SyntaxToken EventKeyword => this.eventKeyword;
         public override TypeSyntax Type => this.type;
         public override ExplicitInterfaceSpecifierSyntax? ExplicitInterfaceSpecifier => this.explicitInterfaceSpecifier;
@@ -27408,7 +20658,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
         public override void Accept(CSharpSyntaxVisitor visitor) => visitor.VisitEventDeclaration(this);
         public override TResult Accept<TResult>(CSharpSyntaxVisitor<TResult> visitor) => visitor.VisitEventDeclaration(this);
 
-        public EventDeclarationSyntax Update(Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> attributeLists, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SyntaxToken> modifiers, SyntaxToken eventKeyword, TypeSyntax type, ExplicitInterfaceSpecifierSyntax explicitInterfaceSpecifier, SyntaxToken identifier, AccessorListSyntax accessorList, SyntaxToken semicolonToken)
+        public EventDeclarationSyntax Update(CoreSyntax.SyntaxList<AttributeListSyntax> attributeLists, CoreSyntax.SyntaxList<SyntaxToken> modifiers, SyntaxToken eventKeyword, TypeSyntax type, ExplicitInterfaceSpecifierSyntax explicitInterfaceSpecifier, SyntaxToken identifier, AccessorListSyntax accessorList, SyntaxToken semicolonToken)
         {
             if (attributeLists != this.AttributeLists || modifiers != this.Modifiers || eventKeyword != this.EventKeyword || type != this.Type || explicitInterfaceSpecifier != this.ExplicitInterfaceSpecifier || identifier != this.Identifier || accessorList != this.AccessorList || semicolonToken != this.SemicolonToken)
             {
@@ -27430,69 +20680,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new EventDeclarationSyntax(this.Kind, this.attributeLists, this.modifiers, this.eventKeyword, this.type, this.explicitInterfaceSpecifier, this.identifier, this.accessorList, this.semicolonToken, GetDiagnostics(), annotations);
-
-        internal EventDeclarationSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 8;
-            var attributeLists = (GreenNode?)reader.ReadValue();
-            if (attributeLists != null)
-            {
-                AdjustFlagsAndWidth(attributeLists);
-                this.attributeLists = attributeLists;
-            }
-            var modifiers = (GreenNode?)reader.ReadValue();
-            if (modifiers != null)
-            {
-                AdjustFlagsAndWidth(modifiers);
-                this.modifiers = modifiers;
-            }
-            var eventKeyword = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(eventKeyword);
-            this.eventKeyword = eventKeyword;
-            var type = (TypeSyntax)reader.ReadValue();
-            AdjustFlagsAndWidth(type);
-            this.type = type;
-            var explicitInterfaceSpecifier = (ExplicitInterfaceSpecifierSyntax?)reader.ReadValue();
-            if (explicitInterfaceSpecifier != null)
-            {
-                AdjustFlagsAndWidth(explicitInterfaceSpecifier);
-                this.explicitInterfaceSpecifier = explicitInterfaceSpecifier;
-            }
-            var identifier = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(identifier);
-            this.identifier = identifier;
-            var accessorList = (AccessorListSyntax?)reader.ReadValue();
-            if (accessorList != null)
-            {
-                AdjustFlagsAndWidth(accessorList);
-                this.accessorList = accessorList;
-            }
-            var semicolonToken = (SyntaxToken?)reader.ReadValue();
-            if (semicolonToken != null)
-            {
-                AdjustFlagsAndWidth(semicolonToken);
-                this.semicolonToken = semicolonToken;
-            }
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.attributeLists);
-            writer.WriteValue(this.modifiers);
-            writer.WriteValue(this.eventKeyword);
-            writer.WriteValue(this.type);
-            writer.WriteValue(this.explicitInterfaceSpecifier);
-            writer.WriteValue(this.identifier);
-            writer.WriteValue(this.accessorList);
-            writer.WriteValue(this.semicolonToken);
-        }
-
-        static EventDeclarationSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(EventDeclarationSyntax), r => new EventDeclarationSyntax(r));
-        }
     }
 
     internal sealed partial class IndexerDeclarationSyntax : BasePropertyDeclarationSyntax
@@ -27634,8 +20821,8 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             }
         }
 
-        public override Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> AttributeLists => new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax>(this.attributeLists);
-        public override Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SyntaxToken> Modifiers => new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SyntaxToken>(this.modifiers);
+        public override CoreSyntax.SyntaxList<AttributeListSyntax> AttributeLists => new CoreSyntax.SyntaxList<AttributeListSyntax>(this.attributeLists);
+        public override CoreSyntax.SyntaxList<SyntaxToken> Modifiers => new CoreSyntax.SyntaxList<SyntaxToken>(this.modifiers);
         public override TypeSyntax Type => this.type;
         public override ExplicitInterfaceSpecifierSyntax? ExplicitInterfaceSpecifier => this.explicitInterfaceSpecifier;
         public SyntaxToken ThisKeyword => this.thisKeyword;
@@ -27665,7 +20852,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
         public override void Accept(CSharpSyntaxVisitor visitor) => visitor.VisitIndexerDeclaration(this);
         public override TResult Accept<TResult>(CSharpSyntaxVisitor<TResult> visitor) => visitor.VisitIndexerDeclaration(this);
 
-        public IndexerDeclarationSyntax Update(Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> attributeLists, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SyntaxToken> modifiers, TypeSyntax type, ExplicitInterfaceSpecifierSyntax explicitInterfaceSpecifier, SyntaxToken thisKeyword, BracketedParameterListSyntax parameterList, AccessorListSyntax accessorList, ArrowExpressionClauseSyntax expressionBody, SyntaxToken semicolonToken)
+        public IndexerDeclarationSyntax Update(CoreSyntax.SyntaxList<AttributeListSyntax> attributeLists, CoreSyntax.SyntaxList<SyntaxToken> modifiers, TypeSyntax type, ExplicitInterfaceSpecifierSyntax explicitInterfaceSpecifier, SyntaxToken thisKeyword, BracketedParameterListSyntax parameterList, AccessorListSyntax accessorList, ArrowExpressionClauseSyntax expressionBody, SyntaxToken semicolonToken)
         {
             if (attributeLists != this.AttributeLists || modifiers != this.Modifiers || type != this.Type || explicitInterfaceSpecifier != this.ExplicitInterfaceSpecifier || thisKeyword != this.ThisKeyword || parameterList != this.ParameterList || accessorList != this.AccessorList || expressionBody != this.ExpressionBody || semicolonToken != this.SemicolonToken)
             {
@@ -27687,76 +20874,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new IndexerDeclarationSyntax(this.Kind, this.attributeLists, this.modifiers, this.type, this.explicitInterfaceSpecifier, this.thisKeyword, this.parameterList, this.accessorList, this.expressionBody, this.semicolonToken, GetDiagnostics(), annotations);
-
-        internal IndexerDeclarationSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 9;
-            var attributeLists = (GreenNode?)reader.ReadValue();
-            if (attributeLists != null)
-            {
-                AdjustFlagsAndWidth(attributeLists);
-                this.attributeLists = attributeLists;
-            }
-            var modifiers = (GreenNode?)reader.ReadValue();
-            if (modifiers != null)
-            {
-                AdjustFlagsAndWidth(modifiers);
-                this.modifiers = modifiers;
-            }
-            var type = (TypeSyntax)reader.ReadValue();
-            AdjustFlagsAndWidth(type);
-            this.type = type;
-            var explicitInterfaceSpecifier = (ExplicitInterfaceSpecifierSyntax?)reader.ReadValue();
-            if (explicitInterfaceSpecifier != null)
-            {
-                AdjustFlagsAndWidth(explicitInterfaceSpecifier);
-                this.explicitInterfaceSpecifier = explicitInterfaceSpecifier;
-            }
-            var thisKeyword = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(thisKeyword);
-            this.thisKeyword = thisKeyword;
-            var parameterList = (BracketedParameterListSyntax)reader.ReadValue();
-            AdjustFlagsAndWidth(parameterList);
-            this.parameterList = parameterList;
-            var accessorList = (AccessorListSyntax?)reader.ReadValue();
-            if (accessorList != null)
-            {
-                AdjustFlagsAndWidth(accessorList);
-                this.accessorList = accessorList;
-            }
-            var expressionBody = (ArrowExpressionClauseSyntax?)reader.ReadValue();
-            if (expressionBody != null)
-            {
-                AdjustFlagsAndWidth(expressionBody);
-                this.expressionBody = expressionBody;
-            }
-            var semicolonToken = (SyntaxToken?)reader.ReadValue();
-            if (semicolonToken != null)
-            {
-                AdjustFlagsAndWidth(semicolonToken);
-                this.semicolonToken = semicolonToken;
-            }
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.attributeLists);
-            writer.WriteValue(this.modifiers);
-            writer.WriteValue(this.type);
-            writer.WriteValue(this.explicitInterfaceSpecifier);
-            writer.WriteValue(this.thisKeyword);
-            writer.WriteValue(this.parameterList);
-            writer.WriteValue(this.accessorList);
-            writer.WriteValue(this.expressionBody);
-            writer.WriteValue(this.semicolonToken);
-        }
-
-        static IndexerDeclarationSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(IndexerDeclarationSyntax), r => new IndexerDeclarationSyntax(r));
-        }
     }
 
     internal sealed partial class AccessorListSyntax : CSharpSyntaxNode
@@ -27812,7 +20929,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
         }
 
         public SyntaxToken OpenBraceToken => this.openBraceToken;
-        public Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AccessorDeclarationSyntax> Accessors => new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AccessorDeclarationSyntax>(this.accessors);
+        public CoreSyntax.SyntaxList<AccessorDeclarationSyntax> Accessors => new CoreSyntax.SyntaxList<AccessorDeclarationSyntax>(this.accessors);
         public SyntaxToken CloseBraceToken => this.closeBraceToken;
 
         internal override GreenNode? GetSlot(int index)
@@ -27829,7 +20946,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
         public override void Accept(CSharpSyntaxVisitor visitor) => visitor.VisitAccessorList(this);
         public override TResult Accept<TResult>(CSharpSyntaxVisitor<TResult> visitor) => visitor.VisitAccessorList(this);
 
-        public AccessorListSyntax Update(SyntaxToken openBraceToken, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AccessorDeclarationSyntax> accessors, SyntaxToken closeBraceToken)
+        public AccessorListSyntax Update(SyntaxToken openBraceToken, CoreSyntax.SyntaxList<AccessorDeclarationSyntax> accessors, SyntaxToken closeBraceToken)
         {
             if (openBraceToken != this.OpenBraceToken || accessors != this.Accessors || closeBraceToken != this.CloseBraceToken)
             {
@@ -27851,37 +20968,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new AccessorListSyntax(this.Kind, this.openBraceToken, this.accessors, this.closeBraceToken, GetDiagnostics(), annotations);
-
-        internal AccessorListSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 3;
-            var openBraceToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(openBraceToken);
-            this.openBraceToken = openBraceToken;
-            var accessors = (GreenNode?)reader.ReadValue();
-            if (accessors != null)
-            {
-                AdjustFlagsAndWidth(accessors);
-                this.accessors = accessors;
-            }
-            var closeBraceToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(closeBraceToken);
-            this.closeBraceToken = closeBraceToken;
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.openBraceToken);
-            writer.WriteValue(this.accessors);
-            writer.WriteValue(this.closeBraceToken);
-        }
-
-        static AccessorListSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(AccessorListSyntax), r => new AccessorListSyntax(r));
-        }
     }
 
     internal sealed partial class AccessorDeclarationSyntax : CSharpSyntaxNode
@@ -27994,9 +21080,9 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
         }
 
         /// <summary>Gets the attribute declaration list.</summary>
-        public Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> AttributeLists => new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax>(this.attributeLists);
+        public CoreSyntax.SyntaxList<AttributeListSyntax> AttributeLists => new CoreSyntax.SyntaxList<AttributeListSyntax>(this.attributeLists);
         /// <summary>Gets the modifier list.</summary>
-        public Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SyntaxToken> Modifiers => new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SyntaxToken>(this.modifiers);
+        public CoreSyntax.SyntaxList<SyntaxToken> Modifiers => new CoreSyntax.SyntaxList<SyntaxToken>(this.modifiers);
         /// <summary>Gets the keyword token, or identifier if an erroneous accessor declaration.</summary>
         public SyntaxToken Keyword => this.keyword;
         /// <summary>Gets the optional body block which may be empty, but it is null if there are no braces.</summary>
@@ -28023,7 +21109,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
         public override void Accept(CSharpSyntaxVisitor visitor) => visitor.VisitAccessorDeclaration(this);
         public override TResult Accept<TResult>(CSharpSyntaxVisitor<TResult> visitor) => visitor.VisitAccessorDeclaration(this);
 
-        public AccessorDeclarationSyntax Update(Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> attributeLists, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SyntaxToken> modifiers, SyntaxToken keyword, BlockSyntax body, ArrowExpressionClauseSyntax expressionBody, SyntaxToken semicolonToken)
+        public AccessorDeclarationSyntax Update(CoreSyntax.SyntaxList<AttributeListSyntax> attributeLists, CoreSyntax.SyntaxList<SyntaxToken> modifiers, SyntaxToken keyword, BlockSyntax body, ArrowExpressionClauseSyntax expressionBody, SyntaxToken semicolonToken)
         {
             if (attributeLists != this.AttributeLists || modifiers != this.Modifiers || keyword != this.Keyword || body != this.Body || expressionBody != this.ExpressionBody || semicolonToken != this.SemicolonToken)
             {
@@ -28045,61 +21131,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new AccessorDeclarationSyntax(this.Kind, this.attributeLists, this.modifiers, this.keyword, this.body, this.expressionBody, this.semicolonToken, GetDiagnostics(), annotations);
-
-        internal AccessorDeclarationSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 6;
-            var attributeLists = (GreenNode?)reader.ReadValue();
-            if (attributeLists != null)
-            {
-                AdjustFlagsAndWidth(attributeLists);
-                this.attributeLists = attributeLists;
-            }
-            var modifiers = (GreenNode?)reader.ReadValue();
-            if (modifiers != null)
-            {
-                AdjustFlagsAndWidth(modifiers);
-                this.modifiers = modifiers;
-            }
-            var keyword = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(keyword);
-            this.keyword = keyword;
-            var body = (BlockSyntax?)reader.ReadValue();
-            if (body != null)
-            {
-                AdjustFlagsAndWidth(body);
-                this.body = body;
-            }
-            var expressionBody = (ArrowExpressionClauseSyntax?)reader.ReadValue();
-            if (expressionBody != null)
-            {
-                AdjustFlagsAndWidth(expressionBody);
-                this.expressionBody = expressionBody;
-            }
-            var semicolonToken = (SyntaxToken?)reader.ReadValue();
-            if (semicolonToken != null)
-            {
-                AdjustFlagsAndWidth(semicolonToken);
-                this.semicolonToken = semicolonToken;
-            }
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.attributeLists);
-            writer.WriteValue(this.modifiers);
-            writer.WriteValue(this.keyword);
-            writer.WriteValue(this.body);
-            writer.WriteValue(this.expressionBody);
-            writer.WriteValue(this.semicolonToken);
-        }
-
-        static AccessorDeclarationSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(AccessorDeclarationSyntax), r => new AccessorDeclarationSyntax(r));
-        }
     }
 
     /// <summary>Base type for parameter list syntax.</summary>
@@ -28115,13 +21146,8 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
         {
         }
 
-        protected BaseParameterListSyntax(ObjectReader reader)
-          : base(reader)
-        {
-        }
-
         /// <summary>Gets the parameter list.</summary>
-        public abstract Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<ParameterSyntax> Parameters { get; }
+        public abstract CoreSyntax.SeparatedSyntaxList<ParameterSyntax> Parameters { get; }
     }
 
     /// <summary>Parameter list syntax.</summary>
@@ -28179,7 +21205,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         /// <summary>Gets the open paren token.</summary>
         public SyntaxToken OpenParenToken => this.openParenToken;
-        public override Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<ParameterSyntax> Parameters => new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<ParameterSyntax>(new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<CSharpSyntaxNode>(this.parameters));
+        public override CoreSyntax.SeparatedSyntaxList<ParameterSyntax> Parameters => new CoreSyntax.SeparatedSyntaxList<ParameterSyntax>(new CoreSyntax.SyntaxList<CSharpSyntaxNode>(this.parameters));
         /// <summary>Gets the close paren token.</summary>
         public SyntaxToken CloseParenToken => this.closeParenToken;
 
@@ -28197,7 +21223,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
         public override void Accept(CSharpSyntaxVisitor visitor) => visitor.VisitParameterList(this);
         public override TResult Accept<TResult>(CSharpSyntaxVisitor<TResult> visitor) => visitor.VisitParameterList(this);
 
-        public ParameterListSyntax Update(SyntaxToken openParenToken, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<ParameterSyntax> parameters, SyntaxToken closeParenToken)
+        public ParameterListSyntax Update(SyntaxToken openParenToken, CoreSyntax.SeparatedSyntaxList<ParameterSyntax> parameters, SyntaxToken closeParenToken)
         {
             if (openParenToken != this.OpenParenToken || parameters != this.Parameters || closeParenToken != this.CloseParenToken)
             {
@@ -28219,37 +21245,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new ParameterListSyntax(this.Kind, this.openParenToken, this.parameters, this.closeParenToken, GetDiagnostics(), annotations);
-
-        internal ParameterListSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 3;
-            var openParenToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(openParenToken);
-            this.openParenToken = openParenToken;
-            var parameters = (GreenNode?)reader.ReadValue();
-            if (parameters != null)
-            {
-                AdjustFlagsAndWidth(parameters);
-                this.parameters = parameters;
-            }
-            var closeParenToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(closeParenToken);
-            this.closeParenToken = closeParenToken;
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.openParenToken);
-            writer.WriteValue(this.parameters);
-            writer.WriteValue(this.closeParenToken);
-        }
-
-        static ParameterListSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(ParameterListSyntax), r => new ParameterListSyntax(r));
-        }
     }
 
     /// <summary>Parameter list syntax with surrounding brackets.</summary>
@@ -28307,7 +21302,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         /// <summary>Gets the open bracket token.</summary>
         public SyntaxToken OpenBracketToken => this.openBracketToken;
-        public override Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<ParameterSyntax> Parameters => new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<ParameterSyntax>(new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<CSharpSyntaxNode>(this.parameters));
+        public override CoreSyntax.SeparatedSyntaxList<ParameterSyntax> Parameters => new CoreSyntax.SeparatedSyntaxList<ParameterSyntax>(new CoreSyntax.SyntaxList<CSharpSyntaxNode>(this.parameters));
         /// <summary>Gets the close bracket token.</summary>
         public SyntaxToken CloseBracketToken => this.closeBracketToken;
 
@@ -28325,7 +21320,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
         public override void Accept(CSharpSyntaxVisitor visitor) => visitor.VisitBracketedParameterList(this);
         public override TResult Accept<TResult>(CSharpSyntaxVisitor<TResult> visitor) => visitor.VisitBracketedParameterList(this);
 
-        public BracketedParameterListSyntax Update(SyntaxToken openBracketToken, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<ParameterSyntax> parameters, SyntaxToken closeBracketToken)
+        public BracketedParameterListSyntax Update(SyntaxToken openBracketToken, CoreSyntax.SeparatedSyntaxList<ParameterSyntax> parameters, SyntaxToken closeBracketToken)
         {
             if (openBracketToken != this.OpenBracketToken || parameters != this.Parameters || closeBracketToken != this.CloseBracketToken)
             {
@@ -28347,37 +21342,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new BracketedParameterListSyntax(this.Kind, this.openBracketToken, this.parameters, this.closeBracketToken, GetDiagnostics(), annotations);
-
-        internal BracketedParameterListSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 3;
-            var openBracketToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(openBracketToken);
-            this.openBracketToken = openBracketToken;
-            var parameters = (GreenNode?)reader.ReadValue();
-            if (parameters != null)
-            {
-                AdjustFlagsAndWidth(parameters);
-                this.parameters = parameters;
-            }
-            var closeBracketToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(closeBracketToken);
-            this.closeBracketToken = closeBracketToken;
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.openBracketToken);
-            writer.WriteValue(this.parameters);
-            writer.WriteValue(this.closeBracketToken);
-        }
-
-        static BracketedParameterListSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(BracketedParameterListSyntax), r => new BracketedParameterListSyntax(r));
-        }
     }
 
     /// <summary>Base parameter syntax.</summary>
@@ -28393,16 +21357,11 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
         {
         }
 
-        protected BaseParameterSyntax(ObjectReader reader)
-          : base(reader)
-        {
-        }
-
         /// <summary>Gets the attribute declaration list.</summary>
-        public abstract Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> AttributeLists { get; }
+        public abstract CoreSyntax.SyntaxList<AttributeListSyntax> AttributeLists { get; }
 
         /// <summary>Gets the modifier list.</summary>
-        public abstract Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SyntaxToken> Modifiers { get; }
+        public abstract CoreSyntax.SyntaxList<SyntaxToken> Modifiers { get; }
 
         public abstract TypeSyntax? Type { get; }
     }
@@ -28502,9 +21461,9 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
         }
 
         /// <summary>Gets the attribute declaration list.</summary>
-        public override Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> AttributeLists => new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax>(this.attributeLists);
+        public override CoreSyntax.SyntaxList<AttributeListSyntax> AttributeLists => new CoreSyntax.SyntaxList<AttributeListSyntax>(this.attributeLists);
         /// <summary>Gets the modifier list.</summary>
-        public override Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SyntaxToken> Modifiers => new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SyntaxToken>(this.modifiers);
+        public override CoreSyntax.SyntaxList<SyntaxToken> Modifiers => new CoreSyntax.SyntaxList<SyntaxToken>(this.modifiers);
         public override TypeSyntax? Type => this.type;
         /// <summary>Gets the identifier.</summary>
         public SyntaxToken Identifier => this.identifier;
@@ -28526,7 +21485,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
         public override void Accept(CSharpSyntaxVisitor visitor) => visitor.VisitParameter(this);
         public override TResult Accept<TResult>(CSharpSyntaxVisitor<TResult> visitor) => visitor.VisitParameter(this);
 
-        public ParameterSyntax Update(Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> attributeLists, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SyntaxToken> modifiers, TypeSyntax type, SyntaxToken identifier, EqualsValueClauseSyntax @default)
+        public ParameterSyntax Update(CoreSyntax.SyntaxList<AttributeListSyntax> attributeLists, CoreSyntax.SyntaxList<SyntaxToken> modifiers, TypeSyntax type, SyntaxToken identifier, EqualsValueClauseSyntax @default)
         {
             if (attributeLists != this.AttributeLists || modifiers != this.Modifiers || type != this.Type || identifier != this.Identifier || @default != this.Default)
             {
@@ -28548,54 +21507,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new ParameterSyntax(this.Kind, this.attributeLists, this.modifiers, this.type, this.identifier, this.@default, GetDiagnostics(), annotations);
-
-        internal ParameterSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 5;
-            var attributeLists = (GreenNode?)reader.ReadValue();
-            if (attributeLists != null)
-            {
-                AdjustFlagsAndWidth(attributeLists);
-                this.attributeLists = attributeLists;
-            }
-            var modifiers = (GreenNode?)reader.ReadValue();
-            if (modifiers != null)
-            {
-                AdjustFlagsAndWidth(modifiers);
-                this.modifiers = modifiers;
-            }
-            var type = (TypeSyntax?)reader.ReadValue();
-            if (type != null)
-            {
-                AdjustFlagsAndWidth(type);
-                this.type = type;
-            }
-            var identifier = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(identifier);
-            this.identifier = identifier;
-            var @default = (EqualsValueClauseSyntax?)reader.ReadValue();
-            if (@default != null)
-            {
-                AdjustFlagsAndWidth(@default);
-                this.@default = @default;
-            }
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.attributeLists);
-            writer.WriteValue(this.modifiers);
-            writer.WriteValue(this.type);
-            writer.WriteValue(this.identifier);
-            writer.WriteValue(this.@default);
-        }
-
-        static ParameterSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(ParameterSyntax), r => new ParameterSyntax(r));
-        }
     }
 
     /// <summary>Parameter syntax.</summary>
@@ -28661,9 +21572,9 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
         }
 
         /// <summary>Gets the attribute declaration list.</summary>
-        public override Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> AttributeLists => new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax>(this.attributeLists);
+        public override CoreSyntax.SyntaxList<AttributeListSyntax> AttributeLists => new CoreSyntax.SyntaxList<AttributeListSyntax>(this.attributeLists);
         /// <summary>Gets the modifier list.</summary>
-        public override Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SyntaxToken> Modifiers => new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SyntaxToken>(this.modifiers);
+        public override CoreSyntax.SyntaxList<SyntaxToken> Modifiers => new CoreSyntax.SyntaxList<SyntaxToken>(this.modifiers);
         public override TypeSyntax Type => this.type;
 
         internal override GreenNode? GetSlot(int index)
@@ -28680,7 +21591,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
         public override void Accept(CSharpSyntaxVisitor visitor) => visitor.VisitFunctionPointerParameter(this);
         public override TResult Accept<TResult>(CSharpSyntaxVisitor<TResult> visitor) => visitor.VisitFunctionPointerParameter(this);
 
-        public FunctionPointerParameterSyntax Update(Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> attributeLists, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SyntaxToken> modifiers, TypeSyntax type)
+        public FunctionPointerParameterSyntax Update(CoreSyntax.SyntaxList<AttributeListSyntax> attributeLists, CoreSyntax.SyntaxList<SyntaxToken> modifiers, TypeSyntax type)
         {
             if (attributeLists != this.AttributeLists || modifiers != this.Modifiers || type != this.Type)
             {
@@ -28702,40 +21613,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new FunctionPointerParameterSyntax(this.Kind, this.attributeLists, this.modifiers, this.type, GetDiagnostics(), annotations);
-
-        internal FunctionPointerParameterSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 3;
-            var attributeLists = (GreenNode?)reader.ReadValue();
-            if (attributeLists != null)
-            {
-                AdjustFlagsAndWidth(attributeLists);
-                this.attributeLists = attributeLists;
-            }
-            var modifiers = (GreenNode?)reader.ReadValue();
-            if (modifiers != null)
-            {
-                AdjustFlagsAndWidth(modifiers);
-                this.modifiers = modifiers;
-            }
-            var type = (TypeSyntax)reader.ReadValue();
-            AdjustFlagsAndWidth(type);
-            this.type = type;
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.attributeLists);
-            writer.WriteValue(this.modifiers);
-            writer.WriteValue(this.type);
-        }
-
-        static FunctionPointerParameterSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(FunctionPointerParameterSyntax), r => new FunctionPointerParameterSyntax(r));
-        }
     }
 
     internal sealed partial class IncompleteMemberSyntax : MemberDeclarationSyntax
@@ -28808,8 +21685,8 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             }
         }
 
-        public override Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> AttributeLists => new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax>(this.attributeLists);
-        public override Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SyntaxToken> Modifiers => new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SyntaxToken>(this.modifiers);
+        public override CoreSyntax.SyntaxList<AttributeListSyntax> AttributeLists => new CoreSyntax.SyntaxList<AttributeListSyntax>(this.attributeLists);
+        public override CoreSyntax.SyntaxList<SyntaxToken> Modifiers => new CoreSyntax.SyntaxList<SyntaxToken>(this.modifiers);
         public TypeSyntax? Type => this.type;
 
         internal override GreenNode? GetSlot(int index)
@@ -28826,7 +21703,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
         public override void Accept(CSharpSyntaxVisitor visitor) => visitor.VisitIncompleteMember(this);
         public override TResult Accept<TResult>(CSharpSyntaxVisitor<TResult> visitor) => visitor.VisitIncompleteMember(this);
 
-        public IncompleteMemberSyntax Update(Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> attributeLists, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SyntaxToken> modifiers, TypeSyntax type)
+        public IncompleteMemberSyntax Update(CoreSyntax.SyntaxList<AttributeListSyntax> attributeLists, CoreSyntax.SyntaxList<SyntaxToken> modifiers, TypeSyntax type)
         {
             if (attributeLists != this.AttributeLists || modifiers != this.Modifiers || type != this.Type)
             {
@@ -28848,43 +21725,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new IncompleteMemberSyntax(this.Kind, this.attributeLists, this.modifiers, this.type, GetDiagnostics(), annotations);
-
-        internal IncompleteMemberSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 3;
-            var attributeLists = (GreenNode?)reader.ReadValue();
-            if (attributeLists != null)
-            {
-                AdjustFlagsAndWidth(attributeLists);
-                this.attributeLists = attributeLists;
-            }
-            var modifiers = (GreenNode?)reader.ReadValue();
-            if (modifiers != null)
-            {
-                AdjustFlagsAndWidth(modifiers);
-                this.modifiers = modifiers;
-            }
-            var type = (TypeSyntax?)reader.ReadValue();
-            if (type != null)
-            {
-                AdjustFlagsAndWidth(type);
-                this.type = type;
-            }
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.attributeLists);
-            writer.WriteValue(this.modifiers);
-            writer.WriteValue(this.type);
-        }
-
-        static IncompleteMemberSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(IncompleteMemberSyntax), r => new IncompleteMemberSyntax(r));
-        }
     }
 
     internal sealed partial class SkippedTokensTriviaSyntax : StructuredTriviaSyntax
@@ -28925,7 +21765,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             }
         }
 
-        public Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SyntaxToken> Tokens => new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SyntaxToken>(this.tokens);
+        public CoreSyntax.SyntaxList<SyntaxToken> Tokens => new CoreSyntax.SyntaxList<SyntaxToken>(this.tokens);
 
         internal override GreenNode? GetSlot(int index)
             => index == 0 ? this.tokens : null;
@@ -28935,7 +21775,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
         public override void Accept(CSharpSyntaxVisitor visitor) => visitor.VisitSkippedTokensTrivia(this);
         public override TResult Accept<TResult>(CSharpSyntaxVisitor<TResult> visitor) => visitor.VisitSkippedTokensTrivia(this);
 
-        public SkippedTokensTriviaSyntax Update(Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SyntaxToken> tokens)
+        public SkippedTokensTriviaSyntax Update(CoreSyntax.SyntaxList<SyntaxToken> tokens)
         {
             if (tokens != this.Tokens)
             {
@@ -28957,29 +21797,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new SkippedTokensTriviaSyntax(this.Kind, this.tokens, GetDiagnostics(), annotations);
-
-        internal SkippedTokensTriviaSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 1;
-            var tokens = (GreenNode?)reader.ReadValue();
-            if (tokens != null)
-            {
-                AdjustFlagsAndWidth(tokens);
-                this.tokens = tokens;
-            }
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.tokens);
-        }
-
-        static SkippedTokensTriviaSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(SkippedTokensTriviaSyntax), r => new SkippedTokensTriviaSyntax(r));
-        }
     }
 
     internal sealed partial class DocumentationCommentTriviaSyntax : StructuredTriviaSyntax
@@ -29027,7 +21844,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             this.endOfComment = endOfComment;
         }
 
-        public Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<XmlNodeSyntax> Content => new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<XmlNodeSyntax>(this.content);
+        public CoreSyntax.SyntaxList<XmlNodeSyntax> Content => new CoreSyntax.SyntaxList<XmlNodeSyntax>(this.content);
         public SyntaxToken EndOfComment => this.endOfComment;
 
         internal override GreenNode? GetSlot(int index)
@@ -29043,7 +21860,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
         public override void Accept(CSharpSyntaxVisitor visitor) => visitor.VisitDocumentationCommentTrivia(this);
         public override TResult Accept<TResult>(CSharpSyntaxVisitor<TResult> visitor) => visitor.VisitDocumentationCommentTrivia(this);
 
-        public DocumentationCommentTriviaSyntax Update(Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<XmlNodeSyntax> content, SyntaxToken endOfComment)
+        public DocumentationCommentTriviaSyntax Update(CoreSyntax.SyntaxList<XmlNodeSyntax> content, SyntaxToken endOfComment)
         {
             if (content != this.Content || endOfComment != this.EndOfComment)
             {
@@ -29065,33 +21882,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new DocumentationCommentTriviaSyntax(this.Kind, this.content, this.endOfComment, GetDiagnostics(), annotations);
-
-        internal DocumentationCommentTriviaSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 2;
-            var content = (GreenNode?)reader.ReadValue();
-            if (content != null)
-            {
-                AdjustFlagsAndWidth(content);
-                this.content = content;
-            }
-            var endOfComment = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(endOfComment);
-            this.endOfComment = endOfComment;
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.content);
-            writer.WriteValue(this.endOfComment);
-        }
-
-        static DocumentationCommentTriviaSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(DocumentationCommentTriviaSyntax), r => new DocumentationCommentTriviaSyntax(r));
-        }
     }
 
     /// <summary>
@@ -29107,11 +21897,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal CrefSyntax(SyntaxKind kind)
           : base(kind)
-        {
-        }
-
-        protected CrefSyntax(ObjectReader reader)
-          : base(reader)
         {
         }
     }
@@ -29184,26 +21969,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new TypeCrefSyntax(this.Kind, this.type, GetDiagnostics(), annotations);
-
-        internal TypeCrefSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 1;
-            var type = (TypeSyntax)reader.ReadValue();
-            AdjustFlagsAndWidth(type);
-            this.type = type;
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.type);
-        }
-
-        static TypeCrefSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(TypeCrefSyntax), r => new TypeCrefSyntax(r));
-        }
     }
 
     /// <summary>
@@ -29296,34 +22061,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new QualifiedCrefSyntax(this.Kind, this.container, this.dotToken, this.member, GetDiagnostics(), annotations);
-
-        internal QualifiedCrefSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 3;
-            var container = (TypeSyntax)reader.ReadValue();
-            AdjustFlagsAndWidth(container);
-            this.container = container;
-            var dotToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(dotToken);
-            this.dotToken = dotToken;
-            var member = (MemberCrefSyntax)reader.ReadValue();
-            AdjustFlagsAndWidth(member);
-            this.member = member;
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.container);
-            writer.WriteValue(this.dotToken);
-            writer.WriteValue(this.member);
-        }
-
-        static QualifiedCrefSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(QualifiedCrefSyntax), r => new QualifiedCrefSyntax(r));
-        }
     }
 
     /// <summary>
@@ -29342,11 +22079,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal MemberCrefSyntax(SyntaxKind kind)
           : base(kind)
-        {
-        }
-
-        protected MemberCrefSyntax(ObjectReader reader)
-          : base(reader)
         {
         }
     }
@@ -29440,33 +22172,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new NameMemberCrefSyntax(this.Kind, this.name, this.parameters, GetDiagnostics(), annotations);
-
-        internal NameMemberCrefSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 2;
-            var name = (TypeSyntax)reader.ReadValue();
-            AdjustFlagsAndWidth(name);
-            this.name = name;
-            var parameters = (CrefParameterListSyntax?)reader.ReadValue();
-            if (parameters != null)
-            {
-                AdjustFlagsAndWidth(parameters);
-                this.parameters = parameters;
-            }
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.name);
-            writer.WriteValue(this.parameters);
-        }
-
-        static NameMemberCrefSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(NameMemberCrefSyntax), r => new NameMemberCrefSyntax(r));
-        }
     }
 
     /// <summary>
@@ -29556,33 +22261,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new IndexerMemberCrefSyntax(this.Kind, this.thisKeyword, this.parameters, GetDiagnostics(), annotations);
-
-        internal IndexerMemberCrefSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 2;
-            var thisKeyword = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(thisKeyword);
-            this.thisKeyword = thisKeyword;
-            var parameters = (CrefBracketedParameterListSyntax?)reader.ReadValue();
-            if (parameters != null)
-            {
-                AdjustFlagsAndWidth(parameters);
-                this.parameters = parameters;
-            }
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.thisKeyword);
-            writer.WriteValue(this.parameters);
-        }
-
-        static IndexerMemberCrefSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(IndexerMemberCrefSyntax), r => new IndexerMemberCrefSyntax(r));
-        }
     }
 
     /// <summary>
@@ -29701,44 +22379,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new OperatorMemberCrefSyntax(this.Kind, this.operatorKeyword, this.checkedKeyword, this.operatorToken, this.parameters, GetDiagnostics(), annotations);
-
-        internal OperatorMemberCrefSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 4;
-            var operatorKeyword = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(operatorKeyword);
-            this.operatorKeyword = operatorKeyword;
-            var checkedKeyword = (SyntaxToken?)reader.ReadValue();
-            if (checkedKeyword != null)
-            {
-                AdjustFlagsAndWidth(checkedKeyword);
-                this.checkedKeyword = checkedKeyword;
-            }
-            var operatorToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(operatorToken);
-            this.operatorToken = operatorToken;
-            var parameters = (CrefParameterListSyntax?)reader.ReadValue();
-            if (parameters != null)
-            {
-                AdjustFlagsAndWidth(parameters);
-                this.parameters = parameters;
-            }
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.operatorKeyword);
-            writer.WriteValue(this.checkedKeyword);
-            writer.WriteValue(this.operatorToken);
-            writer.WriteValue(this.parameters);
-        }
-
-        static OperatorMemberCrefSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(OperatorMemberCrefSyntax), r => new OperatorMemberCrefSyntax(r));
-        }
     }
 
     /// <summary>
@@ -29864,48 +22504,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new ConversionOperatorMemberCrefSyntax(this.Kind, this.implicitOrExplicitKeyword, this.operatorKeyword, this.checkedKeyword, this.type, this.parameters, GetDiagnostics(), annotations);
-
-        internal ConversionOperatorMemberCrefSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 5;
-            var implicitOrExplicitKeyword = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(implicitOrExplicitKeyword);
-            this.implicitOrExplicitKeyword = implicitOrExplicitKeyword;
-            var operatorKeyword = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(operatorKeyword);
-            this.operatorKeyword = operatorKeyword;
-            var checkedKeyword = (SyntaxToken?)reader.ReadValue();
-            if (checkedKeyword != null)
-            {
-                AdjustFlagsAndWidth(checkedKeyword);
-                this.checkedKeyword = checkedKeyword;
-            }
-            var type = (TypeSyntax)reader.ReadValue();
-            AdjustFlagsAndWidth(type);
-            this.type = type;
-            var parameters = (CrefParameterListSyntax?)reader.ReadValue();
-            if (parameters != null)
-            {
-                AdjustFlagsAndWidth(parameters);
-                this.parameters = parameters;
-            }
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.implicitOrExplicitKeyword);
-            writer.WriteValue(this.operatorKeyword);
-            writer.WriteValue(this.checkedKeyword);
-            writer.WriteValue(this.type);
-            writer.WriteValue(this.parameters);
-        }
-
-        static ConversionOperatorMemberCrefSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(ConversionOperatorMemberCrefSyntax), r => new ConversionOperatorMemberCrefSyntax(r));
-        }
     }
 
     /// <summary>
@@ -29924,13 +22522,8 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
         {
         }
 
-        protected BaseCrefParameterListSyntax(ObjectReader reader)
-          : base(reader)
-        {
-        }
-
         /// <summary>Gets the parameter list.</summary>
-        public abstract Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<CrefParameterSyntax> Parameters { get; }
+        public abstract CoreSyntax.SeparatedSyntaxList<CrefParameterSyntax> Parameters { get; }
     }
 
     /// <summary>
@@ -29990,7 +22583,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         /// <summary>Gets the open paren token.</summary>
         public SyntaxToken OpenParenToken => this.openParenToken;
-        public override Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<CrefParameterSyntax> Parameters => new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<CrefParameterSyntax>(new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<CSharpSyntaxNode>(this.parameters));
+        public override CoreSyntax.SeparatedSyntaxList<CrefParameterSyntax> Parameters => new CoreSyntax.SeparatedSyntaxList<CrefParameterSyntax>(new CoreSyntax.SyntaxList<CSharpSyntaxNode>(this.parameters));
         /// <summary>Gets the close paren token.</summary>
         public SyntaxToken CloseParenToken => this.closeParenToken;
 
@@ -30008,7 +22601,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
         public override void Accept(CSharpSyntaxVisitor visitor) => visitor.VisitCrefParameterList(this);
         public override TResult Accept<TResult>(CSharpSyntaxVisitor<TResult> visitor) => visitor.VisitCrefParameterList(this);
 
-        public CrefParameterListSyntax Update(SyntaxToken openParenToken, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<CrefParameterSyntax> parameters, SyntaxToken closeParenToken)
+        public CrefParameterListSyntax Update(SyntaxToken openParenToken, CoreSyntax.SeparatedSyntaxList<CrefParameterSyntax> parameters, SyntaxToken closeParenToken)
         {
             if (openParenToken != this.OpenParenToken || parameters != this.Parameters || closeParenToken != this.CloseParenToken)
             {
@@ -30030,37 +22623,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new CrefParameterListSyntax(this.Kind, this.openParenToken, this.parameters, this.closeParenToken, GetDiagnostics(), annotations);
-
-        internal CrefParameterListSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 3;
-            var openParenToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(openParenToken);
-            this.openParenToken = openParenToken;
-            var parameters = (GreenNode?)reader.ReadValue();
-            if (parameters != null)
-            {
-                AdjustFlagsAndWidth(parameters);
-                this.parameters = parameters;
-            }
-            var closeParenToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(closeParenToken);
-            this.closeParenToken = closeParenToken;
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.openParenToken);
-            writer.WriteValue(this.parameters);
-            writer.WriteValue(this.closeParenToken);
-        }
-
-        static CrefParameterListSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(CrefParameterListSyntax), r => new CrefParameterListSyntax(r));
-        }
     }
 
     /// <summary>
@@ -30120,7 +22682,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         /// <summary>Gets the open bracket token.</summary>
         public SyntaxToken OpenBracketToken => this.openBracketToken;
-        public override Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<CrefParameterSyntax> Parameters => new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<CrefParameterSyntax>(new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<CSharpSyntaxNode>(this.parameters));
+        public override CoreSyntax.SeparatedSyntaxList<CrefParameterSyntax> Parameters => new CoreSyntax.SeparatedSyntaxList<CrefParameterSyntax>(new CoreSyntax.SyntaxList<CSharpSyntaxNode>(this.parameters));
         /// <summary>Gets the close bracket token.</summary>
         public SyntaxToken CloseBracketToken => this.closeBracketToken;
 
@@ -30138,7 +22700,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
         public override void Accept(CSharpSyntaxVisitor visitor) => visitor.VisitCrefBracketedParameterList(this);
         public override TResult Accept<TResult>(CSharpSyntaxVisitor<TResult> visitor) => visitor.VisitCrefBracketedParameterList(this);
 
-        public CrefBracketedParameterListSyntax Update(SyntaxToken openBracketToken, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<CrefParameterSyntax> parameters, SyntaxToken closeBracketToken)
+        public CrefBracketedParameterListSyntax Update(SyntaxToken openBracketToken, CoreSyntax.SeparatedSyntaxList<CrefParameterSyntax> parameters, SyntaxToken closeBracketToken)
         {
             if (openBracketToken != this.OpenBracketToken || parameters != this.Parameters || closeBracketToken != this.CloseBracketToken)
             {
@@ -30160,37 +22722,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new CrefBracketedParameterListSyntax(this.Kind, this.openBracketToken, this.parameters, this.closeBracketToken, GetDiagnostics(), annotations);
-
-        internal CrefBracketedParameterListSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 3;
-            var openBracketToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(openBracketToken);
-            this.openBracketToken = openBracketToken;
-            var parameters = (GreenNode?)reader.ReadValue();
-            if (parameters != null)
-            {
-                AdjustFlagsAndWidth(parameters);
-                this.parameters = parameters;
-            }
-            var closeBracketToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(closeBracketToken);
-            this.closeBracketToken = closeBracketToken;
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.openBracketToken);
-            writer.WriteValue(this.parameters);
-            writer.WriteValue(this.closeBracketToken);
-        }
-
-        static CrefBracketedParameterListSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(CrefBracketedParameterListSyntax), r => new CrefBracketedParameterListSyntax(r));
-        }
     }
 
     /// <summary>
@@ -30300,40 +22831,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new CrefParameterSyntax(this.Kind, this.refKindKeyword, this.readOnlyKeyword, this.type, GetDiagnostics(), annotations);
-
-        internal CrefParameterSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 3;
-            var refKindKeyword = (SyntaxToken?)reader.ReadValue();
-            if (refKindKeyword != null)
-            {
-                AdjustFlagsAndWidth(refKindKeyword);
-                this.refKindKeyword = refKindKeyword;
-            }
-            var readOnlyKeyword = (SyntaxToken?)reader.ReadValue();
-            if (readOnlyKeyword != null)
-            {
-                AdjustFlagsAndWidth(readOnlyKeyword);
-                this.readOnlyKeyword = readOnlyKeyword;
-            }
-            var type = (TypeSyntax)reader.ReadValue();
-            AdjustFlagsAndWidth(type);
-            this.type = type;
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.refKindKeyword);
-            writer.WriteValue(this.readOnlyKeyword);
-            writer.WriteValue(this.type);
-        }
-
-        static CrefParameterSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(CrefParameterSyntax), r => new CrefParameterSyntax(r));
-        }
     }
 
     internal abstract partial class XmlNodeSyntax : CSharpSyntaxNode
@@ -30345,11 +22842,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal XmlNodeSyntax(SyntaxKind kind)
           : base(kind)
-        {
-        }
-
-        protected XmlNodeSyntax(ObjectReader reader)
-          : base(reader)
         {
         }
     }
@@ -30407,7 +22899,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
         }
 
         public XmlElementStartTagSyntax StartTag => this.startTag;
-        public Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<XmlNodeSyntax> Content => new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<XmlNodeSyntax>(this.content);
+        public CoreSyntax.SyntaxList<XmlNodeSyntax> Content => new CoreSyntax.SyntaxList<XmlNodeSyntax>(this.content);
         public XmlElementEndTagSyntax EndTag => this.endTag;
 
         internal override GreenNode? GetSlot(int index)
@@ -30424,7 +22916,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
         public override void Accept(CSharpSyntaxVisitor visitor) => visitor.VisitXmlElement(this);
         public override TResult Accept<TResult>(CSharpSyntaxVisitor<TResult> visitor) => visitor.VisitXmlElement(this);
 
-        public XmlElementSyntax Update(XmlElementStartTagSyntax startTag, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<XmlNodeSyntax> content, XmlElementEndTagSyntax endTag)
+        public XmlElementSyntax Update(XmlElementStartTagSyntax startTag, CoreSyntax.SyntaxList<XmlNodeSyntax> content, XmlElementEndTagSyntax endTag)
         {
             if (startTag != this.StartTag || content != this.Content || endTag != this.EndTag)
             {
@@ -30446,37 +22938,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new XmlElementSyntax(this.Kind, this.startTag, this.content, this.endTag, GetDiagnostics(), annotations);
-
-        internal XmlElementSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 3;
-            var startTag = (XmlElementStartTagSyntax)reader.ReadValue();
-            AdjustFlagsAndWidth(startTag);
-            this.startTag = startTag;
-            var content = (GreenNode?)reader.ReadValue();
-            if (content != null)
-            {
-                AdjustFlagsAndWidth(content);
-                this.content = content;
-            }
-            var endTag = (XmlElementEndTagSyntax)reader.ReadValue();
-            AdjustFlagsAndWidth(endTag);
-            this.endTag = endTag;
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.startTag);
-            writer.WriteValue(this.content);
-            writer.WriteValue(this.endTag);
-        }
-
-        static XmlElementSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(XmlElementSyntax), r => new XmlElementSyntax(r));
-        }
     }
 
     internal sealed partial class XmlElementStartTagSyntax : CSharpSyntaxNode
@@ -30540,7 +23001,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         public SyntaxToken LessThanToken => this.lessThanToken;
         public XmlNameSyntax Name => this.name;
-        public Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<XmlAttributeSyntax> Attributes => new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<XmlAttributeSyntax>(this.attributes);
+        public CoreSyntax.SyntaxList<XmlAttributeSyntax> Attributes => new CoreSyntax.SyntaxList<XmlAttributeSyntax>(this.attributes);
         public SyntaxToken GreaterThanToken => this.greaterThanToken;
 
         internal override GreenNode? GetSlot(int index)
@@ -30558,7 +23019,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
         public override void Accept(CSharpSyntaxVisitor visitor) => visitor.VisitXmlElementStartTag(this);
         public override TResult Accept<TResult>(CSharpSyntaxVisitor<TResult> visitor) => visitor.VisitXmlElementStartTag(this);
 
-        public XmlElementStartTagSyntax Update(SyntaxToken lessThanToken, XmlNameSyntax name, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<XmlAttributeSyntax> attributes, SyntaxToken greaterThanToken)
+        public XmlElementStartTagSyntax Update(SyntaxToken lessThanToken, XmlNameSyntax name, CoreSyntax.SyntaxList<XmlAttributeSyntax> attributes, SyntaxToken greaterThanToken)
         {
             if (lessThanToken != this.LessThanToken || name != this.Name || attributes != this.Attributes || greaterThanToken != this.GreaterThanToken)
             {
@@ -30580,41 +23041,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new XmlElementStartTagSyntax(this.Kind, this.lessThanToken, this.name, this.attributes, this.greaterThanToken, GetDiagnostics(), annotations);
-
-        internal XmlElementStartTagSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 4;
-            var lessThanToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(lessThanToken);
-            this.lessThanToken = lessThanToken;
-            var name = (XmlNameSyntax)reader.ReadValue();
-            AdjustFlagsAndWidth(name);
-            this.name = name;
-            var attributes = (GreenNode?)reader.ReadValue();
-            if (attributes != null)
-            {
-                AdjustFlagsAndWidth(attributes);
-                this.attributes = attributes;
-            }
-            var greaterThanToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(greaterThanToken);
-            this.greaterThanToken = greaterThanToken;
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.lessThanToken);
-            writer.WriteValue(this.name);
-            writer.WriteValue(this.attributes);
-            writer.WriteValue(this.greaterThanToken);
-        }
-
-        static XmlElementStartTagSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(XmlElementStartTagSyntax), r => new XmlElementStartTagSyntax(r));
-        }
     }
 
     internal sealed partial class XmlElementEndTagSyntax : CSharpSyntaxNode
@@ -30700,34 +23126,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new XmlElementEndTagSyntax(this.Kind, this.lessThanSlashToken, this.name, this.greaterThanToken, GetDiagnostics(), annotations);
-
-        internal XmlElementEndTagSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 3;
-            var lessThanSlashToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(lessThanSlashToken);
-            this.lessThanSlashToken = lessThanSlashToken;
-            var name = (XmlNameSyntax)reader.ReadValue();
-            AdjustFlagsAndWidth(name);
-            this.name = name;
-            var greaterThanToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(greaterThanToken);
-            this.greaterThanToken = greaterThanToken;
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.lessThanSlashToken);
-            writer.WriteValue(this.name);
-            writer.WriteValue(this.greaterThanToken);
-        }
-
-        static XmlElementEndTagSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(XmlElementEndTagSyntax), r => new XmlElementEndTagSyntax(r));
-        }
     }
 
     internal sealed partial class XmlEmptyElementSyntax : XmlNodeSyntax
@@ -30791,7 +23189,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         public SyntaxToken LessThanToken => this.lessThanToken;
         public XmlNameSyntax Name => this.name;
-        public Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<XmlAttributeSyntax> Attributes => new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<XmlAttributeSyntax>(this.attributes);
+        public CoreSyntax.SyntaxList<XmlAttributeSyntax> Attributes => new CoreSyntax.SyntaxList<XmlAttributeSyntax>(this.attributes);
         public SyntaxToken SlashGreaterThanToken => this.slashGreaterThanToken;
 
         internal override GreenNode? GetSlot(int index)
@@ -30809,7 +23207,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
         public override void Accept(CSharpSyntaxVisitor visitor) => visitor.VisitXmlEmptyElement(this);
         public override TResult Accept<TResult>(CSharpSyntaxVisitor<TResult> visitor) => visitor.VisitXmlEmptyElement(this);
 
-        public XmlEmptyElementSyntax Update(SyntaxToken lessThanToken, XmlNameSyntax name, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<XmlAttributeSyntax> attributes, SyntaxToken slashGreaterThanToken)
+        public XmlEmptyElementSyntax Update(SyntaxToken lessThanToken, XmlNameSyntax name, CoreSyntax.SyntaxList<XmlAttributeSyntax> attributes, SyntaxToken slashGreaterThanToken)
         {
             if (lessThanToken != this.LessThanToken || name != this.Name || attributes != this.Attributes || slashGreaterThanToken != this.SlashGreaterThanToken)
             {
@@ -30831,41 +23229,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new XmlEmptyElementSyntax(this.Kind, this.lessThanToken, this.name, this.attributes, this.slashGreaterThanToken, GetDiagnostics(), annotations);
-
-        internal XmlEmptyElementSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 4;
-            var lessThanToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(lessThanToken);
-            this.lessThanToken = lessThanToken;
-            var name = (XmlNameSyntax)reader.ReadValue();
-            AdjustFlagsAndWidth(name);
-            this.name = name;
-            var attributes = (GreenNode?)reader.ReadValue();
-            if (attributes != null)
-            {
-                AdjustFlagsAndWidth(attributes);
-                this.attributes = attributes;
-            }
-            var slashGreaterThanToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(slashGreaterThanToken);
-            this.slashGreaterThanToken = slashGreaterThanToken;
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.lessThanToken);
-            writer.WriteValue(this.name);
-            writer.WriteValue(this.attributes);
-            writer.WriteValue(this.slashGreaterThanToken);
-        }
-
-        static XmlEmptyElementSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(XmlEmptyElementSyntax), r => new XmlEmptyElementSyntax(r));
-        }
     }
 
     internal sealed partial class XmlNameSyntax : CSharpSyntaxNode
@@ -30951,33 +23314,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new XmlNameSyntax(this.Kind, this.prefix, this.localName, GetDiagnostics(), annotations);
-
-        internal XmlNameSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 2;
-            var prefix = (XmlPrefixSyntax?)reader.ReadValue();
-            if (prefix != null)
-            {
-                AdjustFlagsAndWidth(prefix);
-                this.prefix = prefix;
-            }
-            var localName = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(localName);
-            this.localName = localName;
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.prefix);
-            writer.WriteValue(this.localName);
-        }
-
-        static XmlNameSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(XmlNameSyntax), r => new XmlNameSyntax(r));
-        }
     }
 
     internal sealed partial class XmlPrefixSyntax : CSharpSyntaxNode
@@ -31054,30 +23390,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new XmlPrefixSyntax(this.Kind, this.prefix, this.colonToken, GetDiagnostics(), annotations);
-
-        internal XmlPrefixSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 2;
-            var prefix = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(prefix);
-            this.prefix = prefix;
-            var colonToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(colonToken);
-            this.colonToken = colonToken;
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.prefix);
-            writer.WriteValue(this.colonToken);
-        }
-
-        static XmlPrefixSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(XmlPrefixSyntax), r => new XmlPrefixSyntax(r));
-        }
     }
 
     internal abstract partial class XmlAttributeSyntax : CSharpSyntaxNode
@@ -31089,11 +23401,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal XmlAttributeSyntax(SyntaxKind kind)
           : base(kind)
-        {
-        }
-
-        protected XmlAttributeSyntax(ObjectReader reader)
-          : base(reader)
         {
         }
 
@@ -31175,7 +23482,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
         public override XmlNameSyntax Name => this.name;
         public override SyntaxToken EqualsToken => this.equalsToken;
         public override SyntaxToken StartQuoteToken => this.startQuoteToken;
-        public Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SyntaxToken> TextTokens => new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SyntaxToken>(this.textTokens);
+        public CoreSyntax.SyntaxList<SyntaxToken> TextTokens => new CoreSyntax.SyntaxList<SyntaxToken>(this.textTokens);
         public override SyntaxToken EndQuoteToken => this.endQuoteToken;
 
         internal override GreenNode? GetSlot(int index)
@@ -31194,7 +23501,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
         public override void Accept(CSharpSyntaxVisitor visitor) => visitor.VisitXmlTextAttribute(this);
         public override TResult Accept<TResult>(CSharpSyntaxVisitor<TResult> visitor) => visitor.VisitXmlTextAttribute(this);
 
-        public XmlTextAttributeSyntax Update(XmlNameSyntax name, SyntaxToken equalsToken, SyntaxToken startQuoteToken, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SyntaxToken> textTokens, SyntaxToken endQuoteToken)
+        public XmlTextAttributeSyntax Update(XmlNameSyntax name, SyntaxToken equalsToken, SyntaxToken startQuoteToken, CoreSyntax.SyntaxList<SyntaxToken> textTokens, SyntaxToken endQuoteToken)
         {
             if (name != this.Name || equalsToken != this.EqualsToken || startQuoteToken != this.StartQuoteToken || textTokens != this.TextTokens || endQuoteToken != this.EndQuoteToken)
             {
@@ -31216,45 +23523,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new XmlTextAttributeSyntax(this.Kind, this.name, this.equalsToken, this.startQuoteToken, this.textTokens, this.endQuoteToken, GetDiagnostics(), annotations);
-
-        internal XmlTextAttributeSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 5;
-            var name = (XmlNameSyntax)reader.ReadValue();
-            AdjustFlagsAndWidth(name);
-            this.name = name;
-            var equalsToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(equalsToken);
-            this.equalsToken = equalsToken;
-            var startQuoteToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(startQuoteToken);
-            this.startQuoteToken = startQuoteToken;
-            var textTokens = (GreenNode?)reader.ReadValue();
-            if (textTokens != null)
-            {
-                AdjustFlagsAndWidth(textTokens);
-                this.textTokens = textTokens;
-            }
-            var endQuoteToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(endQuoteToken);
-            this.endQuoteToken = endQuoteToken;
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.name);
-            writer.WriteValue(this.equalsToken);
-            writer.WriteValue(this.startQuoteToken);
-            writer.WriteValue(this.textTokens);
-            writer.WriteValue(this.endQuoteToken);
-        }
-
-        static XmlTextAttributeSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(XmlTextAttributeSyntax), r => new XmlTextAttributeSyntax(r));
-        }
     }
 
     internal sealed partial class XmlCrefAttributeSyntax : XmlAttributeSyntax
@@ -31358,42 +23626,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new XmlCrefAttributeSyntax(this.Kind, this.name, this.equalsToken, this.startQuoteToken, this.cref, this.endQuoteToken, GetDiagnostics(), annotations);
-
-        internal XmlCrefAttributeSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 5;
-            var name = (XmlNameSyntax)reader.ReadValue();
-            AdjustFlagsAndWidth(name);
-            this.name = name;
-            var equalsToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(equalsToken);
-            this.equalsToken = equalsToken;
-            var startQuoteToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(startQuoteToken);
-            this.startQuoteToken = startQuoteToken;
-            var cref = (CrefSyntax)reader.ReadValue();
-            AdjustFlagsAndWidth(cref);
-            this.cref = cref;
-            var endQuoteToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(endQuoteToken);
-            this.endQuoteToken = endQuoteToken;
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.name);
-            writer.WriteValue(this.equalsToken);
-            writer.WriteValue(this.startQuoteToken);
-            writer.WriteValue(this.cref);
-            writer.WriteValue(this.endQuoteToken);
-        }
-
-        static XmlCrefAttributeSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(XmlCrefAttributeSyntax), r => new XmlCrefAttributeSyntax(r));
-        }
     }
 
     internal sealed partial class XmlNameAttributeSyntax : XmlAttributeSyntax
@@ -31497,42 +23729,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new XmlNameAttributeSyntax(this.Kind, this.name, this.equalsToken, this.startQuoteToken, this.identifier, this.endQuoteToken, GetDiagnostics(), annotations);
-
-        internal XmlNameAttributeSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 5;
-            var name = (XmlNameSyntax)reader.ReadValue();
-            AdjustFlagsAndWidth(name);
-            this.name = name;
-            var equalsToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(equalsToken);
-            this.equalsToken = equalsToken;
-            var startQuoteToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(startQuoteToken);
-            this.startQuoteToken = startQuoteToken;
-            var identifier = (IdentifierNameSyntax)reader.ReadValue();
-            AdjustFlagsAndWidth(identifier);
-            this.identifier = identifier;
-            var endQuoteToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(endQuoteToken);
-            this.endQuoteToken = endQuoteToken;
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.name);
-            writer.WriteValue(this.equalsToken);
-            writer.WriteValue(this.startQuoteToken);
-            writer.WriteValue(this.identifier);
-            writer.WriteValue(this.endQuoteToken);
-        }
-
-        static XmlNameAttributeSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(XmlNameAttributeSyntax), r => new XmlNameAttributeSyntax(r));
-        }
     }
 
     internal sealed partial class XmlTextSyntax : XmlNodeSyntax
@@ -31573,7 +23769,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             }
         }
 
-        public Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SyntaxToken> TextTokens => new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SyntaxToken>(this.textTokens);
+        public CoreSyntax.SyntaxList<SyntaxToken> TextTokens => new CoreSyntax.SyntaxList<SyntaxToken>(this.textTokens);
 
         internal override GreenNode? GetSlot(int index)
             => index == 0 ? this.textTokens : null;
@@ -31583,7 +23779,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
         public override void Accept(CSharpSyntaxVisitor visitor) => visitor.VisitXmlText(this);
         public override TResult Accept<TResult>(CSharpSyntaxVisitor<TResult> visitor) => visitor.VisitXmlText(this);
 
-        public XmlTextSyntax Update(Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SyntaxToken> textTokens)
+        public XmlTextSyntax Update(CoreSyntax.SyntaxList<SyntaxToken> textTokens)
         {
             if (textTokens != this.TextTokens)
             {
@@ -31605,29 +23801,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new XmlTextSyntax(this.Kind, this.textTokens, GetDiagnostics(), annotations);
-
-        internal XmlTextSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 1;
-            var textTokens = (GreenNode?)reader.ReadValue();
-            if (textTokens != null)
-            {
-                AdjustFlagsAndWidth(textTokens);
-                this.textTokens = textTokens;
-            }
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.textTokens);
-        }
-
-        static XmlTextSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(XmlTextSyntax), r => new XmlTextSyntax(r));
-        }
     }
 
     internal sealed partial class XmlCDataSectionSyntax : XmlNodeSyntax
@@ -31683,7 +23856,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
         }
 
         public SyntaxToken StartCDataToken => this.startCDataToken;
-        public Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SyntaxToken> TextTokens => new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SyntaxToken>(this.textTokens);
+        public CoreSyntax.SyntaxList<SyntaxToken> TextTokens => new CoreSyntax.SyntaxList<SyntaxToken>(this.textTokens);
         public SyntaxToken EndCDataToken => this.endCDataToken;
 
         internal override GreenNode? GetSlot(int index)
@@ -31700,7 +23873,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
         public override void Accept(CSharpSyntaxVisitor visitor) => visitor.VisitXmlCDataSection(this);
         public override TResult Accept<TResult>(CSharpSyntaxVisitor<TResult> visitor) => visitor.VisitXmlCDataSection(this);
 
-        public XmlCDataSectionSyntax Update(SyntaxToken startCDataToken, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SyntaxToken> textTokens, SyntaxToken endCDataToken)
+        public XmlCDataSectionSyntax Update(SyntaxToken startCDataToken, CoreSyntax.SyntaxList<SyntaxToken> textTokens, SyntaxToken endCDataToken)
         {
             if (startCDataToken != this.StartCDataToken || textTokens != this.TextTokens || endCDataToken != this.EndCDataToken)
             {
@@ -31722,37 +23895,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new XmlCDataSectionSyntax(this.Kind, this.startCDataToken, this.textTokens, this.endCDataToken, GetDiagnostics(), annotations);
-
-        internal XmlCDataSectionSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 3;
-            var startCDataToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(startCDataToken);
-            this.startCDataToken = startCDataToken;
-            var textTokens = (GreenNode?)reader.ReadValue();
-            if (textTokens != null)
-            {
-                AdjustFlagsAndWidth(textTokens);
-                this.textTokens = textTokens;
-            }
-            var endCDataToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(endCDataToken);
-            this.endCDataToken = endCDataToken;
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.startCDataToken);
-            writer.WriteValue(this.textTokens);
-            writer.WriteValue(this.endCDataToken);
-        }
-
-        static XmlCDataSectionSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(XmlCDataSectionSyntax), r => new XmlCDataSectionSyntax(r));
-        }
     }
 
     internal sealed partial class XmlProcessingInstructionSyntax : XmlNodeSyntax
@@ -31816,7 +23958,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         public SyntaxToken StartProcessingInstructionToken => this.startProcessingInstructionToken;
         public XmlNameSyntax Name => this.name;
-        public Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SyntaxToken> TextTokens => new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SyntaxToken>(this.textTokens);
+        public CoreSyntax.SyntaxList<SyntaxToken> TextTokens => new CoreSyntax.SyntaxList<SyntaxToken>(this.textTokens);
         public SyntaxToken EndProcessingInstructionToken => this.endProcessingInstructionToken;
 
         internal override GreenNode? GetSlot(int index)
@@ -31834,7 +23976,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
         public override void Accept(CSharpSyntaxVisitor visitor) => visitor.VisitXmlProcessingInstruction(this);
         public override TResult Accept<TResult>(CSharpSyntaxVisitor<TResult> visitor) => visitor.VisitXmlProcessingInstruction(this);
 
-        public XmlProcessingInstructionSyntax Update(SyntaxToken startProcessingInstructionToken, XmlNameSyntax name, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SyntaxToken> textTokens, SyntaxToken endProcessingInstructionToken)
+        public XmlProcessingInstructionSyntax Update(SyntaxToken startProcessingInstructionToken, XmlNameSyntax name, CoreSyntax.SyntaxList<SyntaxToken> textTokens, SyntaxToken endProcessingInstructionToken)
         {
             if (startProcessingInstructionToken != this.StartProcessingInstructionToken || name != this.Name || textTokens != this.TextTokens || endProcessingInstructionToken != this.EndProcessingInstructionToken)
             {
@@ -31856,41 +23998,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new XmlProcessingInstructionSyntax(this.Kind, this.startProcessingInstructionToken, this.name, this.textTokens, this.endProcessingInstructionToken, GetDiagnostics(), annotations);
-
-        internal XmlProcessingInstructionSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 4;
-            var startProcessingInstructionToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(startProcessingInstructionToken);
-            this.startProcessingInstructionToken = startProcessingInstructionToken;
-            var name = (XmlNameSyntax)reader.ReadValue();
-            AdjustFlagsAndWidth(name);
-            this.name = name;
-            var textTokens = (GreenNode?)reader.ReadValue();
-            if (textTokens != null)
-            {
-                AdjustFlagsAndWidth(textTokens);
-                this.textTokens = textTokens;
-            }
-            var endProcessingInstructionToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(endProcessingInstructionToken);
-            this.endProcessingInstructionToken = endProcessingInstructionToken;
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.startProcessingInstructionToken);
-            writer.WriteValue(this.name);
-            writer.WriteValue(this.textTokens);
-            writer.WriteValue(this.endProcessingInstructionToken);
-        }
-
-        static XmlProcessingInstructionSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(XmlProcessingInstructionSyntax), r => new XmlProcessingInstructionSyntax(r));
-        }
     }
 
     internal sealed partial class XmlCommentSyntax : XmlNodeSyntax
@@ -31946,7 +24053,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
         }
 
         public SyntaxToken LessThanExclamationMinusMinusToken => this.lessThanExclamationMinusMinusToken;
-        public Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SyntaxToken> TextTokens => new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SyntaxToken>(this.textTokens);
+        public CoreSyntax.SyntaxList<SyntaxToken> TextTokens => new CoreSyntax.SyntaxList<SyntaxToken>(this.textTokens);
         public SyntaxToken MinusMinusGreaterThanToken => this.minusMinusGreaterThanToken;
 
         internal override GreenNode? GetSlot(int index)
@@ -31963,7 +24070,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
         public override void Accept(CSharpSyntaxVisitor visitor) => visitor.VisitXmlComment(this);
         public override TResult Accept<TResult>(CSharpSyntaxVisitor<TResult> visitor) => visitor.VisitXmlComment(this);
 
-        public XmlCommentSyntax Update(SyntaxToken lessThanExclamationMinusMinusToken, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SyntaxToken> textTokens, SyntaxToken minusMinusGreaterThanToken)
+        public XmlCommentSyntax Update(SyntaxToken lessThanExclamationMinusMinusToken, CoreSyntax.SyntaxList<SyntaxToken> textTokens, SyntaxToken minusMinusGreaterThanToken)
         {
             if (lessThanExclamationMinusMinusToken != this.LessThanExclamationMinusMinusToken || textTokens != this.TextTokens || minusMinusGreaterThanToken != this.MinusMinusGreaterThanToken)
             {
@@ -31985,37 +24092,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new XmlCommentSyntax(this.Kind, this.lessThanExclamationMinusMinusToken, this.textTokens, this.minusMinusGreaterThanToken, GetDiagnostics(), annotations);
-
-        internal XmlCommentSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 3;
-            var lessThanExclamationMinusMinusToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(lessThanExclamationMinusMinusToken);
-            this.lessThanExclamationMinusMinusToken = lessThanExclamationMinusMinusToken;
-            var textTokens = (GreenNode?)reader.ReadValue();
-            if (textTokens != null)
-            {
-                AdjustFlagsAndWidth(textTokens);
-                this.textTokens = textTokens;
-            }
-            var minusMinusGreaterThanToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(minusMinusGreaterThanToken);
-            this.minusMinusGreaterThanToken = minusMinusGreaterThanToken;
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.lessThanExclamationMinusMinusToken);
-            writer.WriteValue(this.textTokens);
-            writer.WriteValue(this.minusMinusGreaterThanToken);
-        }
-
-        static XmlCommentSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(XmlCommentSyntax), r => new XmlCommentSyntax(r));
-        }
     }
 
     internal abstract partial class DirectiveTriviaSyntax : StructuredTriviaSyntax
@@ -32028,12 +24104,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal DirectiveTriviaSyntax(SyntaxKind kind)
           : base(kind)
-        {
-            this.flags |= NodeFlags.ContainsDirectives;
-        }
-
-        protected DirectiveTriviaSyntax(ObjectReader reader)
-          : base(reader)
         {
             this.flags |= NodeFlags.ContainsDirectives;
         }
@@ -32057,11 +24127,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
         {
         }
 
-        protected BranchingDirectiveTriviaSyntax(ObjectReader reader)
-          : base(reader)
-        {
-        }
-
         public abstract bool BranchTaken { get; }
     }
 
@@ -32074,11 +24139,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal ConditionalDirectiveTriviaSyntax(SyntaxKind kind)
           : base(kind)
-        {
-        }
-
-        protected ConditionalDirectiveTriviaSyntax(ObjectReader reader)
-          : base(reader)
         {
         }
 
@@ -32194,44 +24254,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new IfDirectiveTriviaSyntax(this.Kind, this.hashToken, this.ifKeyword, this.condition, this.endOfDirectiveToken, this.isActive, this.branchTaken, this.conditionValue, GetDiagnostics(), annotations);
-
-        internal IfDirectiveTriviaSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 4;
-            var hashToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(hashToken);
-            this.hashToken = hashToken;
-            var ifKeyword = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(ifKeyword);
-            this.ifKeyword = ifKeyword;
-            var condition = (ExpressionSyntax)reader.ReadValue();
-            AdjustFlagsAndWidth(condition);
-            this.condition = condition;
-            var endOfDirectiveToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(endOfDirectiveToken);
-            this.endOfDirectiveToken = endOfDirectiveToken;
-            this.isActive = (bool)reader.ReadBoolean();
-            this.branchTaken = (bool)reader.ReadBoolean();
-            this.conditionValue = (bool)reader.ReadBoolean();
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.hashToken);
-            writer.WriteValue(this.ifKeyword);
-            writer.WriteValue(this.condition);
-            writer.WriteValue(this.endOfDirectiveToken);
-            writer.WriteBoolean(this.isActive);
-            writer.WriteBoolean(this.branchTaken);
-            writer.WriteBoolean(this.conditionValue);
-        }
-
-        static IfDirectiveTriviaSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(IfDirectiveTriviaSyntax), r => new IfDirectiveTriviaSyntax(r));
-        }
     }
 
     internal sealed partial class ElifDirectiveTriviaSyntax : ConditionalDirectiveTriviaSyntax
@@ -32341,44 +24363,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new ElifDirectiveTriviaSyntax(this.Kind, this.hashToken, this.elifKeyword, this.condition, this.endOfDirectiveToken, this.isActive, this.branchTaken, this.conditionValue, GetDiagnostics(), annotations);
-
-        internal ElifDirectiveTriviaSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 4;
-            var hashToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(hashToken);
-            this.hashToken = hashToken;
-            var elifKeyword = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(elifKeyword);
-            this.elifKeyword = elifKeyword;
-            var condition = (ExpressionSyntax)reader.ReadValue();
-            AdjustFlagsAndWidth(condition);
-            this.condition = condition;
-            var endOfDirectiveToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(endOfDirectiveToken);
-            this.endOfDirectiveToken = endOfDirectiveToken;
-            this.isActive = (bool)reader.ReadBoolean();
-            this.branchTaken = (bool)reader.ReadBoolean();
-            this.conditionValue = (bool)reader.ReadBoolean();
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.hashToken);
-            writer.WriteValue(this.elifKeyword);
-            writer.WriteValue(this.condition);
-            writer.WriteValue(this.endOfDirectiveToken);
-            writer.WriteBoolean(this.isActive);
-            writer.WriteBoolean(this.branchTaken);
-            writer.WriteBoolean(this.conditionValue);
-        }
-
-        static ElifDirectiveTriviaSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(ElifDirectiveTriviaSyntax), r => new ElifDirectiveTriviaSyntax(r));
-        }
     }
 
     internal sealed partial class ElseDirectiveTriviaSyntax : BranchingDirectiveTriviaSyntax
@@ -32474,38 +24458,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new ElseDirectiveTriviaSyntax(this.Kind, this.hashToken, this.elseKeyword, this.endOfDirectiveToken, this.isActive, this.branchTaken, GetDiagnostics(), annotations);
-
-        internal ElseDirectiveTriviaSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 3;
-            var hashToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(hashToken);
-            this.hashToken = hashToken;
-            var elseKeyword = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(elseKeyword);
-            this.elseKeyword = elseKeyword;
-            var endOfDirectiveToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(endOfDirectiveToken);
-            this.endOfDirectiveToken = endOfDirectiveToken;
-            this.isActive = (bool)reader.ReadBoolean();
-            this.branchTaken = (bool)reader.ReadBoolean();
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.hashToken);
-            writer.WriteValue(this.elseKeyword);
-            writer.WriteValue(this.endOfDirectiveToken);
-            writer.WriteBoolean(this.isActive);
-            writer.WriteBoolean(this.branchTaken);
-        }
-
-        static ElseDirectiveTriviaSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(ElseDirectiveTriviaSyntax), r => new ElseDirectiveTriviaSyntax(r));
-        }
     }
 
     internal sealed partial class EndIfDirectiveTriviaSyntax : DirectiveTriviaSyntax
@@ -32596,36 +24548,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new EndIfDirectiveTriviaSyntax(this.Kind, this.hashToken, this.endIfKeyword, this.endOfDirectiveToken, this.isActive, GetDiagnostics(), annotations);
-
-        internal EndIfDirectiveTriviaSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 3;
-            var hashToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(hashToken);
-            this.hashToken = hashToken;
-            var endIfKeyword = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(endIfKeyword);
-            this.endIfKeyword = endIfKeyword;
-            var endOfDirectiveToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(endOfDirectiveToken);
-            this.endOfDirectiveToken = endOfDirectiveToken;
-            this.isActive = (bool)reader.ReadBoolean();
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.hashToken);
-            writer.WriteValue(this.endIfKeyword);
-            writer.WriteValue(this.endOfDirectiveToken);
-            writer.WriteBoolean(this.isActive);
-        }
-
-        static EndIfDirectiveTriviaSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(EndIfDirectiveTriviaSyntax), r => new EndIfDirectiveTriviaSyntax(r));
-        }
     }
 
     internal sealed partial class RegionDirectiveTriviaSyntax : DirectiveTriviaSyntax
@@ -32716,36 +24638,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new RegionDirectiveTriviaSyntax(this.Kind, this.hashToken, this.regionKeyword, this.endOfDirectiveToken, this.isActive, GetDiagnostics(), annotations);
-
-        internal RegionDirectiveTriviaSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 3;
-            var hashToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(hashToken);
-            this.hashToken = hashToken;
-            var regionKeyword = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(regionKeyword);
-            this.regionKeyword = regionKeyword;
-            var endOfDirectiveToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(endOfDirectiveToken);
-            this.endOfDirectiveToken = endOfDirectiveToken;
-            this.isActive = (bool)reader.ReadBoolean();
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.hashToken);
-            writer.WriteValue(this.regionKeyword);
-            writer.WriteValue(this.endOfDirectiveToken);
-            writer.WriteBoolean(this.isActive);
-        }
-
-        static RegionDirectiveTriviaSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(RegionDirectiveTriviaSyntax), r => new RegionDirectiveTriviaSyntax(r));
-        }
     }
 
     internal sealed partial class EndRegionDirectiveTriviaSyntax : DirectiveTriviaSyntax
@@ -32836,36 +24728,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new EndRegionDirectiveTriviaSyntax(this.Kind, this.hashToken, this.endRegionKeyword, this.endOfDirectiveToken, this.isActive, GetDiagnostics(), annotations);
-
-        internal EndRegionDirectiveTriviaSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 3;
-            var hashToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(hashToken);
-            this.hashToken = hashToken;
-            var endRegionKeyword = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(endRegionKeyword);
-            this.endRegionKeyword = endRegionKeyword;
-            var endOfDirectiveToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(endOfDirectiveToken);
-            this.endOfDirectiveToken = endOfDirectiveToken;
-            this.isActive = (bool)reader.ReadBoolean();
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.hashToken);
-            writer.WriteValue(this.endRegionKeyword);
-            writer.WriteValue(this.endOfDirectiveToken);
-            writer.WriteBoolean(this.isActive);
-        }
-
-        static EndRegionDirectiveTriviaSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(EndRegionDirectiveTriviaSyntax), r => new EndRegionDirectiveTriviaSyntax(r));
-        }
     }
 
     internal sealed partial class ErrorDirectiveTriviaSyntax : DirectiveTriviaSyntax
@@ -32956,36 +24818,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new ErrorDirectiveTriviaSyntax(this.Kind, this.hashToken, this.errorKeyword, this.endOfDirectiveToken, this.isActive, GetDiagnostics(), annotations);
-
-        internal ErrorDirectiveTriviaSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 3;
-            var hashToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(hashToken);
-            this.hashToken = hashToken;
-            var errorKeyword = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(errorKeyword);
-            this.errorKeyword = errorKeyword;
-            var endOfDirectiveToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(endOfDirectiveToken);
-            this.endOfDirectiveToken = endOfDirectiveToken;
-            this.isActive = (bool)reader.ReadBoolean();
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.hashToken);
-            writer.WriteValue(this.errorKeyword);
-            writer.WriteValue(this.endOfDirectiveToken);
-            writer.WriteBoolean(this.isActive);
-        }
-
-        static ErrorDirectiveTriviaSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(ErrorDirectiveTriviaSyntax), r => new ErrorDirectiveTriviaSyntax(r));
-        }
     }
 
     internal sealed partial class WarningDirectiveTriviaSyntax : DirectiveTriviaSyntax
@@ -33076,36 +24908,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new WarningDirectiveTriviaSyntax(this.Kind, this.hashToken, this.warningKeyword, this.endOfDirectiveToken, this.isActive, GetDiagnostics(), annotations);
-
-        internal WarningDirectiveTriviaSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 3;
-            var hashToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(hashToken);
-            this.hashToken = hashToken;
-            var warningKeyword = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(warningKeyword);
-            this.warningKeyword = warningKeyword;
-            var endOfDirectiveToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(endOfDirectiveToken);
-            this.endOfDirectiveToken = endOfDirectiveToken;
-            this.isActive = (bool)reader.ReadBoolean();
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.hashToken);
-            writer.WriteValue(this.warningKeyword);
-            writer.WriteValue(this.endOfDirectiveToken);
-            writer.WriteBoolean(this.isActive);
-        }
-
-        static WarningDirectiveTriviaSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(WarningDirectiveTriviaSyntax), r => new WarningDirectiveTriviaSyntax(r));
-        }
     }
 
     internal sealed partial class BadDirectiveTriviaSyntax : DirectiveTriviaSyntax
@@ -33196,36 +24998,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new BadDirectiveTriviaSyntax(this.Kind, this.hashToken, this.identifier, this.endOfDirectiveToken, this.isActive, GetDiagnostics(), annotations);
-
-        internal BadDirectiveTriviaSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 3;
-            var hashToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(hashToken);
-            this.hashToken = hashToken;
-            var identifier = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(identifier);
-            this.identifier = identifier;
-            var endOfDirectiveToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(endOfDirectiveToken);
-            this.endOfDirectiveToken = endOfDirectiveToken;
-            this.isActive = (bool)reader.ReadBoolean();
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.hashToken);
-            writer.WriteValue(this.identifier);
-            writer.WriteValue(this.endOfDirectiveToken);
-            writer.WriteBoolean(this.isActive);
-        }
-
-        static BadDirectiveTriviaSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(BadDirectiveTriviaSyntax), r => new BadDirectiveTriviaSyntax(r));
-        }
     }
 
     internal sealed partial class DefineDirectiveTriviaSyntax : DirectiveTriviaSyntax
@@ -33325,40 +25097,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new DefineDirectiveTriviaSyntax(this.Kind, this.hashToken, this.defineKeyword, this.name, this.endOfDirectiveToken, this.isActive, GetDiagnostics(), annotations);
-
-        internal DefineDirectiveTriviaSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 4;
-            var hashToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(hashToken);
-            this.hashToken = hashToken;
-            var defineKeyword = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(defineKeyword);
-            this.defineKeyword = defineKeyword;
-            var name = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(name);
-            this.name = name;
-            var endOfDirectiveToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(endOfDirectiveToken);
-            this.endOfDirectiveToken = endOfDirectiveToken;
-            this.isActive = (bool)reader.ReadBoolean();
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.hashToken);
-            writer.WriteValue(this.defineKeyword);
-            writer.WriteValue(this.name);
-            writer.WriteValue(this.endOfDirectiveToken);
-            writer.WriteBoolean(this.isActive);
-        }
-
-        static DefineDirectiveTriviaSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(DefineDirectiveTriviaSyntax), r => new DefineDirectiveTriviaSyntax(r));
-        }
     }
 
     internal sealed partial class UndefDirectiveTriviaSyntax : DirectiveTriviaSyntax
@@ -33458,40 +25196,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new UndefDirectiveTriviaSyntax(this.Kind, this.hashToken, this.undefKeyword, this.name, this.endOfDirectiveToken, this.isActive, GetDiagnostics(), annotations);
-
-        internal UndefDirectiveTriviaSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 4;
-            var hashToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(hashToken);
-            this.hashToken = hashToken;
-            var undefKeyword = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(undefKeyword);
-            this.undefKeyword = undefKeyword;
-            var name = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(name);
-            this.name = name;
-            var endOfDirectiveToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(endOfDirectiveToken);
-            this.endOfDirectiveToken = endOfDirectiveToken;
-            this.isActive = (bool)reader.ReadBoolean();
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.hashToken);
-            writer.WriteValue(this.undefKeyword);
-            writer.WriteValue(this.name);
-            writer.WriteValue(this.endOfDirectiveToken);
-            writer.WriteBoolean(this.isActive);
-        }
-
-        static UndefDirectiveTriviaSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(UndefDirectiveTriviaSyntax), r => new UndefDirectiveTriviaSyntax(r));
-        }
     }
 
     internal abstract partial class LineOrSpanDirectiveTriviaSyntax : DirectiveTriviaSyntax
@@ -33503,11 +25207,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal LineOrSpanDirectiveTriviaSyntax(SyntaxKind kind)
           : base(kind)
-        {
-        }
-
-        protected LineOrSpanDirectiveTriviaSyntax(ObjectReader reader)
-          : base(reader)
         {
         }
 
@@ -33631,47 +25330,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new LineDirectiveTriviaSyntax(this.Kind, this.hashToken, this.lineKeyword, this.line, this.file, this.endOfDirectiveToken, this.isActive, GetDiagnostics(), annotations);
-
-        internal LineDirectiveTriviaSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 5;
-            var hashToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(hashToken);
-            this.hashToken = hashToken;
-            var lineKeyword = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(lineKeyword);
-            this.lineKeyword = lineKeyword;
-            var line = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(line);
-            this.line = line;
-            var file = (SyntaxToken?)reader.ReadValue();
-            if (file != null)
-            {
-                AdjustFlagsAndWidth(file);
-                this.file = file;
-            }
-            var endOfDirectiveToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(endOfDirectiveToken);
-            this.endOfDirectiveToken = endOfDirectiveToken;
-            this.isActive = (bool)reader.ReadBoolean();
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.hashToken);
-            writer.WriteValue(this.lineKeyword);
-            writer.WriteValue(this.line);
-            writer.WriteValue(this.file);
-            writer.WriteValue(this.endOfDirectiveToken);
-            writer.WriteBoolean(this.isActive);
-        }
-
-        static LineDirectiveTriviaSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(LineDirectiveTriviaSyntax), r => new LineDirectiveTriviaSyntax(r));
-        }
     }
 
     internal sealed partial class LineDirectivePositionSyntax : CSharpSyntaxNode
@@ -33775,42 +25433,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new LineDirectivePositionSyntax(this.Kind, this.openParenToken, this.line, this.commaToken, this.character, this.closeParenToken, GetDiagnostics(), annotations);
-
-        internal LineDirectivePositionSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 5;
-            var openParenToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(openParenToken);
-            this.openParenToken = openParenToken;
-            var line = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(line);
-            this.line = line;
-            var commaToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(commaToken);
-            this.commaToken = commaToken;
-            var character = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(character);
-            this.character = character;
-            var closeParenToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(closeParenToken);
-            this.closeParenToken = closeParenToken;
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.openParenToken);
-            writer.WriteValue(this.line);
-            writer.WriteValue(this.commaToken);
-            writer.WriteValue(this.character);
-            writer.WriteValue(this.closeParenToken);
-        }
-
-        static LineDirectivePositionSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(LineDirectivePositionSyntax), r => new LineDirectivePositionSyntax(r));
-        }
     }
 
     internal sealed partial class LineSpanDirectiveTriviaSyntax : LineOrSpanDirectiveTriviaSyntax
@@ -33955,59 +25577,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new LineSpanDirectiveTriviaSyntax(this.Kind, this.hashToken, this.lineKeyword, this.start, this.minusToken, this.end, this.characterOffset, this.file, this.endOfDirectiveToken, this.isActive, GetDiagnostics(), annotations);
-
-        internal LineSpanDirectiveTriviaSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 8;
-            var hashToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(hashToken);
-            this.hashToken = hashToken;
-            var lineKeyword = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(lineKeyword);
-            this.lineKeyword = lineKeyword;
-            var start = (LineDirectivePositionSyntax)reader.ReadValue();
-            AdjustFlagsAndWidth(start);
-            this.start = start;
-            var minusToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(minusToken);
-            this.minusToken = minusToken;
-            var end = (LineDirectivePositionSyntax)reader.ReadValue();
-            AdjustFlagsAndWidth(end);
-            this.end = end;
-            var characterOffset = (SyntaxToken?)reader.ReadValue();
-            if (characterOffset != null)
-            {
-                AdjustFlagsAndWidth(characterOffset);
-                this.characterOffset = characterOffset;
-            }
-            var file = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(file);
-            this.file = file;
-            var endOfDirectiveToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(endOfDirectiveToken);
-            this.endOfDirectiveToken = endOfDirectiveToken;
-            this.isActive = (bool)reader.ReadBoolean();
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.hashToken);
-            writer.WriteValue(this.lineKeyword);
-            writer.WriteValue(this.start);
-            writer.WriteValue(this.minusToken);
-            writer.WriteValue(this.end);
-            writer.WriteValue(this.characterOffset);
-            writer.WriteValue(this.file);
-            writer.WriteValue(this.endOfDirectiveToken);
-            writer.WriteBoolean(this.isActive);
-        }
-
-        static LineSpanDirectiveTriviaSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(LineSpanDirectiveTriviaSyntax), r => new LineSpanDirectiveTriviaSyntax(r));
-        }
     }
 
     internal sealed partial class PragmaWarningDirectiveTriviaSyntax : DirectiveTriviaSyntax
@@ -34091,7 +25660,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
         public SyntaxToken PragmaKeyword => this.pragmaKeyword;
         public SyntaxToken WarningKeyword => this.warningKeyword;
         public SyntaxToken DisableOrRestoreKeyword => this.disableOrRestoreKeyword;
-        public Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<ExpressionSyntax> ErrorCodes => new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<ExpressionSyntax>(new Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<CSharpSyntaxNode>(this.errorCodes));
+        public CoreSyntax.SeparatedSyntaxList<ExpressionSyntax> ErrorCodes => new CoreSyntax.SeparatedSyntaxList<ExpressionSyntax>(new CoreSyntax.SyntaxList<CSharpSyntaxNode>(this.errorCodes));
         public override SyntaxToken EndOfDirectiveToken => this.endOfDirectiveToken;
         public override bool IsActive => this.isActive;
 
@@ -34112,7 +25681,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
         public override void Accept(CSharpSyntaxVisitor visitor) => visitor.VisitPragmaWarningDirectiveTrivia(this);
         public override TResult Accept<TResult>(CSharpSyntaxVisitor<TResult> visitor) => visitor.VisitPragmaWarningDirectiveTrivia(this);
 
-        public PragmaWarningDirectiveTriviaSyntax Update(SyntaxToken hashToken, SyntaxToken pragmaKeyword, SyntaxToken warningKeyword, SyntaxToken disableOrRestoreKeyword, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<ExpressionSyntax> errorCodes, SyntaxToken endOfDirectiveToken, bool isActive)
+        public PragmaWarningDirectiveTriviaSyntax Update(SyntaxToken hashToken, SyntaxToken pragmaKeyword, SyntaxToken warningKeyword, SyntaxToken disableOrRestoreKeyword, CoreSyntax.SeparatedSyntaxList<ExpressionSyntax> errorCodes, SyntaxToken endOfDirectiveToken, bool isActive)
         {
             if (hashToken != this.HashToken || pragmaKeyword != this.PragmaKeyword || warningKeyword != this.WarningKeyword || disableOrRestoreKeyword != this.DisableOrRestoreKeyword || errorCodes != this.ErrorCodes || endOfDirectiveToken != this.EndOfDirectiveToken)
             {
@@ -34134,51 +25703,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new PragmaWarningDirectiveTriviaSyntax(this.Kind, this.hashToken, this.pragmaKeyword, this.warningKeyword, this.disableOrRestoreKeyword, this.errorCodes, this.endOfDirectiveToken, this.isActive, GetDiagnostics(), annotations);
-
-        internal PragmaWarningDirectiveTriviaSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 6;
-            var hashToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(hashToken);
-            this.hashToken = hashToken;
-            var pragmaKeyword = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(pragmaKeyword);
-            this.pragmaKeyword = pragmaKeyword;
-            var warningKeyword = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(warningKeyword);
-            this.warningKeyword = warningKeyword;
-            var disableOrRestoreKeyword = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(disableOrRestoreKeyword);
-            this.disableOrRestoreKeyword = disableOrRestoreKeyword;
-            var errorCodes = (GreenNode?)reader.ReadValue();
-            if (errorCodes != null)
-            {
-                AdjustFlagsAndWidth(errorCodes);
-                this.errorCodes = errorCodes;
-            }
-            var endOfDirectiveToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(endOfDirectiveToken);
-            this.endOfDirectiveToken = endOfDirectiveToken;
-            this.isActive = (bool)reader.ReadBoolean();
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.hashToken);
-            writer.WriteValue(this.pragmaKeyword);
-            writer.WriteValue(this.warningKeyword);
-            writer.WriteValue(this.disableOrRestoreKeyword);
-            writer.WriteValue(this.errorCodes);
-            writer.WriteValue(this.endOfDirectiveToken);
-            writer.WriteBoolean(this.isActive);
-        }
-
-        static PragmaWarningDirectiveTriviaSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(PragmaWarningDirectiveTriviaSyntax), r => new PragmaWarningDirectiveTriviaSyntax(r));
-        }
     }
 
     internal sealed partial class PragmaChecksumDirectiveTriviaSyntax : DirectiveTriviaSyntax
@@ -34305,52 +25829,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new PragmaChecksumDirectiveTriviaSyntax(this.Kind, this.hashToken, this.pragmaKeyword, this.checksumKeyword, this.file, this.guid, this.bytes, this.endOfDirectiveToken, this.isActive, GetDiagnostics(), annotations);
-
-        internal PragmaChecksumDirectiveTriviaSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 7;
-            var hashToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(hashToken);
-            this.hashToken = hashToken;
-            var pragmaKeyword = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(pragmaKeyword);
-            this.pragmaKeyword = pragmaKeyword;
-            var checksumKeyword = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(checksumKeyword);
-            this.checksumKeyword = checksumKeyword;
-            var file = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(file);
-            this.file = file;
-            var guid = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(guid);
-            this.guid = guid;
-            var bytes = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(bytes);
-            this.bytes = bytes;
-            var endOfDirectiveToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(endOfDirectiveToken);
-            this.endOfDirectiveToken = endOfDirectiveToken;
-            this.isActive = (bool)reader.ReadBoolean();
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.hashToken);
-            writer.WriteValue(this.pragmaKeyword);
-            writer.WriteValue(this.checksumKeyword);
-            writer.WriteValue(this.file);
-            writer.WriteValue(this.guid);
-            writer.WriteValue(this.bytes);
-            writer.WriteValue(this.endOfDirectiveToken);
-            writer.WriteBoolean(this.isActive);
-        }
-
-        static PragmaChecksumDirectiveTriviaSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(PragmaChecksumDirectiveTriviaSyntax), r => new PragmaChecksumDirectiveTriviaSyntax(r));
-        }
     }
 
     internal sealed partial class ReferenceDirectiveTriviaSyntax : DirectiveTriviaSyntax
@@ -34450,40 +25928,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new ReferenceDirectiveTriviaSyntax(this.Kind, this.hashToken, this.referenceKeyword, this.file, this.endOfDirectiveToken, this.isActive, GetDiagnostics(), annotations);
-
-        internal ReferenceDirectiveTriviaSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 4;
-            var hashToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(hashToken);
-            this.hashToken = hashToken;
-            var referenceKeyword = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(referenceKeyword);
-            this.referenceKeyword = referenceKeyword;
-            var file = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(file);
-            this.file = file;
-            var endOfDirectiveToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(endOfDirectiveToken);
-            this.endOfDirectiveToken = endOfDirectiveToken;
-            this.isActive = (bool)reader.ReadBoolean();
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.hashToken);
-            writer.WriteValue(this.referenceKeyword);
-            writer.WriteValue(this.file);
-            writer.WriteValue(this.endOfDirectiveToken);
-            writer.WriteBoolean(this.isActive);
-        }
-
-        static ReferenceDirectiveTriviaSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(ReferenceDirectiveTriviaSyntax), r => new ReferenceDirectiveTriviaSyntax(r));
-        }
     }
 
     internal sealed partial class LoadDirectiveTriviaSyntax : DirectiveTriviaSyntax
@@ -34583,40 +26027,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new LoadDirectiveTriviaSyntax(this.Kind, this.hashToken, this.loadKeyword, this.file, this.endOfDirectiveToken, this.isActive, GetDiagnostics(), annotations);
-
-        internal LoadDirectiveTriviaSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 4;
-            var hashToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(hashToken);
-            this.hashToken = hashToken;
-            var loadKeyword = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(loadKeyword);
-            this.loadKeyword = loadKeyword;
-            var file = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(file);
-            this.file = file;
-            var endOfDirectiveToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(endOfDirectiveToken);
-            this.endOfDirectiveToken = endOfDirectiveToken;
-            this.isActive = (bool)reader.ReadBoolean();
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.hashToken);
-            writer.WriteValue(this.loadKeyword);
-            writer.WriteValue(this.file);
-            writer.WriteValue(this.endOfDirectiveToken);
-            writer.WriteBoolean(this.isActive);
-        }
-
-        static LoadDirectiveTriviaSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(LoadDirectiveTriviaSyntax), r => new LoadDirectiveTriviaSyntax(r));
-        }
     }
 
     internal sealed partial class ShebangDirectiveTriviaSyntax : DirectiveTriviaSyntax
@@ -34707,36 +26117,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new ShebangDirectiveTriviaSyntax(this.Kind, this.hashToken, this.exclamationToken, this.endOfDirectiveToken, this.isActive, GetDiagnostics(), annotations);
-
-        internal ShebangDirectiveTriviaSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 3;
-            var hashToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(hashToken);
-            this.hashToken = hashToken;
-            var exclamationToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(exclamationToken);
-            this.exclamationToken = exclamationToken;
-            var endOfDirectiveToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(endOfDirectiveToken);
-            this.endOfDirectiveToken = endOfDirectiveToken;
-            this.isActive = (bool)reader.ReadBoolean();
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.hashToken);
-            writer.WriteValue(this.exclamationToken);
-            writer.WriteValue(this.endOfDirectiveToken);
-            writer.WriteBoolean(this.isActive);
-        }
-
-        static ShebangDirectiveTriviaSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(ShebangDirectiveTriviaSyntax), r => new ShebangDirectiveTriviaSyntax(r));
-        }
     }
 
     internal sealed partial class NullableDirectiveTriviaSyntax : DirectiveTriviaSyntax
@@ -34854,47 +26234,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
 
         internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
             => new NullableDirectiveTriviaSyntax(this.Kind, this.hashToken, this.nullableKeyword, this.settingToken, this.targetToken, this.endOfDirectiveToken, this.isActive, GetDiagnostics(), annotations);
-
-        internal NullableDirectiveTriviaSyntax(ObjectReader reader)
-          : base(reader)
-        {
-            this.SlotCount = 5;
-            var hashToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(hashToken);
-            this.hashToken = hashToken;
-            var nullableKeyword = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(nullableKeyword);
-            this.nullableKeyword = nullableKeyword;
-            var settingToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(settingToken);
-            this.settingToken = settingToken;
-            var targetToken = (SyntaxToken?)reader.ReadValue();
-            if (targetToken != null)
-            {
-                AdjustFlagsAndWidth(targetToken);
-                this.targetToken = targetToken;
-            }
-            var endOfDirectiveToken = (SyntaxToken)reader.ReadValue();
-            AdjustFlagsAndWidth(endOfDirectiveToken);
-            this.endOfDirectiveToken = endOfDirectiveToken;
-            this.isActive = (bool)reader.ReadBoolean();
-        }
-
-        internal override void WriteTo(ObjectWriter writer)
-        {
-            base.WriteTo(writer);
-            writer.WriteValue(this.hashToken);
-            writer.WriteValue(this.nullableKeyword);
-            writer.WriteValue(this.settingToken);
-            writer.WriteValue(this.targetToken);
-            writer.WriteValue(this.endOfDirectiveToken);
-            writer.WriteBoolean(this.isActive);
-        }
-
-        static NullableDirectiveTriviaSyntax()
-        {
-            ObjectBinder.RegisterTypeReader(typeof(NullableDirectiveTriviaSyntax), r => new NullableDirectiveTriviaSyntax(r));
-        }
     }
 
     internal partial class CSharpSyntaxVisitor<TResult>
@@ -36189,7 +27528,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return result;
         }
 
-        public TypeArgumentListSyntax TypeArgumentList(SyntaxToken lessThanToken, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<TypeSyntax> arguments, SyntaxToken greaterThanToken)
+        public TypeArgumentListSyntax TypeArgumentList(SyntaxToken lessThanToken, CoreSyntax.SeparatedSyntaxList<TypeSyntax> arguments, SyntaxToken greaterThanToken)
         {
 #if DEBUG
             if (lessThanToken == null) throw new ArgumentNullException(nameof(lessThanToken));
@@ -36272,7 +27611,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return result;
         }
 
-        public ArrayTypeSyntax ArrayType(TypeSyntax elementType, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<ArrayRankSpecifierSyntax> rankSpecifiers)
+        public ArrayTypeSyntax ArrayType(TypeSyntax elementType, CoreSyntax.SyntaxList<ArrayRankSpecifierSyntax> rankSpecifiers)
         {
 #if DEBUG
             if (elementType == null) throw new ArgumentNullException(nameof(elementType));
@@ -36291,7 +27630,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return result;
         }
 
-        public ArrayRankSpecifierSyntax ArrayRankSpecifier(SyntaxToken openBracketToken, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<ExpressionSyntax> sizes, SyntaxToken closeBracketToken)
+        public ArrayRankSpecifierSyntax ArrayRankSpecifier(SyntaxToken openBracketToken, CoreSyntax.SeparatedSyntaxList<ExpressionSyntax> sizes, SyntaxToken closeBracketToken)
         {
 #if DEBUG
             if (openBracketToken == null) throw new ArgumentNullException(nameof(openBracketToken));
@@ -36347,7 +27686,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return new FunctionPointerTypeSyntax(SyntaxKind.FunctionPointerType, delegateKeyword, asteriskToken, callingConvention, parameterList, this.context);
         }
 
-        public FunctionPointerParameterListSyntax FunctionPointerParameterList(SyntaxToken lessThanToken, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<FunctionPointerParameterSyntax> parameters, SyntaxToken greaterThanToken)
+        public FunctionPointerParameterListSyntax FunctionPointerParameterList(SyntaxToken lessThanToken, CoreSyntax.SeparatedSyntaxList<FunctionPointerParameterSyntax> parameters, SyntaxToken greaterThanToken)
         {
 #if DEBUG
             if (lessThanToken == null) throw new ArgumentNullException(nameof(lessThanToken));
@@ -36394,7 +27733,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return result;
         }
 
-        public FunctionPointerUnmanagedCallingConventionListSyntax FunctionPointerUnmanagedCallingConventionList(SyntaxToken openBracketToken, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<FunctionPointerUnmanagedCallingConventionSyntax> callingConventions, SyntaxToken closeBracketToken)
+        public FunctionPointerUnmanagedCallingConventionListSyntax FunctionPointerUnmanagedCallingConventionList(SyntaxToken openBracketToken, CoreSyntax.SeparatedSyntaxList<FunctionPointerUnmanagedCallingConventionSyntax> callingConventions, SyntaxToken closeBracketToken)
         {
 #if DEBUG
             if (openBracketToken == null) throw new ArgumentNullException(nameof(openBracketToken));
@@ -36457,7 +27796,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return result;
         }
 
-        public TupleTypeSyntax TupleType(SyntaxToken openParenToken, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<TupleElementSyntax> elements, SyntaxToken closeParenToken)
+        public TupleTypeSyntax TupleType(SyntaxToken openParenToken, CoreSyntax.SeparatedSyntaxList<TupleElementSyntax> elements, SyntaxToken closeParenToken)
         {
 #if DEBUG
             if (openParenToken == null) throw new ArgumentNullException(nameof(openParenToken));
@@ -36601,7 +27940,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return result;
         }
 
-        public TupleExpressionSyntax TupleExpression(SyntaxToken openParenToken, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<ArgumentSyntax> arguments, SyntaxToken closeParenToken)
+        public TupleExpressionSyntax TupleExpression(SyntaxToken openParenToken, CoreSyntax.SeparatedSyntaxList<ArgumentSyntax> arguments, SyntaxToken closeParenToken)
         {
 #if DEBUG
             if (openParenToken == null) throw new ArgumentNullException(nameof(openParenToken));
@@ -37249,7 +28588,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return result;
         }
 
-        public ArgumentListSyntax ArgumentList(SyntaxToken openParenToken, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<ArgumentSyntax> arguments, SyntaxToken closeParenToken)
+        public ArgumentListSyntax ArgumentList(SyntaxToken openParenToken, CoreSyntax.SeparatedSyntaxList<ArgumentSyntax> arguments, SyntaxToken closeParenToken)
         {
 #if DEBUG
             if (openParenToken == null) throw new ArgumentNullException(nameof(openParenToken));
@@ -37271,7 +28610,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return result;
         }
 
-        public BracketedArgumentListSyntax BracketedArgumentList(SyntaxToken openBracketToken, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<ArgumentSyntax> arguments, SyntaxToken closeBracketToken)
+        public BracketedArgumentListSyntax BracketedArgumentList(SyntaxToken openBracketToken, CoreSyntax.SeparatedSyntaxList<ArgumentSyntax> arguments, SyntaxToken closeBracketToken)
         {
 #if DEBUG
             if (openBracketToken == null) throw new ArgumentNullException(nameof(openBracketToken));
@@ -37397,7 +28736,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return new CastExpressionSyntax(SyntaxKind.CastExpression, openParenToken, type, closeParenToken, expression, this.context);
         }
 
-        public AnonymousMethodExpressionSyntax AnonymousMethodExpression(Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SyntaxToken> modifiers, SyntaxToken delegateKeyword, ParameterListSyntax? parameterList, BlockSyntax block, ExpressionSyntax? expressionBody)
+        public AnonymousMethodExpressionSyntax AnonymousMethodExpression(CoreSyntax.SyntaxList<SyntaxToken> modifiers, SyntaxToken delegateKeyword, ParameterListSyntax? parameterList, BlockSyntax block, ExpressionSyntax? expressionBody)
         {
 #if DEBUG
             if (delegateKeyword == null) throw new ArgumentNullException(nameof(delegateKeyword));
@@ -37408,7 +28747,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return new AnonymousMethodExpressionSyntax(SyntaxKind.AnonymousMethodExpression, modifiers.Node, delegateKeyword, parameterList, block, expressionBody, this.context);
         }
 
-        public SimpleLambdaExpressionSyntax SimpleLambdaExpression(Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> attributeLists, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SyntaxToken> modifiers, ParameterSyntax parameter, SyntaxToken arrowToken, BlockSyntax? block, ExpressionSyntax? expressionBody)
+        public SimpleLambdaExpressionSyntax SimpleLambdaExpression(CoreSyntax.SyntaxList<AttributeListSyntax> attributeLists, CoreSyntax.SyntaxList<SyntaxToken> modifiers, ParameterSyntax parameter, SyntaxToken arrowToken, BlockSyntax? block, ExpressionSyntax? expressionBody)
         {
 #if DEBUG
             if (parameter == null) throw new ArgumentNullException(nameof(parameter));
@@ -37440,7 +28779,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return result;
         }
 
-        public ParenthesizedLambdaExpressionSyntax ParenthesizedLambdaExpression(Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> attributeLists, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SyntaxToken> modifiers, TypeSyntax? returnType, ParameterListSyntax parameterList, SyntaxToken arrowToken, BlockSyntax? block, ExpressionSyntax? expressionBody)
+        public ParenthesizedLambdaExpressionSyntax ParenthesizedLambdaExpression(CoreSyntax.SyntaxList<AttributeListSyntax> attributeLists, CoreSyntax.SyntaxList<SyntaxToken> modifiers, TypeSyntax? returnType, ParameterListSyntax parameterList, SyntaxToken arrowToken, BlockSyntax? block, ExpressionSyntax? expressionBody)
         {
 #if DEBUG
             if (parameterList == null) throw new ArgumentNullException(nameof(parameterList));
@@ -37451,7 +28790,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return new ParenthesizedLambdaExpressionSyntax(SyntaxKind.ParenthesizedLambdaExpression, attributeLists.Node, modifiers.Node, returnType, parameterList, arrowToken, block, expressionBody, this.context);
         }
 
-        public InitializerExpressionSyntax InitializerExpression(SyntaxKind kind, SyntaxToken openBraceToken, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<ExpressionSyntax> expressions, SyntaxToken closeBraceToken)
+        public InitializerExpressionSyntax InitializerExpression(SyntaxKind kind, SyntaxToken openBraceToken, CoreSyntax.SeparatedSyntaxList<ExpressionSyntax> expressions, SyntaxToken closeBraceToken)
         {
             switch (kind)
             {
@@ -37555,7 +28894,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return result;
         }
 
-        public AnonymousObjectCreationExpressionSyntax AnonymousObjectCreationExpression(SyntaxToken newKeyword, SyntaxToken openBraceToken, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<AnonymousObjectMemberDeclaratorSyntax> initializers, SyntaxToken closeBraceToken)
+        public AnonymousObjectCreationExpressionSyntax AnonymousObjectCreationExpression(SyntaxToken newKeyword, SyntaxToken openBraceToken, CoreSyntax.SeparatedSyntaxList<AnonymousObjectMemberDeclaratorSyntax> initializers, SyntaxToken closeBraceToken)
         {
 #if DEBUG
             if (newKeyword == null) throw new ArgumentNullException(nameof(newKeyword));
@@ -37590,7 +28929,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return result;
         }
 
-        public ImplicitArrayCreationExpressionSyntax ImplicitArrayCreationExpression(SyntaxToken newKeyword, SyntaxToken openBracketToken, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SyntaxToken> commas, SyntaxToken closeBracketToken, InitializerExpressionSyntax initializer)
+        public ImplicitArrayCreationExpressionSyntax ImplicitArrayCreationExpression(SyntaxToken newKeyword, SyntaxToken openBracketToken, CoreSyntax.SyntaxList<SyntaxToken> commas, SyntaxToken closeBracketToken, InitializerExpressionSyntax initializer)
         {
 #if DEBUG
             if (newKeyword == null) throw new ArgumentNullException(nameof(newKeyword));
@@ -37641,7 +28980,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return new ImplicitStackAllocArrayCreationExpressionSyntax(SyntaxKind.ImplicitStackAllocArrayCreationExpression, stackAllocKeyword, openBracketToken, closeBracketToken, initializer, this.context);
         }
 
-        public CollectionExpressionSyntax CollectionExpression(SyntaxToken openBracketToken, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<CollectionElementSyntax> elements, SyntaxToken closeBracketToken)
+        public CollectionExpressionSyntax CollectionExpression(SyntaxToken openBracketToken, CoreSyntax.SeparatedSyntaxList<CollectionElementSyntax> elements, SyntaxToken closeBracketToken)
         {
 #if DEBUG
             if (openBracketToken == null) throw new ArgumentNullException(nameof(openBracketToken));
@@ -37723,7 +29062,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return result;
         }
 
-        public QueryBodySyntax QueryBody(Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<QueryClauseSyntax> clauses, SelectOrGroupClauseSyntax selectOrGroup, QueryContinuationSyntax? continuation)
+        public QueryBodySyntax QueryBody(CoreSyntax.SyntaxList<QueryClauseSyntax> clauses, SelectOrGroupClauseSyntax selectOrGroup, QueryContinuationSyntax? continuation)
         {
 #if DEBUG
             if (selectOrGroup == null) throw new ArgumentNullException(nameof(selectOrGroup));
@@ -37836,7 +29175,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return result;
         }
 
-        public OrderByClauseSyntax OrderByClause(SyntaxToken orderByKeyword, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<OrderingSyntax> orderings)
+        public OrderByClauseSyntax OrderByClause(SyntaxToken orderByKeyword, CoreSyntax.SeparatedSyntaxList<OrderingSyntax> orderings)
         {
 #if DEBUG
             if (orderByKeyword == null) throw new ArgumentNullException(nameof(orderByKeyword));
@@ -37969,7 +29308,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return result;
         }
 
-        public InterpolatedStringExpressionSyntax InterpolatedStringExpression(SyntaxToken stringStartToken, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<InterpolatedStringContentSyntax> contents, SyntaxToken stringEndToken)
+        public InterpolatedStringExpressionSyntax InterpolatedStringExpression(SyntaxToken stringStartToken, CoreSyntax.SyntaxList<InterpolatedStringContentSyntax> contents, SyntaxToken stringEndToken)
         {
 #if DEBUG
             if (stringStartToken == null) throw new ArgumentNullException(nameof(stringStartToken));
@@ -38136,7 +29475,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return new RecursivePatternSyntax(SyntaxKind.RecursivePattern, type, positionalPatternClause, propertyPatternClause, designation, this.context);
         }
 
-        public PositionalPatternClauseSyntax PositionalPatternClause(SyntaxToken openParenToken, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<SubpatternSyntax> subpatterns, SyntaxToken closeParenToken)
+        public PositionalPatternClauseSyntax PositionalPatternClause(SyntaxToken openParenToken, CoreSyntax.SeparatedSyntaxList<SubpatternSyntax> subpatterns, SyntaxToken closeParenToken)
         {
 #if DEBUG
             if (openParenToken == null) throw new ArgumentNullException(nameof(openParenToken));
@@ -38158,7 +29497,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return result;
         }
 
-        public PropertyPatternClauseSyntax PropertyPatternClause(SyntaxToken openBraceToken, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<SubpatternSyntax> subpatterns, SyntaxToken closeBraceToken)
+        public PropertyPatternClauseSyntax PropertyPatternClause(SyntaxToken openBraceToken, CoreSyntax.SeparatedSyntaxList<SubpatternSyntax> subpatterns, SyntaxToken closeBraceToken)
         {
 #if DEBUG
             if (openBraceToken == null) throw new ArgumentNullException(nameof(openBraceToken));
@@ -38344,7 +29683,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return result;
         }
 
-        public ListPatternSyntax ListPattern(SyntaxToken openBracketToken, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<PatternSyntax> patterns, SyntaxToken closeBracketToken, VariableDesignationSyntax? designation)
+        public ListPatternSyntax ListPattern(SyntaxToken openBracketToken, CoreSyntax.SeparatedSyntaxList<PatternSyntax> patterns, SyntaxToken closeBracketToken, VariableDesignationSyntax? designation)
         {
 #if DEBUG
             if (openBracketToken == null) throw new ArgumentNullException(nameof(openBracketToken));
@@ -38450,7 +29789,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return result;
         }
 
-        public GlobalStatementSyntax GlobalStatement(Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> attributeLists, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SyntaxToken> modifiers, StatementSyntax statement)
+        public GlobalStatementSyntax GlobalStatement(CoreSyntax.SyntaxList<AttributeListSyntax> attributeLists, CoreSyntax.SyntaxList<SyntaxToken> modifiers, StatementSyntax statement)
         {
 #if DEBUG
             if (statement == null) throw new ArgumentNullException(nameof(statement));
@@ -38469,7 +29808,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return result;
         }
 
-        public BlockSyntax Block(Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> attributeLists, SyntaxToken openBraceToken, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<StatementSyntax> statements, SyntaxToken closeBraceToken)
+        public BlockSyntax Block(CoreSyntax.SyntaxList<AttributeListSyntax> attributeLists, SyntaxToken openBraceToken, CoreSyntax.SyntaxList<StatementSyntax> statements, SyntaxToken closeBraceToken)
         {
 #if DEBUG
             if (openBraceToken == null) throw new ArgumentNullException(nameof(openBraceToken));
@@ -38481,7 +29820,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return new BlockSyntax(SyntaxKind.Block, attributeLists.Node, openBraceToken, statements.Node, closeBraceToken, this.context);
         }
 
-        public LocalFunctionStatementSyntax LocalFunctionStatement(Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> attributeLists, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SyntaxToken> modifiers, TypeSyntax returnType, SyntaxToken identifier, TypeParameterListSyntax? typeParameterList, ParameterListSyntax parameterList, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<TypeParameterConstraintClauseSyntax> constraintClauses, BlockSyntax? body, ArrowExpressionClauseSyntax? expressionBody, SyntaxToken? semicolonToken)
+        public LocalFunctionStatementSyntax LocalFunctionStatement(CoreSyntax.SyntaxList<AttributeListSyntax> attributeLists, CoreSyntax.SyntaxList<SyntaxToken> modifiers, TypeSyntax returnType, SyntaxToken identifier, TypeParameterListSyntax? typeParameterList, ParameterListSyntax parameterList, CoreSyntax.SyntaxList<TypeParameterConstraintClauseSyntax> constraintClauses, BlockSyntax? body, ArrowExpressionClauseSyntax? expressionBody, SyntaxToken? semicolonToken)
         {
 #if DEBUG
             if (returnType == null) throw new ArgumentNullException(nameof(returnType));
@@ -38502,7 +29841,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return new LocalFunctionStatementSyntax(SyntaxKind.LocalFunctionStatement, attributeLists.Node, modifiers.Node, returnType, identifier, typeParameterList, parameterList, constraintClauses.Node, body, expressionBody, semicolonToken, this.context);
         }
 
-        public LocalDeclarationStatementSyntax LocalDeclarationStatement(Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> attributeLists, SyntaxToken? awaitKeyword, SyntaxToken? usingKeyword, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SyntaxToken> modifiers, VariableDeclarationSyntax declaration, SyntaxToken semicolonToken)
+        public LocalDeclarationStatementSyntax LocalDeclarationStatement(CoreSyntax.SyntaxList<AttributeListSyntax> attributeLists, SyntaxToken? awaitKeyword, SyntaxToken? usingKeyword, CoreSyntax.SyntaxList<SyntaxToken> modifiers, VariableDeclarationSyntax declaration, SyntaxToken semicolonToken)
         {
 #if DEBUG
             if (awaitKeyword != null)
@@ -38531,7 +29870,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return new LocalDeclarationStatementSyntax(SyntaxKind.LocalDeclarationStatement, attributeLists.Node, awaitKeyword, usingKeyword, modifiers.Node, declaration, semicolonToken, this.context);
         }
 
-        public VariableDeclarationSyntax VariableDeclaration(TypeSyntax type, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<VariableDeclaratorSyntax> variables)
+        public VariableDeclarationSyntax VariableDeclaration(TypeSyntax type, CoreSyntax.SeparatedSyntaxList<VariableDeclaratorSyntax> variables)
         {
 #if DEBUG
             if (type == null) throw new ArgumentNullException(nameof(type));
@@ -38631,7 +29970,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return result;
         }
 
-        public ParenthesizedVariableDesignationSyntax ParenthesizedVariableDesignation(SyntaxToken openParenToken, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<VariableDesignationSyntax> variables, SyntaxToken closeParenToken)
+        public ParenthesizedVariableDesignationSyntax ParenthesizedVariableDesignation(SyntaxToken openParenToken, CoreSyntax.SeparatedSyntaxList<VariableDesignationSyntax> variables, SyntaxToken closeParenToken)
         {
 #if DEBUG
             if (openParenToken == null) throw new ArgumentNullException(nameof(openParenToken));
@@ -38653,7 +29992,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return result;
         }
 
-        public ExpressionStatementSyntax ExpressionStatement(Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> attributeLists, ExpressionSyntax expression, SyntaxToken semicolonToken)
+        public ExpressionStatementSyntax ExpressionStatement(CoreSyntax.SyntaxList<AttributeListSyntax> attributeLists, ExpressionSyntax expression, SyntaxToken semicolonToken)
         {
 #if DEBUG
             if (expression == null) throw new ArgumentNullException(nameof(expression));
@@ -38674,7 +30013,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return result;
         }
 
-        public EmptyStatementSyntax EmptyStatement(Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> attributeLists, SyntaxToken semicolonToken)
+        public EmptyStatementSyntax EmptyStatement(CoreSyntax.SyntaxList<AttributeListSyntax> attributeLists, SyntaxToken semicolonToken)
         {
 #if DEBUG
             if (semicolonToken == null) throw new ArgumentNullException(nameof(semicolonToken));
@@ -38694,7 +30033,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return result;
         }
 
-        public LabeledStatementSyntax LabeledStatement(Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> attributeLists, SyntaxToken identifier, SyntaxToken colonToken, StatementSyntax statement)
+        public LabeledStatementSyntax LabeledStatement(CoreSyntax.SyntaxList<AttributeListSyntax> attributeLists, SyntaxToken identifier, SyntaxToken colonToken, StatementSyntax statement)
         {
 #if DEBUG
             if (identifier == null) throw new ArgumentNullException(nameof(identifier));
@@ -38707,7 +30046,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return new LabeledStatementSyntax(SyntaxKind.LabeledStatement, attributeLists.Node, identifier, colonToken, statement, this.context);
         }
 
-        public GotoStatementSyntax GotoStatement(SyntaxKind kind, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> attributeLists, SyntaxToken gotoKeyword, SyntaxToken? caseOrDefaultKeyword, ExpressionSyntax? expression, SyntaxToken semicolonToken)
+        public GotoStatementSyntax GotoStatement(SyntaxKind kind, CoreSyntax.SyntaxList<AttributeListSyntax> attributeLists, SyntaxToken gotoKeyword, SyntaxToken? caseOrDefaultKeyword, ExpressionSyntax? expression, SyntaxToken semicolonToken)
         {
             switch (kind)
             {
@@ -38736,7 +30075,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return new GotoStatementSyntax(kind, attributeLists.Node, gotoKeyword, caseOrDefaultKeyword, expression, semicolonToken, this.context);
         }
 
-        public BreakStatementSyntax BreakStatement(Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> attributeLists, SyntaxToken breakKeyword, SyntaxToken semicolonToken)
+        public BreakStatementSyntax BreakStatement(CoreSyntax.SyntaxList<AttributeListSyntax> attributeLists, SyntaxToken breakKeyword, SyntaxToken semicolonToken)
         {
 #if DEBUG
             if (breakKeyword == null) throw new ArgumentNullException(nameof(breakKeyword));
@@ -38758,7 +30097,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return result;
         }
 
-        public ContinueStatementSyntax ContinueStatement(Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> attributeLists, SyntaxToken continueKeyword, SyntaxToken semicolonToken)
+        public ContinueStatementSyntax ContinueStatement(CoreSyntax.SyntaxList<AttributeListSyntax> attributeLists, SyntaxToken continueKeyword, SyntaxToken semicolonToken)
         {
 #if DEBUG
             if (continueKeyword == null) throw new ArgumentNullException(nameof(continueKeyword));
@@ -38780,7 +30119,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return result;
         }
 
-        public ReturnStatementSyntax ReturnStatement(Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> attributeLists, SyntaxToken returnKeyword, ExpressionSyntax? expression, SyntaxToken semicolonToken)
+        public ReturnStatementSyntax ReturnStatement(CoreSyntax.SyntaxList<AttributeListSyntax> attributeLists, SyntaxToken returnKeyword, ExpressionSyntax? expression, SyntaxToken semicolonToken)
         {
 #if DEBUG
             if (returnKeyword == null) throw new ArgumentNullException(nameof(returnKeyword));
@@ -38792,7 +30131,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return new ReturnStatementSyntax(SyntaxKind.ReturnStatement, attributeLists.Node, returnKeyword, expression, semicolonToken, this.context);
         }
 
-        public ThrowStatementSyntax ThrowStatement(Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> attributeLists, SyntaxToken throwKeyword, ExpressionSyntax? expression, SyntaxToken semicolonToken)
+        public ThrowStatementSyntax ThrowStatement(CoreSyntax.SyntaxList<AttributeListSyntax> attributeLists, SyntaxToken throwKeyword, ExpressionSyntax? expression, SyntaxToken semicolonToken)
         {
 #if DEBUG
             if (throwKeyword == null) throw new ArgumentNullException(nameof(throwKeyword));
@@ -38804,7 +30143,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return new ThrowStatementSyntax(SyntaxKind.ThrowStatement, attributeLists.Node, throwKeyword, expression, semicolonToken, this.context);
         }
 
-        public YieldStatementSyntax YieldStatement(SyntaxKind kind, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> attributeLists, SyntaxToken yieldKeyword, SyntaxToken returnOrBreakKeyword, ExpressionSyntax? expression, SyntaxToken semicolonToken)
+        public YieldStatementSyntax YieldStatement(SyntaxKind kind, CoreSyntax.SyntaxList<AttributeListSyntax> attributeLists, SyntaxToken yieldKeyword, SyntaxToken returnOrBreakKeyword, ExpressionSyntax? expression, SyntaxToken semicolonToken)
         {
             switch (kind)
             {
@@ -38829,7 +30168,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return new YieldStatementSyntax(kind, attributeLists.Node, yieldKeyword, returnOrBreakKeyword, expression, semicolonToken, this.context);
         }
 
-        public WhileStatementSyntax WhileStatement(Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> attributeLists, SyntaxToken whileKeyword, SyntaxToken openParenToken, ExpressionSyntax condition, SyntaxToken closeParenToken, StatementSyntax statement)
+        public WhileStatementSyntax WhileStatement(CoreSyntax.SyntaxList<AttributeListSyntax> attributeLists, SyntaxToken whileKeyword, SyntaxToken openParenToken, ExpressionSyntax condition, SyntaxToken closeParenToken, StatementSyntax statement)
         {
 #if DEBUG
             if (whileKeyword == null) throw new ArgumentNullException(nameof(whileKeyword));
@@ -38845,7 +30184,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return new WhileStatementSyntax(SyntaxKind.WhileStatement, attributeLists.Node, whileKeyword, openParenToken, condition, closeParenToken, statement, this.context);
         }
 
-        public DoStatementSyntax DoStatement(Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> attributeLists, SyntaxToken doKeyword, StatementSyntax statement, SyntaxToken whileKeyword, SyntaxToken openParenToken, ExpressionSyntax condition, SyntaxToken closeParenToken, SyntaxToken semicolonToken)
+        public DoStatementSyntax DoStatement(CoreSyntax.SyntaxList<AttributeListSyntax> attributeLists, SyntaxToken doKeyword, StatementSyntax statement, SyntaxToken whileKeyword, SyntaxToken openParenToken, ExpressionSyntax condition, SyntaxToken closeParenToken, SyntaxToken semicolonToken)
         {
 #if DEBUG
             if (doKeyword == null) throw new ArgumentNullException(nameof(doKeyword));
@@ -38865,7 +30204,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return new DoStatementSyntax(SyntaxKind.DoStatement, attributeLists.Node, doKeyword, statement, whileKeyword, openParenToken, condition, closeParenToken, semicolonToken, this.context);
         }
 
-        public ForStatementSyntax ForStatement(Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> attributeLists, SyntaxToken forKeyword, SyntaxToken openParenToken, VariableDeclarationSyntax? declaration, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<ExpressionSyntax> initializers, SyntaxToken firstSemicolonToken, ExpressionSyntax? condition, SyntaxToken secondSemicolonToken, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<ExpressionSyntax> incrementors, SyntaxToken closeParenToken, StatementSyntax statement)
+        public ForStatementSyntax ForStatement(CoreSyntax.SyntaxList<AttributeListSyntax> attributeLists, SyntaxToken forKeyword, SyntaxToken openParenToken, VariableDeclarationSyntax? declaration, CoreSyntax.SeparatedSyntaxList<ExpressionSyntax> initializers, SyntaxToken firstSemicolonToken, ExpressionSyntax? condition, SyntaxToken secondSemicolonToken, CoreSyntax.SeparatedSyntaxList<ExpressionSyntax> incrementors, SyntaxToken closeParenToken, StatementSyntax statement)
         {
 #if DEBUG
             if (forKeyword == null) throw new ArgumentNullException(nameof(forKeyword));
@@ -38884,7 +30223,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return new ForStatementSyntax(SyntaxKind.ForStatement, attributeLists.Node, forKeyword, openParenToken, declaration, initializers.Node, firstSemicolonToken, condition, secondSemicolonToken, incrementors.Node, closeParenToken, statement, this.context);
         }
 
-        public ForEachStatementSyntax ForEachStatement(Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> attributeLists, SyntaxToken? awaitKeyword, SyntaxToken forEachKeyword, SyntaxToken openParenToken, TypeSyntax type, SyntaxToken identifier, SyntaxToken inKeyword, ExpressionSyntax expression, SyntaxToken closeParenToken, StatementSyntax statement)
+        public ForEachStatementSyntax ForEachStatement(CoreSyntax.SyntaxList<AttributeListSyntax> attributeLists, SyntaxToken? awaitKeyword, SyntaxToken forEachKeyword, SyntaxToken openParenToken, TypeSyntax type, SyntaxToken identifier, SyntaxToken inKeyword, ExpressionSyntax expression, SyntaxToken closeParenToken, StatementSyntax statement)
         {
 #if DEBUG
             if (awaitKeyword != null)
@@ -38914,7 +30253,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return new ForEachStatementSyntax(SyntaxKind.ForEachStatement, attributeLists.Node, awaitKeyword, forEachKeyword, openParenToken, type, identifier, inKeyword, expression, closeParenToken, statement, this.context);
         }
 
-        public ForEachVariableStatementSyntax ForEachVariableStatement(Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> attributeLists, SyntaxToken? awaitKeyword, SyntaxToken forEachKeyword, SyntaxToken openParenToken, ExpressionSyntax variable, SyntaxToken inKeyword, ExpressionSyntax expression, SyntaxToken closeParenToken, StatementSyntax statement)
+        public ForEachVariableStatementSyntax ForEachVariableStatement(CoreSyntax.SyntaxList<AttributeListSyntax> attributeLists, SyntaxToken? awaitKeyword, SyntaxToken forEachKeyword, SyntaxToken openParenToken, ExpressionSyntax variable, SyntaxToken inKeyword, ExpressionSyntax expression, SyntaxToken closeParenToken, StatementSyntax statement)
         {
 #if DEBUG
             if (awaitKeyword != null)
@@ -38942,7 +30281,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return new ForEachVariableStatementSyntax(SyntaxKind.ForEachVariableStatement, attributeLists.Node, awaitKeyword, forEachKeyword, openParenToken, variable, inKeyword, expression, closeParenToken, statement, this.context);
         }
 
-        public UsingStatementSyntax UsingStatement(Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> attributeLists, SyntaxToken? awaitKeyword, SyntaxToken usingKeyword, SyntaxToken openParenToken, VariableDeclarationSyntax? declaration, ExpressionSyntax? expression, SyntaxToken closeParenToken, StatementSyntax statement)
+        public UsingStatementSyntax UsingStatement(CoreSyntax.SyntaxList<AttributeListSyntax> attributeLists, SyntaxToken? awaitKeyword, SyntaxToken usingKeyword, SyntaxToken openParenToken, VariableDeclarationSyntax? declaration, ExpressionSyntax? expression, SyntaxToken closeParenToken, StatementSyntax statement)
         {
 #if DEBUG
             if (awaitKeyword != null)
@@ -38966,7 +30305,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return new UsingStatementSyntax(SyntaxKind.UsingStatement, attributeLists.Node, awaitKeyword, usingKeyword, openParenToken, declaration, expression, closeParenToken, statement, this.context);
         }
 
-        public FixedStatementSyntax FixedStatement(Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> attributeLists, SyntaxToken fixedKeyword, SyntaxToken openParenToken, VariableDeclarationSyntax declaration, SyntaxToken closeParenToken, StatementSyntax statement)
+        public FixedStatementSyntax FixedStatement(CoreSyntax.SyntaxList<AttributeListSyntax> attributeLists, SyntaxToken fixedKeyword, SyntaxToken openParenToken, VariableDeclarationSyntax declaration, SyntaxToken closeParenToken, StatementSyntax statement)
         {
 #if DEBUG
             if (fixedKeyword == null) throw new ArgumentNullException(nameof(fixedKeyword));
@@ -38982,7 +30321,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return new FixedStatementSyntax(SyntaxKind.FixedStatement, attributeLists.Node, fixedKeyword, openParenToken, declaration, closeParenToken, statement, this.context);
         }
 
-        public CheckedStatementSyntax CheckedStatement(SyntaxKind kind, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> attributeLists, SyntaxToken keyword, BlockSyntax block)
+        public CheckedStatementSyntax CheckedStatement(SyntaxKind kind, CoreSyntax.SyntaxList<AttributeListSyntax> attributeLists, SyntaxToken keyword, BlockSyntax block)
         {
             switch (kind)
             {
@@ -39014,7 +30353,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return result;
         }
 
-        public UnsafeStatementSyntax UnsafeStatement(Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> attributeLists, SyntaxToken unsafeKeyword, BlockSyntax block)
+        public UnsafeStatementSyntax UnsafeStatement(CoreSyntax.SyntaxList<AttributeListSyntax> attributeLists, SyntaxToken unsafeKeyword, BlockSyntax block)
         {
 #if DEBUG
             if (unsafeKeyword == null) throw new ArgumentNullException(nameof(unsafeKeyword));
@@ -39035,7 +30374,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return result;
         }
 
-        public LockStatementSyntax LockStatement(Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> attributeLists, SyntaxToken lockKeyword, SyntaxToken openParenToken, ExpressionSyntax expression, SyntaxToken closeParenToken, StatementSyntax statement)
+        public LockStatementSyntax LockStatement(CoreSyntax.SyntaxList<AttributeListSyntax> attributeLists, SyntaxToken lockKeyword, SyntaxToken openParenToken, ExpressionSyntax expression, SyntaxToken closeParenToken, StatementSyntax statement)
         {
 #if DEBUG
             if (lockKeyword == null) throw new ArgumentNullException(nameof(lockKeyword));
@@ -39051,7 +30390,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return new LockStatementSyntax(SyntaxKind.LockStatement, attributeLists.Node, lockKeyword, openParenToken, expression, closeParenToken, statement, this.context);
         }
 
-        public IfStatementSyntax IfStatement(Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> attributeLists, SyntaxToken ifKeyword, SyntaxToken openParenToken, ExpressionSyntax condition, SyntaxToken closeParenToken, StatementSyntax statement, ElseClauseSyntax? @else)
+        public IfStatementSyntax IfStatement(CoreSyntax.SyntaxList<AttributeListSyntax> attributeLists, SyntaxToken ifKeyword, SyntaxToken openParenToken, ExpressionSyntax condition, SyntaxToken closeParenToken, StatementSyntax statement, ElseClauseSyntax? @else)
         {
 #if DEBUG
             if (ifKeyword == null) throw new ArgumentNullException(nameof(ifKeyword));
@@ -39088,7 +30427,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return result;
         }
 
-        public SwitchStatementSyntax SwitchStatement(Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> attributeLists, SyntaxToken switchKeyword, SyntaxToken? openParenToken, ExpressionSyntax expression, SyntaxToken? closeParenToken, SyntaxToken openBraceToken, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SwitchSectionSyntax> sections, SyntaxToken closeBraceToken)
+        public SwitchStatementSyntax SwitchStatement(CoreSyntax.SyntaxList<AttributeListSyntax> attributeLists, SyntaxToken switchKeyword, SyntaxToken? openParenToken, ExpressionSyntax expression, SyntaxToken? closeParenToken, SyntaxToken openBraceToken, CoreSyntax.SyntaxList<SwitchSectionSyntax> sections, SyntaxToken closeBraceToken)
         {
 #if DEBUG
             if (switchKeyword == null) throw new ArgumentNullException(nameof(switchKeyword));
@@ -39121,7 +30460,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return new SwitchStatementSyntax(SyntaxKind.SwitchStatement, attributeLists.Node, switchKeyword, openParenToken, expression, closeParenToken, openBraceToken, sections.Node, closeBraceToken, this.context);
         }
 
-        public SwitchSectionSyntax SwitchSection(Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SwitchLabelSyntax> labels, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<StatementSyntax> statements)
+        public SwitchSectionSyntax SwitchSection(CoreSyntax.SyntaxList<SwitchLabelSyntax> labels, CoreSyntax.SyntaxList<StatementSyntax> statements)
         {
 #if DEBUG
 #endif
@@ -39194,7 +30533,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return result;
         }
 
-        public SwitchExpressionSyntax SwitchExpression(ExpressionSyntax governingExpression, SyntaxToken switchKeyword, SyntaxToken openBraceToken, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<SwitchExpressionArmSyntax> arms, SyntaxToken closeBraceToken)
+        public SwitchExpressionSyntax SwitchExpression(ExpressionSyntax governingExpression, SyntaxToken switchKeyword, SyntaxToken openBraceToken, CoreSyntax.SeparatedSyntaxList<SwitchExpressionArmSyntax> arms, SyntaxToken closeBraceToken)
         {
 #if DEBUG
             if (governingExpression == null) throw new ArgumentNullException(nameof(governingExpression));
@@ -39221,7 +30560,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return new SwitchExpressionArmSyntax(SyntaxKind.SwitchExpressionArm, pattern, whenClause, equalsGreaterThanToken, expression, this.context);
         }
 
-        public TryStatementSyntax TryStatement(Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> attributeLists, SyntaxToken tryKeyword, BlockSyntax block, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<CatchClauseSyntax> catches, FinallyClauseSyntax? @finally)
+        public TryStatementSyntax TryStatement(CoreSyntax.SyntaxList<AttributeListSyntax> attributeLists, SyntaxToken tryKeyword, BlockSyntax block, CoreSyntax.SyntaxList<CatchClauseSyntax> catches, FinallyClauseSyntax? @finally)
         {
 #if DEBUG
             if (tryKeyword == null) throw new ArgumentNullException(nameof(tryKeyword));
@@ -39301,7 +30640,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return result;
         }
 
-        public CompilationUnitSyntax CompilationUnit(Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<ExternAliasDirectiveSyntax> externs, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<UsingDirectiveSyntax> usings, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> attributeLists, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<MemberDeclarationSyntax> members, SyntaxToken endOfFileToken)
+        public CompilationUnitSyntax CompilationUnit(CoreSyntax.SyntaxList<ExternAliasDirectiveSyntax> externs, CoreSyntax.SyntaxList<UsingDirectiveSyntax> usings, CoreSyntax.SyntaxList<AttributeListSyntax> attributeLists, CoreSyntax.SyntaxList<MemberDeclarationSyntax> members, SyntaxToken endOfFileToken)
         {
 #if DEBUG
             if (endOfFileToken == null) throw new ArgumentNullException(nameof(endOfFileToken));
@@ -39367,7 +30706,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return new UsingDirectiveSyntax(SyntaxKind.UsingDirective, globalKeyword, usingKeyword, staticKeyword, unsafeKeyword, alias, namespaceOrType, semicolonToken, this.context);
         }
 
-        public NamespaceDeclarationSyntax NamespaceDeclaration(Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> attributeLists, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SyntaxToken> modifiers, SyntaxToken namespaceKeyword, NameSyntax name, SyntaxToken openBraceToken, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<ExternAliasDirectiveSyntax> externs, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<UsingDirectiveSyntax> usings, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<MemberDeclarationSyntax> members, SyntaxToken closeBraceToken, SyntaxToken? semicolonToken)
+        public NamespaceDeclarationSyntax NamespaceDeclaration(CoreSyntax.SyntaxList<AttributeListSyntax> attributeLists, CoreSyntax.SyntaxList<SyntaxToken> modifiers, SyntaxToken namespaceKeyword, NameSyntax name, SyntaxToken openBraceToken, CoreSyntax.SyntaxList<ExternAliasDirectiveSyntax> externs, CoreSyntax.SyntaxList<UsingDirectiveSyntax> usings, CoreSyntax.SyntaxList<MemberDeclarationSyntax> members, SyntaxToken closeBraceToken, SyntaxToken? semicolonToken)
         {
 #if DEBUG
             if (namespaceKeyword == null) throw new ArgumentNullException(nameof(namespaceKeyword));
@@ -39391,7 +30730,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return new NamespaceDeclarationSyntax(SyntaxKind.NamespaceDeclaration, attributeLists.Node, modifiers.Node, namespaceKeyword, name, openBraceToken, externs.Node, usings.Node, members.Node, closeBraceToken, semicolonToken, this.context);
         }
 
-        public FileScopedNamespaceDeclarationSyntax FileScopedNamespaceDeclaration(Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> attributeLists, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SyntaxToken> modifiers, SyntaxToken namespaceKeyword, NameSyntax name, SyntaxToken semicolonToken, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<ExternAliasDirectiveSyntax> externs, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<UsingDirectiveSyntax> usings, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<MemberDeclarationSyntax> members)
+        public FileScopedNamespaceDeclarationSyntax FileScopedNamespaceDeclaration(CoreSyntax.SyntaxList<AttributeListSyntax> attributeLists, CoreSyntax.SyntaxList<SyntaxToken> modifiers, SyntaxToken namespaceKeyword, NameSyntax name, SyntaxToken semicolonToken, CoreSyntax.SyntaxList<ExternAliasDirectiveSyntax> externs, CoreSyntax.SyntaxList<UsingDirectiveSyntax> usings, CoreSyntax.SyntaxList<MemberDeclarationSyntax> members)
         {
 #if DEBUG
             if (namespaceKeyword == null) throw new ArgumentNullException(nameof(namespaceKeyword));
@@ -39404,7 +30743,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return new FileScopedNamespaceDeclarationSyntax(SyntaxKind.FileScopedNamespaceDeclaration, attributeLists.Node, modifiers.Node, namespaceKeyword, name, semicolonToken, externs.Node, usings.Node, members.Node, this.context);
         }
 
-        public AttributeListSyntax AttributeList(SyntaxToken openBracketToken, AttributeTargetSpecifierSyntax? target, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<AttributeSyntax> attributes, SyntaxToken closeBracketToken)
+        public AttributeListSyntax AttributeList(SyntaxToken openBracketToken, AttributeTargetSpecifierSyntax? target, CoreSyntax.SeparatedSyntaxList<AttributeSyntax> attributes, SyntaxToken closeBracketToken)
         {
 #if DEBUG
             if (openBracketToken == null) throw new ArgumentNullException(nameof(openBracketToken));
@@ -39456,7 +30795,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return result;
         }
 
-        public AttributeArgumentListSyntax AttributeArgumentList(SyntaxToken openParenToken, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<AttributeArgumentSyntax> arguments, SyntaxToken closeParenToken)
+        public AttributeArgumentListSyntax AttributeArgumentList(SyntaxToken openParenToken, CoreSyntax.SeparatedSyntaxList<AttributeArgumentSyntax> arguments, SyntaxToken closeParenToken)
         {
 #if DEBUG
             if (openParenToken == null) throw new ArgumentNullException(nameof(openParenToken));
@@ -39518,7 +30857,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return result;
         }
 
-        public TypeParameterListSyntax TypeParameterList(SyntaxToken lessThanToken, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<TypeParameterSyntax> parameters, SyntaxToken greaterThanToken)
+        public TypeParameterListSyntax TypeParameterList(SyntaxToken lessThanToken, CoreSyntax.SeparatedSyntaxList<TypeParameterSyntax> parameters, SyntaxToken greaterThanToken)
         {
 #if DEBUG
             if (lessThanToken == null) throw new ArgumentNullException(nameof(lessThanToken));
@@ -39540,7 +30879,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return result;
         }
 
-        public TypeParameterSyntax TypeParameter(Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> attributeLists, SyntaxToken? varianceKeyword, SyntaxToken identifier)
+        public TypeParameterSyntax TypeParameter(CoreSyntax.SyntaxList<AttributeListSyntax> attributeLists, SyntaxToken? varianceKeyword, SyntaxToken identifier)
         {
 #if DEBUG
             if (varianceKeyword != null)
@@ -39570,7 +30909,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return result;
         }
 
-        public ClassDeclarationSyntax ClassDeclaration(Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> attributeLists, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SyntaxToken> modifiers, SyntaxToken keyword, SyntaxToken identifier, TypeParameterListSyntax? typeParameterList, ParameterListSyntax? parameterList, BaseListSyntax? baseList, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<TypeParameterConstraintClauseSyntax> constraintClauses, SyntaxToken? openBraceToken, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<MemberDeclarationSyntax> members, SyntaxToken? closeBraceToken, SyntaxToken? semicolonToken)
+        public ClassDeclarationSyntax ClassDeclaration(CoreSyntax.SyntaxList<AttributeListSyntax> attributeLists, CoreSyntax.SyntaxList<SyntaxToken> modifiers, SyntaxToken keyword, SyntaxToken identifier, TypeParameterListSyntax? typeParameterList, ParameterListSyntax? parameterList, BaseListSyntax? baseList, CoreSyntax.SyntaxList<TypeParameterConstraintClauseSyntax> constraintClauses, SyntaxToken? openBraceToken, CoreSyntax.SyntaxList<MemberDeclarationSyntax> members, SyntaxToken? closeBraceToken, SyntaxToken? semicolonToken)
         {
 #if DEBUG
             if (keyword == null) throw new ArgumentNullException(nameof(keyword));
@@ -39609,7 +30948,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return new ClassDeclarationSyntax(SyntaxKind.ClassDeclaration, attributeLists.Node, modifiers.Node, keyword, identifier, typeParameterList, parameterList, baseList, constraintClauses.Node, openBraceToken, members.Node, closeBraceToken, semicolonToken, this.context);
         }
 
-        public StructDeclarationSyntax StructDeclaration(Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> attributeLists, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SyntaxToken> modifiers, SyntaxToken keyword, SyntaxToken identifier, TypeParameterListSyntax? typeParameterList, ParameterListSyntax? parameterList, BaseListSyntax? baseList, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<TypeParameterConstraintClauseSyntax> constraintClauses, SyntaxToken? openBraceToken, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<MemberDeclarationSyntax> members, SyntaxToken? closeBraceToken, SyntaxToken? semicolonToken)
+        public StructDeclarationSyntax StructDeclaration(CoreSyntax.SyntaxList<AttributeListSyntax> attributeLists, CoreSyntax.SyntaxList<SyntaxToken> modifiers, SyntaxToken keyword, SyntaxToken identifier, TypeParameterListSyntax? typeParameterList, ParameterListSyntax? parameterList, BaseListSyntax? baseList, CoreSyntax.SyntaxList<TypeParameterConstraintClauseSyntax> constraintClauses, SyntaxToken? openBraceToken, CoreSyntax.SyntaxList<MemberDeclarationSyntax> members, SyntaxToken? closeBraceToken, SyntaxToken? semicolonToken)
         {
 #if DEBUG
             if (keyword == null) throw new ArgumentNullException(nameof(keyword));
@@ -39648,7 +30987,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return new StructDeclarationSyntax(SyntaxKind.StructDeclaration, attributeLists.Node, modifiers.Node, keyword, identifier, typeParameterList, parameterList, baseList, constraintClauses.Node, openBraceToken, members.Node, closeBraceToken, semicolonToken, this.context);
         }
 
-        public InterfaceDeclarationSyntax InterfaceDeclaration(Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> attributeLists, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SyntaxToken> modifiers, SyntaxToken keyword, SyntaxToken identifier, TypeParameterListSyntax? typeParameterList, ParameterListSyntax? parameterList, BaseListSyntax? baseList, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<TypeParameterConstraintClauseSyntax> constraintClauses, SyntaxToken? openBraceToken, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<MemberDeclarationSyntax> members, SyntaxToken? closeBraceToken, SyntaxToken? semicolonToken)
+        public InterfaceDeclarationSyntax InterfaceDeclaration(CoreSyntax.SyntaxList<AttributeListSyntax> attributeLists, CoreSyntax.SyntaxList<SyntaxToken> modifiers, SyntaxToken keyword, SyntaxToken identifier, TypeParameterListSyntax? typeParameterList, ParameterListSyntax? parameterList, BaseListSyntax? baseList, CoreSyntax.SyntaxList<TypeParameterConstraintClauseSyntax> constraintClauses, SyntaxToken? openBraceToken, CoreSyntax.SyntaxList<MemberDeclarationSyntax> members, SyntaxToken? closeBraceToken, SyntaxToken? semicolonToken)
         {
 #if DEBUG
             if (keyword == null) throw new ArgumentNullException(nameof(keyword));
@@ -39687,7 +31026,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return new InterfaceDeclarationSyntax(SyntaxKind.InterfaceDeclaration, attributeLists.Node, modifiers.Node, keyword, identifier, typeParameterList, parameterList, baseList, constraintClauses.Node, openBraceToken, members.Node, closeBraceToken, semicolonToken, this.context);
         }
 
-        public RecordDeclarationSyntax RecordDeclaration(SyntaxKind kind, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> attributeLists, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SyntaxToken> modifiers, SyntaxToken keyword, SyntaxToken? classOrStructKeyword, SyntaxToken identifier, TypeParameterListSyntax? typeParameterList, ParameterListSyntax? parameterList, BaseListSyntax? baseList, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<TypeParameterConstraintClauseSyntax> constraintClauses, SyntaxToken? openBraceToken, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<MemberDeclarationSyntax> members, SyntaxToken? closeBraceToken, SyntaxToken? semicolonToken)
+        public RecordDeclarationSyntax RecordDeclaration(SyntaxKind kind, CoreSyntax.SyntaxList<AttributeListSyntax> attributeLists, CoreSyntax.SyntaxList<SyntaxToken> modifiers, SyntaxToken keyword, SyntaxToken? classOrStructKeyword, SyntaxToken identifier, TypeParameterListSyntax? typeParameterList, ParameterListSyntax? parameterList, BaseListSyntax? baseList, CoreSyntax.SyntaxList<TypeParameterConstraintClauseSyntax> constraintClauses, SyntaxToken? openBraceToken, CoreSyntax.SyntaxList<MemberDeclarationSyntax> members, SyntaxToken? closeBraceToken, SyntaxToken? semicolonToken)
         {
             switch (kind)
             {
@@ -39741,7 +31080,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return new RecordDeclarationSyntax(kind, attributeLists.Node, modifiers.Node, keyword, classOrStructKeyword, identifier, typeParameterList, parameterList, baseList, constraintClauses.Node, openBraceToken, members.Node, closeBraceToken, semicolonToken, this.context);
         }
 
-        public EnumDeclarationSyntax EnumDeclaration(Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> attributeLists, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SyntaxToken> modifiers, SyntaxToken enumKeyword, SyntaxToken identifier, BaseListSyntax? baseList, SyntaxToken? openBraceToken, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<EnumMemberDeclarationSyntax> members, SyntaxToken? closeBraceToken, SyntaxToken? semicolonToken)
+        public EnumDeclarationSyntax EnumDeclaration(CoreSyntax.SyntaxList<AttributeListSyntax> attributeLists, CoreSyntax.SyntaxList<SyntaxToken> modifiers, SyntaxToken enumKeyword, SyntaxToken identifier, BaseListSyntax? baseList, SyntaxToken? openBraceToken, CoreSyntax.SeparatedSyntaxList<EnumMemberDeclarationSyntax> members, SyntaxToken? closeBraceToken, SyntaxToken? semicolonToken)
         {
 #if DEBUG
             if (enumKeyword == null) throw new ArgumentNullException(nameof(enumKeyword));
@@ -39780,7 +31119,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return new EnumDeclarationSyntax(SyntaxKind.EnumDeclaration, attributeLists.Node, modifiers.Node, enumKeyword, identifier, baseList, openBraceToken, members.Node, closeBraceToken, semicolonToken, this.context);
         }
 
-        public DelegateDeclarationSyntax DelegateDeclaration(Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> attributeLists, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SyntaxToken> modifiers, SyntaxToken delegateKeyword, TypeSyntax returnType, SyntaxToken identifier, TypeParameterListSyntax? typeParameterList, ParameterListSyntax parameterList, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<TypeParameterConstraintClauseSyntax> constraintClauses, SyntaxToken semicolonToken)
+        public DelegateDeclarationSyntax DelegateDeclaration(CoreSyntax.SyntaxList<AttributeListSyntax> attributeLists, CoreSyntax.SyntaxList<SyntaxToken> modifiers, SyntaxToken delegateKeyword, TypeSyntax returnType, SyntaxToken identifier, TypeParameterListSyntax? typeParameterList, ParameterListSyntax parameterList, CoreSyntax.SyntaxList<TypeParameterConstraintClauseSyntax> constraintClauses, SyntaxToken semicolonToken)
         {
 #if DEBUG
             if (delegateKeyword == null) throw new ArgumentNullException(nameof(delegateKeyword));
@@ -39796,7 +31135,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return new DelegateDeclarationSyntax(SyntaxKind.DelegateDeclaration, attributeLists.Node, modifiers.Node, delegateKeyword, returnType, identifier, typeParameterList, parameterList, constraintClauses.Node, semicolonToken, this.context);
         }
 
-        public EnumMemberDeclarationSyntax EnumMemberDeclaration(Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> attributeLists, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SyntaxToken> modifiers, SyntaxToken identifier, EqualsValueClauseSyntax? equalsValue)
+        public EnumMemberDeclarationSyntax EnumMemberDeclaration(CoreSyntax.SyntaxList<AttributeListSyntax> attributeLists, CoreSyntax.SyntaxList<SyntaxToken> modifiers, SyntaxToken identifier, EqualsValueClauseSyntax? equalsValue)
         {
 #if DEBUG
             if (identifier == null) throw new ArgumentNullException(nameof(identifier));
@@ -39806,7 +31145,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return new EnumMemberDeclarationSyntax(SyntaxKind.EnumMemberDeclaration, attributeLists.Node, modifiers.Node, identifier, equalsValue, this.context);
         }
 
-        public BaseListSyntax BaseList(SyntaxToken colonToken, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<BaseTypeSyntax> types)
+        public BaseListSyntax BaseList(SyntaxToken colonToken, CoreSyntax.SeparatedSyntaxList<BaseTypeSyntax> types)
         {
 #if DEBUG
             if (colonToken == null) throw new ArgumentNullException(nameof(colonToken));
@@ -39865,7 +31204,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return result;
         }
 
-        public TypeParameterConstraintClauseSyntax TypeParameterConstraintClause(SyntaxToken whereKeyword, IdentifierNameSyntax name, SyntaxToken colonToken, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<TypeParameterConstraintSyntax> constraints)
+        public TypeParameterConstraintClauseSyntax TypeParameterConstraintClause(SyntaxToken whereKeyword, IdentifierNameSyntax name, SyntaxToken colonToken, CoreSyntax.SeparatedSyntaxList<TypeParameterConstraintSyntax> constraints)
         {
 #if DEBUG
             if (whereKeyword == null) throw new ArgumentNullException(nameof(whereKeyword));
@@ -39981,7 +31320,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return result;
         }
 
-        public FieldDeclarationSyntax FieldDeclaration(Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> attributeLists, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SyntaxToken> modifiers, VariableDeclarationSyntax declaration, SyntaxToken semicolonToken)
+        public FieldDeclarationSyntax FieldDeclaration(CoreSyntax.SyntaxList<AttributeListSyntax> attributeLists, CoreSyntax.SyntaxList<SyntaxToken> modifiers, VariableDeclarationSyntax declaration, SyntaxToken semicolonToken)
         {
 #if DEBUG
             if (declaration == null) throw new ArgumentNullException(nameof(declaration));
@@ -39992,7 +31331,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return new FieldDeclarationSyntax(SyntaxKind.FieldDeclaration, attributeLists.Node, modifiers.Node, declaration, semicolonToken, this.context);
         }
 
-        public EventFieldDeclarationSyntax EventFieldDeclaration(Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> attributeLists, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SyntaxToken> modifiers, SyntaxToken eventKeyword, VariableDeclarationSyntax declaration, SyntaxToken semicolonToken)
+        public EventFieldDeclarationSyntax EventFieldDeclaration(CoreSyntax.SyntaxList<AttributeListSyntax> attributeLists, CoreSyntax.SyntaxList<SyntaxToken> modifiers, SyntaxToken eventKeyword, VariableDeclarationSyntax declaration, SyntaxToken semicolonToken)
         {
 #if DEBUG
             if (eventKeyword == null) throw new ArgumentNullException(nameof(eventKeyword));
@@ -40026,7 +31365,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return result;
         }
 
-        public MethodDeclarationSyntax MethodDeclaration(Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> attributeLists, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SyntaxToken> modifiers, TypeSyntax returnType, ExplicitInterfaceSpecifierSyntax? explicitInterfaceSpecifier, SyntaxToken identifier, TypeParameterListSyntax? typeParameterList, ParameterListSyntax parameterList, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<TypeParameterConstraintClauseSyntax> constraintClauses, BlockSyntax? body, ArrowExpressionClauseSyntax? expressionBody, SyntaxToken? semicolonToken)
+        public MethodDeclarationSyntax MethodDeclaration(CoreSyntax.SyntaxList<AttributeListSyntax> attributeLists, CoreSyntax.SyntaxList<SyntaxToken> modifiers, TypeSyntax returnType, ExplicitInterfaceSpecifierSyntax? explicitInterfaceSpecifier, SyntaxToken identifier, TypeParameterListSyntax? typeParameterList, ParameterListSyntax parameterList, CoreSyntax.SyntaxList<TypeParameterConstraintClauseSyntax> constraintClauses, BlockSyntax? body, ArrowExpressionClauseSyntax? expressionBody, SyntaxToken? semicolonToken)
         {
 #if DEBUG
             if (returnType == null) throw new ArgumentNullException(nameof(returnType));
@@ -40047,7 +31386,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return new MethodDeclarationSyntax(SyntaxKind.MethodDeclaration, attributeLists.Node, modifiers.Node, returnType, explicitInterfaceSpecifier, identifier, typeParameterList, parameterList, constraintClauses.Node, body, expressionBody, semicolonToken, this.context);
         }
 
-        public OperatorDeclarationSyntax OperatorDeclaration(Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> attributeLists, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SyntaxToken> modifiers, TypeSyntax returnType, ExplicitInterfaceSpecifierSyntax? explicitInterfaceSpecifier, SyntaxToken operatorKeyword, SyntaxToken? checkedKeyword, SyntaxToken operatorToken, ParameterListSyntax parameterList, BlockSyntax? body, ArrowExpressionClauseSyntax? expressionBody, SyntaxToken? semicolonToken)
+        public OperatorDeclarationSyntax OperatorDeclaration(CoreSyntax.SyntaxList<AttributeListSyntax> attributeLists, CoreSyntax.SyntaxList<SyntaxToken> modifiers, TypeSyntax returnType, ExplicitInterfaceSpecifierSyntax? explicitInterfaceSpecifier, SyntaxToken operatorKeyword, SyntaxToken? checkedKeyword, SyntaxToken operatorToken, ParameterListSyntax parameterList, BlockSyntax? body, ArrowExpressionClauseSyntax? expressionBody, SyntaxToken? semicolonToken)
         {
 #if DEBUG
             if (returnType == null) throw new ArgumentNullException(nameof(returnType));
@@ -40106,7 +31445,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return new OperatorDeclarationSyntax(SyntaxKind.OperatorDeclaration, attributeLists.Node, modifiers.Node, returnType, explicitInterfaceSpecifier, operatorKeyword, checkedKeyword, operatorToken, parameterList, body, expressionBody, semicolonToken, this.context);
         }
 
-        public ConversionOperatorDeclarationSyntax ConversionOperatorDeclaration(Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> attributeLists, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SyntaxToken> modifiers, SyntaxToken implicitOrExplicitKeyword, ExplicitInterfaceSpecifierSyntax? explicitInterfaceSpecifier, SyntaxToken operatorKeyword, SyntaxToken? checkedKeyword, TypeSyntax type, ParameterListSyntax parameterList, BlockSyntax? body, ArrowExpressionClauseSyntax? expressionBody, SyntaxToken? semicolonToken)
+        public ConversionOperatorDeclarationSyntax ConversionOperatorDeclaration(CoreSyntax.SyntaxList<AttributeListSyntax> attributeLists, CoreSyntax.SyntaxList<SyntaxToken> modifiers, SyntaxToken implicitOrExplicitKeyword, ExplicitInterfaceSpecifierSyntax? explicitInterfaceSpecifier, SyntaxToken operatorKeyword, SyntaxToken? checkedKeyword, TypeSyntax type, ParameterListSyntax parameterList, BlockSyntax? body, ArrowExpressionClauseSyntax? expressionBody, SyntaxToken? semicolonToken)
         {
 #if DEBUG
             if (implicitOrExplicitKeyword == null) throw new ArgumentNullException(nameof(implicitOrExplicitKeyword));
@@ -40143,7 +31482,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return new ConversionOperatorDeclarationSyntax(SyntaxKind.ConversionOperatorDeclaration, attributeLists.Node, modifiers.Node, implicitOrExplicitKeyword, explicitInterfaceSpecifier, operatorKeyword, checkedKeyword, type, parameterList, body, expressionBody, semicolonToken, this.context);
         }
 
-        public ConstructorDeclarationSyntax ConstructorDeclaration(Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> attributeLists, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SyntaxToken> modifiers, SyntaxToken identifier, ParameterListSyntax parameterList, ConstructorInitializerSyntax? initializer, BlockSyntax? body, ArrowExpressionClauseSyntax? expressionBody, SyntaxToken? semicolonToken)
+        public ConstructorDeclarationSyntax ConstructorDeclaration(CoreSyntax.SyntaxList<AttributeListSyntax> attributeLists, CoreSyntax.SyntaxList<SyntaxToken> modifiers, SyntaxToken identifier, ParameterListSyntax parameterList, ConstructorInitializerSyntax? initializer, BlockSyntax? body, ArrowExpressionClauseSyntax? expressionBody, SyntaxToken? semicolonToken)
         {
 #if DEBUG
             if (identifier == null) throw new ArgumentNullException(nameof(identifier));
@@ -40197,7 +31536,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return result;
         }
 
-        public DestructorDeclarationSyntax DestructorDeclaration(Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> attributeLists, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SyntaxToken> modifiers, SyntaxToken tildeToken, SyntaxToken identifier, ParameterListSyntax parameterList, BlockSyntax? body, ArrowExpressionClauseSyntax? expressionBody, SyntaxToken? semicolonToken)
+        public DestructorDeclarationSyntax DestructorDeclaration(CoreSyntax.SyntaxList<AttributeListSyntax> attributeLists, CoreSyntax.SyntaxList<SyntaxToken> modifiers, SyntaxToken tildeToken, SyntaxToken identifier, ParameterListSyntax parameterList, BlockSyntax? body, ArrowExpressionClauseSyntax? expressionBody, SyntaxToken? semicolonToken)
         {
 #if DEBUG
             if (tildeToken == null) throw new ArgumentNullException(nameof(tildeToken));
@@ -40219,7 +31558,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return new DestructorDeclarationSyntax(SyntaxKind.DestructorDeclaration, attributeLists.Node, modifiers.Node, tildeToken, identifier, parameterList, body, expressionBody, semicolonToken, this.context);
         }
 
-        public PropertyDeclarationSyntax PropertyDeclaration(Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> attributeLists, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SyntaxToken> modifiers, TypeSyntax type, ExplicitInterfaceSpecifierSyntax? explicitInterfaceSpecifier, SyntaxToken identifier, AccessorListSyntax? accessorList, ArrowExpressionClauseSyntax? expressionBody, EqualsValueClauseSyntax? initializer, SyntaxToken? semicolonToken)
+        public PropertyDeclarationSyntax PropertyDeclaration(CoreSyntax.SyntaxList<AttributeListSyntax> attributeLists, CoreSyntax.SyntaxList<SyntaxToken> modifiers, TypeSyntax type, ExplicitInterfaceSpecifierSyntax? explicitInterfaceSpecifier, SyntaxToken identifier, AccessorListSyntax? accessorList, ArrowExpressionClauseSyntax? expressionBody, EqualsValueClauseSyntax? initializer, SyntaxToken? semicolonToken)
         {
 #if DEBUG
             if (type == null) throw new ArgumentNullException(nameof(type));
@@ -40260,7 +31599,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return result;
         }
 
-        public EventDeclarationSyntax EventDeclaration(Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> attributeLists, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SyntaxToken> modifiers, SyntaxToken eventKeyword, TypeSyntax type, ExplicitInterfaceSpecifierSyntax? explicitInterfaceSpecifier, SyntaxToken identifier, AccessorListSyntax? accessorList, SyntaxToken? semicolonToken)
+        public EventDeclarationSyntax EventDeclaration(CoreSyntax.SyntaxList<AttributeListSyntax> attributeLists, CoreSyntax.SyntaxList<SyntaxToken> modifiers, SyntaxToken eventKeyword, TypeSyntax type, ExplicitInterfaceSpecifierSyntax? explicitInterfaceSpecifier, SyntaxToken identifier, AccessorListSyntax? accessorList, SyntaxToken? semicolonToken)
         {
 #if DEBUG
             if (eventKeyword == null) throw new ArgumentNullException(nameof(eventKeyword));
@@ -40282,7 +31621,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return new EventDeclarationSyntax(SyntaxKind.EventDeclaration, attributeLists.Node, modifiers.Node, eventKeyword, type, explicitInterfaceSpecifier, identifier, accessorList, semicolonToken, this.context);
         }
 
-        public IndexerDeclarationSyntax IndexerDeclaration(Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> attributeLists, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SyntaxToken> modifiers, TypeSyntax type, ExplicitInterfaceSpecifierSyntax? explicitInterfaceSpecifier, SyntaxToken thisKeyword, BracketedParameterListSyntax parameterList, AccessorListSyntax? accessorList, ArrowExpressionClauseSyntax? expressionBody, SyntaxToken? semicolonToken)
+        public IndexerDeclarationSyntax IndexerDeclaration(CoreSyntax.SyntaxList<AttributeListSyntax> attributeLists, CoreSyntax.SyntaxList<SyntaxToken> modifiers, TypeSyntax type, ExplicitInterfaceSpecifierSyntax? explicitInterfaceSpecifier, SyntaxToken thisKeyword, BracketedParameterListSyntax parameterList, AccessorListSyntax? accessorList, ArrowExpressionClauseSyntax? expressionBody, SyntaxToken? semicolonToken)
         {
 #if DEBUG
             if (type == null) throw new ArgumentNullException(nameof(type));
@@ -40303,7 +31642,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return new IndexerDeclarationSyntax(SyntaxKind.IndexerDeclaration, attributeLists.Node, modifiers.Node, type, explicitInterfaceSpecifier, thisKeyword, parameterList, accessorList, expressionBody, semicolonToken, this.context);
         }
 
-        public AccessorListSyntax AccessorList(SyntaxToken openBraceToken, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AccessorDeclarationSyntax> accessors, SyntaxToken closeBraceToken)
+        public AccessorListSyntax AccessorList(SyntaxToken openBraceToken, CoreSyntax.SyntaxList<AccessorDeclarationSyntax> accessors, SyntaxToken closeBraceToken)
         {
 #if DEBUG
             if (openBraceToken == null) throw new ArgumentNullException(nameof(openBraceToken));
@@ -40325,7 +31664,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return result;
         }
 
-        public AccessorDeclarationSyntax AccessorDeclaration(SyntaxKind kind, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> attributeLists, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SyntaxToken> modifiers, SyntaxToken keyword, BlockSyntax? body, ArrowExpressionClauseSyntax? expressionBody, SyntaxToken? semicolonToken)
+        public AccessorDeclarationSyntax AccessorDeclaration(SyntaxKind kind, CoreSyntax.SyntaxList<AttributeListSyntax> attributeLists, CoreSyntax.SyntaxList<SyntaxToken> modifiers, SyntaxToken keyword, BlockSyntax? body, ArrowExpressionClauseSyntax? expressionBody, SyntaxToken? semicolonToken)
         {
             switch (kind)
             {
@@ -40363,7 +31702,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return new AccessorDeclarationSyntax(kind, attributeLists.Node, modifiers.Node, keyword, body, expressionBody, semicolonToken, this.context);
         }
 
-        public ParameterListSyntax ParameterList(SyntaxToken openParenToken, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<ParameterSyntax> parameters, SyntaxToken closeParenToken)
+        public ParameterListSyntax ParameterList(SyntaxToken openParenToken, CoreSyntax.SeparatedSyntaxList<ParameterSyntax> parameters, SyntaxToken closeParenToken)
         {
 #if DEBUG
             if (openParenToken == null) throw new ArgumentNullException(nameof(openParenToken));
@@ -40385,7 +31724,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return result;
         }
 
-        public BracketedParameterListSyntax BracketedParameterList(SyntaxToken openBracketToken, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<ParameterSyntax> parameters, SyntaxToken closeBracketToken)
+        public BracketedParameterListSyntax BracketedParameterList(SyntaxToken openBracketToken, CoreSyntax.SeparatedSyntaxList<ParameterSyntax> parameters, SyntaxToken closeBracketToken)
         {
 #if DEBUG
             if (openBracketToken == null) throw new ArgumentNullException(nameof(openBracketToken));
@@ -40407,7 +31746,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return result;
         }
 
-        public ParameterSyntax Parameter(Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> attributeLists, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SyntaxToken> modifiers, TypeSyntax? type, SyntaxToken identifier, EqualsValueClauseSyntax? @default)
+        public ParameterSyntax Parameter(CoreSyntax.SyntaxList<AttributeListSyntax> attributeLists, CoreSyntax.SyntaxList<SyntaxToken> modifiers, TypeSyntax? type, SyntaxToken identifier, EqualsValueClauseSyntax? @default)
         {
 #if DEBUG
             if (identifier == null) throw new ArgumentNullException(nameof(identifier));
@@ -40422,7 +31761,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return new ParameterSyntax(SyntaxKind.Parameter, attributeLists.Node, modifiers.Node, type, identifier, @default, this.context);
         }
 
-        public FunctionPointerParameterSyntax FunctionPointerParameter(Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> attributeLists, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SyntaxToken> modifiers, TypeSyntax type)
+        public FunctionPointerParameterSyntax FunctionPointerParameter(CoreSyntax.SyntaxList<AttributeListSyntax> attributeLists, CoreSyntax.SyntaxList<SyntaxToken> modifiers, TypeSyntax type)
         {
 #if DEBUG
             if (type == null) throw new ArgumentNullException(nameof(type));
@@ -40441,7 +31780,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return result;
         }
 
-        public IncompleteMemberSyntax IncompleteMember(Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> attributeLists, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SyntaxToken> modifiers, TypeSyntax? type)
+        public IncompleteMemberSyntax IncompleteMember(CoreSyntax.SyntaxList<AttributeListSyntax> attributeLists, CoreSyntax.SyntaxList<SyntaxToken> modifiers, TypeSyntax? type)
         {
 #if DEBUG
 #endif
@@ -40449,7 +31788,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return new IncompleteMemberSyntax(SyntaxKind.IncompleteMember, attributeLists.Node, modifiers.Node, type, this.context);
         }
 
-        public SkippedTokensTriviaSyntax SkippedTokensTrivia(Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SyntaxToken> tokens)
+        public SkippedTokensTriviaSyntax SkippedTokensTrivia(CoreSyntax.SyntaxList<SyntaxToken> tokens)
         {
 #if DEBUG
 #endif
@@ -40457,7 +31796,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return new SkippedTokensTriviaSyntax(SyntaxKind.SkippedTokensTrivia, tokens.Node, this.context);
         }
 
-        public DocumentationCommentTriviaSyntax DocumentationCommentTrivia(SyntaxKind kind, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<XmlNodeSyntax> content, SyntaxToken endOfComment)
+        public DocumentationCommentTriviaSyntax DocumentationCommentTrivia(SyntaxKind kind, CoreSyntax.SyntaxList<XmlNodeSyntax> content, SyntaxToken endOfComment)
         {
             switch (kind)
             {
@@ -40627,7 +31966,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return new ConversionOperatorMemberCrefSyntax(SyntaxKind.ConversionOperatorMemberCref, implicitOrExplicitKeyword, operatorKeyword, checkedKeyword, type, parameters, this.context);
         }
 
-        public CrefParameterListSyntax CrefParameterList(SyntaxToken openParenToken, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<CrefParameterSyntax> parameters, SyntaxToken closeParenToken)
+        public CrefParameterListSyntax CrefParameterList(SyntaxToken openParenToken, CoreSyntax.SeparatedSyntaxList<CrefParameterSyntax> parameters, SyntaxToken closeParenToken)
         {
 #if DEBUG
             if (openParenToken == null) throw new ArgumentNullException(nameof(openParenToken));
@@ -40649,7 +31988,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return result;
         }
 
-        public CrefBracketedParameterListSyntax CrefBracketedParameterList(SyntaxToken openBracketToken, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<CrefParameterSyntax> parameters, SyntaxToken closeBracketToken)
+        public CrefBracketedParameterListSyntax CrefBracketedParameterList(SyntaxToken openBracketToken, CoreSyntax.SeparatedSyntaxList<CrefParameterSyntax> parameters, SyntaxToken closeBracketToken)
         {
 #if DEBUG
             if (openBracketToken == null) throw new ArgumentNullException(nameof(openBracketToken));
@@ -40710,7 +32049,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return result;
         }
 
-        public XmlElementSyntax XmlElement(XmlElementStartTagSyntax startTag, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<XmlNodeSyntax> content, XmlElementEndTagSyntax endTag)
+        public XmlElementSyntax XmlElement(XmlElementStartTagSyntax startTag, CoreSyntax.SyntaxList<XmlNodeSyntax> content, XmlElementEndTagSyntax endTag)
         {
 #if DEBUG
             if (startTag == null) throw new ArgumentNullException(nameof(startTag));
@@ -40730,7 +32069,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return result;
         }
 
-        public XmlElementStartTagSyntax XmlElementStartTag(SyntaxToken lessThanToken, XmlNameSyntax name, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<XmlAttributeSyntax> attributes, SyntaxToken greaterThanToken)
+        public XmlElementStartTagSyntax XmlElementStartTag(SyntaxToken lessThanToken, XmlNameSyntax name, CoreSyntax.SyntaxList<XmlAttributeSyntax> attributes, SyntaxToken greaterThanToken)
         {
 #if DEBUG
             if (lessThanToken == null) throw new ArgumentNullException(nameof(lessThanToken));
@@ -40766,7 +32105,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return result;
         }
 
-        public XmlEmptyElementSyntax XmlEmptyElement(SyntaxToken lessThanToken, XmlNameSyntax name, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<XmlAttributeSyntax> attributes, SyntaxToken slashGreaterThanToken)
+        public XmlEmptyElementSyntax XmlEmptyElement(SyntaxToken lessThanToken, XmlNameSyntax name, CoreSyntax.SyntaxList<XmlAttributeSyntax> attributes, SyntaxToken slashGreaterThanToken)
         {
 #if DEBUG
             if (lessThanToken == null) throw new ArgumentNullException(nameof(lessThanToken));
@@ -40821,7 +32160,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return result;
         }
 
-        public XmlTextAttributeSyntax XmlTextAttribute(XmlNameSyntax name, SyntaxToken equalsToken, SyntaxToken startQuoteToken, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SyntaxToken> textTokens, SyntaxToken endQuoteToken)
+        public XmlTextAttributeSyntax XmlTextAttribute(XmlNameSyntax name, SyntaxToken equalsToken, SyntaxToken startQuoteToken, CoreSyntax.SyntaxList<SyntaxToken> textTokens, SyntaxToken endQuoteToken)
         {
 #if DEBUG
             if (name == null) throw new ArgumentNullException(nameof(name));
@@ -40898,7 +32237,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return new XmlNameAttributeSyntax(SyntaxKind.XmlNameAttribute, name, equalsToken, startQuoteToken, identifier, endQuoteToken, this.context);
         }
 
-        public XmlTextSyntax XmlText(Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SyntaxToken> textTokens)
+        public XmlTextSyntax XmlText(CoreSyntax.SyntaxList<SyntaxToken> textTokens)
         {
 #if DEBUG
 #endif
@@ -40916,7 +32255,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return result;
         }
 
-        public XmlCDataSectionSyntax XmlCDataSection(SyntaxToken startCDataToken, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SyntaxToken> textTokens, SyntaxToken endCDataToken)
+        public XmlCDataSectionSyntax XmlCDataSection(SyntaxToken startCDataToken, CoreSyntax.SyntaxList<SyntaxToken> textTokens, SyntaxToken endCDataToken)
         {
 #if DEBUG
             if (startCDataToken == null) throw new ArgumentNullException(nameof(startCDataToken));
@@ -40938,7 +32277,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return result;
         }
 
-        public XmlProcessingInstructionSyntax XmlProcessingInstruction(SyntaxToken startProcessingInstructionToken, XmlNameSyntax name, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SyntaxToken> textTokens, SyntaxToken endProcessingInstructionToken)
+        public XmlProcessingInstructionSyntax XmlProcessingInstruction(SyntaxToken startProcessingInstructionToken, XmlNameSyntax name, CoreSyntax.SyntaxList<SyntaxToken> textTokens, SyntaxToken endProcessingInstructionToken)
         {
 #if DEBUG
             if (startProcessingInstructionToken == null) throw new ArgumentNullException(nameof(startProcessingInstructionToken));
@@ -40951,7 +32290,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return new XmlProcessingInstructionSyntax(SyntaxKind.XmlProcessingInstruction, startProcessingInstructionToken, name, textTokens.Node, endProcessingInstructionToken, this.context);
         }
 
-        public XmlCommentSyntax XmlComment(SyntaxToken lessThanExclamationMinusMinusToken, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SyntaxToken> textTokens, SyntaxToken minusMinusGreaterThanToken)
+        public XmlCommentSyntax XmlComment(SyntaxToken lessThanExclamationMinusMinusToken, CoreSyntax.SyntaxList<SyntaxToken> textTokens, SyntaxToken minusMinusGreaterThanToken)
         {
 #if DEBUG
             if (lessThanExclamationMinusMinusToken == null) throw new ArgumentNullException(nameof(lessThanExclamationMinusMinusToken));
@@ -41210,7 +32549,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return new LineSpanDirectiveTriviaSyntax(SyntaxKind.LineSpanDirectiveTrivia, hashToken, lineKeyword, start, minusToken, end, characterOffset, file, endOfDirectiveToken, isActive, this.context);
         }
 
-        public PragmaWarningDirectiveTriviaSyntax PragmaWarningDirectiveTrivia(SyntaxToken hashToken, SyntaxToken pragmaKeyword, SyntaxToken warningKeyword, SyntaxToken disableOrRestoreKeyword, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<ExpressionSyntax> errorCodes, SyntaxToken endOfDirectiveToken, bool isActive)
+        public PragmaWarningDirectiveTriviaSyntax PragmaWarningDirectiveTrivia(SyntaxToken hashToken, SyntaxToken pragmaKeyword, SyntaxToken warningKeyword, SyntaxToken disableOrRestoreKeyword, CoreSyntax.SeparatedSyntaxList<ExpressionSyntax> errorCodes, SyntaxToken endOfDirectiveToken, bool isActive)
         {
 #if DEBUG
             if (hashToken == null) throw new ArgumentNullException(nameof(hashToken));
@@ -41405,7 +32744,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return result;
         }
 
-        public static TypeArgumentListSyntax TypeArgumentList(SyntaxToken lessThanToken, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<TypeSyntax> arguments, SyntaxToken greaterThanToken)
+        public static TypeArgumentListSyntax TypeArgumentList(SyntaxToken lessThanToken, CoreSyntax.SeparatedSyntaxList<TypeSyntax> arguments, SyntaxToken greaterThanToken)
         {
 #if DEBUG
             if (lessThanToken == null) throw new ArgumentNullException(nameof(lessThanToken));
@@ -41488,7 +32827,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return result;
         }
 
-        public static ArrayTypeSyntax ArrayType(TypeSyntax elementType, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<ArrayRankSpecifierSyntax> rankSpecifiers)
+        public static ArrayTypeSyntax ArrayType(TypeSyntax elementType, CoreSyntax.SyntaxList<ArrayRankSpecifierSyntax> rankSpecifiers)
         {
 #if DEBUG
             if (elementType == null) throw new ArgumentNullException(nameof(elementType));
@@ -41507,7 +32846,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return result;
         }
 
-        public static ArrayRankSpecifierSyntax ArrayRankSpecifier(SyntaxToken openBracketToken, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<ExpressionSyntax> sizes, SyntaxToken closeBracketToken)
+        public static ArrayRankSpecifierSyntax ArrayRankSpecifier(SyntaxToken openBracketToken, CoreSyntax.SeparatedSyntaxList<ExpressionSyntax> sizes, SyntaxToken closeBracketToken)
         {
 #if DEBUG
             if (openBracketToken == null) throw new ArgumentNullException(nameof(openBracketToken));
@@ -41563,7 +32902,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return new FunctionPointerTypeSyntax(SyntaxKind.FunctionPointerType, delegateKeyword, asteriskToken, callingConvention, parameterList);
         }
 
-        public static FunctionPointerParameterListSyntax FunctionPointerParameterList(SyntaxToken lessThanToken, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<FunctionPointerParameterSyntax> parameters, SyntaxToken greaterThanToken)
+        public static FunctionPointerParameterListSyntax FunctionPointerParameterList(SyntaxToken lessThanToken, CoreSyntax.SeparatedSyntaxList<FunctionPointerParameterSyntax> parameters, SyntaxToken greaterThanToken)
         {
 #if DEBUG
             if (lessThanToken == null) throw new ArgumentNullException(nameof(lessThanToken));
@@ -41610,7 +32949,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return result;
         }
 
-        public static FunctionPointerUnmanagedCallingConventionListSyntax FunctionPointerUnmanagedCallingConventionList(SyntaxToken openBracketToken, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<FunctionPointerUnmanagedCallingConventionSyntax> callingConventions, SyntaxToken closeBracketToken)
+        public static FunctionPointerUnmanagedCallingConventionListSyntax FunctionPointerUnmanagedCallingConventionList(SyntaxToken openBracketToken, CoreSyntax.SeparatedSyntaxList<FunctionPointerUnmanagedCallingConventionSyntax> callingConventions, SyntaxToken closeBracketToken)
         {
 #if DEBUG
             if (openBracketToken == null) throw new ArgumentNullException(nameof(openBracketToken));
@@ -41673,7 +33012,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return result;
         }
 
-        public static TupleTypeSyntax TupleType(SyntaxToken openParenToken, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<TupleElementSyntax> elements, SyntaxToken closeParenToken)
+        public static TupleTypeSyntax TupleType(SyntaxToken openParenToken, CoreSyntax.SeparatedSyntaxList<TupleElementSyntax> elements, SyntaxToken closeParenToken)
         {
 #if DEBUG
             if (openParenToken == null) throw new ArgumentNullException(nameof(openParenToken));
@@ -41817,7 +33156,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return result;
         }
 
-        public static TupleExpressionSyntax TupleExpression(SyntaxToken openParenToken, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<ArgumentSyntax> arguments, SyntaxToken closeParenToken)
+        public static TupleExpressionSyntax TupleExpression(SyntaxToken openParenToken, CoreSyntax.SeparatedSyntaxList<ArgumentSyntax> arguments, SyntaxToken closeParenToken)
         {
 #if DEBUG
             if (openParenToken == null) throw new ArgumentNullException(nameof(openParenToken));
@@ -42465,7 +33804,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return result;
         }
 
-        public static ArgumentListSyntax ArgumentList(SyntaxToken openParenToken, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<ArgumentSyntax> arguments, SyntaxToken closeParenToken)
+        public static ArgumentListSyntax ArgumentList(SyntaxToken openParenToken, CoreSyntax.SeparatedSyntaxList<ArgumentSyntax> arguments, SyntaxToken closeParenToken)
         {
 #if DEBUG
             if (openParenToken == null) throw new ArgumentNullException(nameof(openParenToken));
@@ -42487,7 +33826,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return result;
         }
 
-        public static BracketedArgumentListSyntax BracketedArgumentList(SyntaxToken openBracketToken, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<ArgumentSyntax> arguments, SyntaxToken closeBracketToken)
+        public static BracketedArgumentListSyntax BracketedArgumentList(SyntaxToken openBracketToken, CoreSyntax.SeparatedSyntaxList<ArgumentSyntax> arguments, SyntaxToken closeBracketToken)
         {
 #if DEBUG
             if (openBracketToken == null) throw new ArgumentNullException(nameof(openBracketToken));
@@ -42613,7 +33952,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return new CastExpressionSyntax(SyntaxKind.CastExpression, openParenToken, type, closeParenToken, expression);
         }
 
-        public static AnonymousMethodExpressionSyntax AnonymousMethodExpression(Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SyntaxToken> modifiers, SyntaxToken delegateKeyword, ParameterListSyntax? parameterList, BlockSyntax block, ExpressionSyntax? expressionBody)
+        public static AnonymousMethodExpressionSyntax AnonymousMethodExpression(CoreSyntax.SyntaxList<SyntaxToken> modifiers, SyntaxToken delegateKeyword, ParameterListSyntax? parameterList, BlockSyntax block, ExpressionSyntax? expressionBody)
         {
 #if DEBUG
             if (delegateKeyword == null) throw new ArgumentNullException(nameof(delegateKeyword));
@@ -42624,7 +33963,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return new AnonymousMethodExpressionSyntax(SyntaxKind.AnonymousMethodExpression, modifiers.Node, delegateKeyword, parameterList, block, expressionBody);
         }
 
-        public static SimpleLambdaExpressionSyntax SimpleLambdaExpression(Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> attributeLists, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SyntaxToken> modifiers, ParameterSyntax parameter, SyntaxToken arrowToken, BlockSyntax? block, ExpressionSyntax? expressionBody)
+        public static SimpleLambdaExpressionSyntax SimpleLambdaExpression(CoreSyntax.SyntaxList<AttributeListSyntax> attributeLists, CoreSyntax.SyntaxList<SyntaxToken> modifiers, ParameterSyntax parameter, SyntaxToken arrowToken, BlockSyntax? block, ExpressionSyntax? expressionBody)
         {
 #if DEBUG
             if (parameter == null) throw new ArgumentNullException(nameof(parameter));
@@ -42656,7 +33995,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return result;
         }
 
-        public static ParenthesizedLambdaExpressionSyntax ParenthesizedLambdaExpression(Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> attributeLists, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SyntaxToken> modifiers, TypeSyntax? returnType, ParameterListSyntax parameterList, SyntaxToken arrowToken, BlockSyntax? block, ExpressionSyntax? expressionBody)
+        public static ParenthesizedLambdaExpressionSyntax ParenthesizedLambdaExpression(CoreSyntax.SyntaxList<AttributeListSyntax> attributeLists, CoreSyntax.SyntaxList<SyntaxToken> modifiers, TypeSyntax? returnType, ParameterListSyntax parameterList, SyntaxToken arrowToken, BlockSyntax? block, ExpressionSyntax? expressionBody)
         {
 #if DEBUG
             if (parameterList == null) throw new ArgumentNullException(nameof(parameterList));
@@ -42667,7 +34006,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return new ParenthesizedLambdaExpressionSyntax(SyntaxKind.ParenthesizedLambdaExpression, attributeLists.Node, modifiers.Node, returnType, parameterList, arrowToken, block, expressionBody);
         }
 
-        public static InitializerExpressionSyntax InitializerExpression(SyntaxKind kind, SyntaxToken openBraceToken, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<ExpressionSyntax> expressions, SyntaxToken closeBraceToken)
+        public static InitializerExpressionSyntax InitializerExpression(SyntaxKind kind, SyntaxToken openBraceToken, CoreSyntax.SeparatedSyntaxList<ExpressionSyntax> expressions, SyntaxToken closeBraceToken)
         {
             switch (kind)
             {
@@ -42771,7 +34110,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return result;
         }
 
-        public static AnonymousObjectCreationExpressionSyntax AnonymousObjectCreationExpression(SyntaxToken newKeyword, SyntaxToken openBraceToken, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<AnonymousObjectMemberDeclaratorSyntax> initializers, SyntaxToken closeBraceToken)
+        public static AnonymousObjectCreationExpressionSyntax AnonymousObjectCreationExpression(SyntaxToken newKeyword, SyntaxToken openBraceToken, CoreSyntax.SeparatedSyntaxList<AnonymousObjectMemberDeclaratorSyntax> initializers, SyntaxToken closeBraceToken)
         {
 #if DEBUG
             if (newKeyword == null) throw new ArgumentNullException(nameof(newKeyword));
@@ -42806,7 +34145,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return result;
         }
 
-        public static ImplicitArrayCreationExpressionSyntax ImplicitArrayCreationExpression(SyntaxToken newKeyword, SyntaxToken openBracketToken, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SyntaxToken> commas, SyntaxToken closeBracketToken, InitializerExpressionSyntax initializer)
+        public static ImplicitArrayCreationExpressionSyntax ImplicitArrayCreationExpression(SyntaxToken newKeyword, SyntaxToken openBracketToken, CoreSyntax.SyntaxList<SyntaxToken> commas, SyntaxToken closeBracketToken, InitializerExpressionSyntax initializer)
         {
 #if DEBUG
             if (newKeyword == null) throw new ArgumentNullException(nameof(newKeyword));
@@ -42857,7 +34196,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return new ImplicitStackAllocArrayCreationExpressionSyntax(SyntaxKind.ImplicitStackAllocArrayCreationExpression, stackAllocKeyword, openBracketToken, closeBracketToken, initializer);
         }
 
-        public static CollectionExpressionSyntax CollectionExpression(SyntaxToken openBracketToken, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<CollectionElementSyntax> elements, SyntaxToken closeBracketToken)
+        public static CollectionExpressionSyntax CollectionExpression(SyntaxToken openBracketToken, CoreSyntax.SeparatedSyntaxList<CollectionElementSyntax> elements, SyntaxToken closeBracketToken)
         {
 #if DEBUG
             if (openBracketToken == null) throw new ArgumentNullException(nameof(openBracketToken));
@@ -42939,7 +34278,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return result;
         }
 
-        public static QueryBodySyntax QueryBody(Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<QueryClauseSyntax> clauses, SelectOrGroupClauseSyntax selectOrGroup, QueryContinuationSyntax? continuation)
+        public static QueryBodySyntax QueryBody(CoreSyntax.SyntaxList<QueryClauseSyntax> clauses, SelectOrGroupClauseSyntax selectOrGroup, QueryContinuationSyntax? continuation)
         {
 #if DEBUG
             if (selectOrGroup == null) throw new ArgumentNullException(nameof(selectOrGroup));
@@ -43052,7 +34391,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return result;
         }
 
-        public static OrderByClauseSyntax OrderByClause(SyntaxToken orderByKeyword, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<OrderingSyntax> orderings)
+        public static OrderByClauseSyntax OrderByClause(SyntaxToken orderByKeyword, CoreSyntax.SeparatedSyntaxList<OrderingSyntax> orderings)
         {
 #if DEBUG
             if (orderByKeyword == null) throw new ArgumentNullException(nameof(orderByKeyword));
@@ -43185,7 +34524,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return result;
         }
 
-        public static InterpolatedStringExpressionSyntax InterpolatedStringExpression(SyntaxToken stringStartToken, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<InterpolatedStringContentSyntax> contents, SyntaxToken stringEndToken)
+        public static InterpolatedStringExpressionSyntax InterpolatedStringExpression(SyntaxToken stringStartToken, CoreSyntax.SyntaxList<InterpolatedStringContentSyntax> contents, SyntaxToken stringEndToken)
         {
 #if DEBUG
             if (stringStartToken == null) throw new ArgumentNullException(nameof(stringStartToken));
@@ -43352,7 +34691,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return new RecursivePatternSyntax(SyntaxKind.RecursivePattern, type, positionalPatternClause, propertyPatternClause, designation);
         }
 
-        public static PositionalPatternClauseSyntax PositionalPatternClause(SyntaxToken openParenToken, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<SubpatternSyntax> subpatterns, SyntaxToken closeParenToken)
+        public static PositionalPatternClauseSyntax PositionalPatternClause(SyntaxToken openParenToken, CoreSyntax.SeparatedSyntaxList<SubpatternSyntax> subpatterns, SyntaxToken closeParenToken)
         {
 #if DEBUG
             if (openParenToken == null) throw new ArgumentNullException(nameof(openParenToken));
@@ -43374,7 +34713,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return result;
         }
 
-        public static PropertyPatternClauseSyntax PropertyPatternClause(SyntaxToken openBraceToken, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<SubpatternSyntax> subpatterns, SyntaxToken closeBraceToken)
+        public static PropertyPatternClauseSyntax PropertyPatternClause(SyntaxToken openBraceToken, CoreSyntax.SeparatedSyntaxList<SubpatternSyntax> subpatterns, SyntaxToken closeBraceToken)
         {
 #if DEBUG
             if (openBraceToken == null) throw new ArgumentNullException(nameof(openBraceToken));
@@ -43560,7 +34899,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return result;
         }
 
-        public static ListPatternSyntax ListPattern(SyntaxToken openBracketToken, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<PatternSyntax> patterns, SyntaxToken closeBracketToken, VariableDesignationSyntax? designation)
+        public static ListPatternSyntax ListPattern(SyntaxToken openBracketToken, CoreSyntax.SeparatedSyntaxList<PatternSyntax> patterns, SyntaxToken closeBracketToken, VariableDesignationSyntax? designation)
         {
 #if DEBUG
             if (openBracketToken == null) throw new ArgumentNullException(nameof(openBracketToken));
@@ -43666,7 +35005,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return result;
         }
 
-        public static GlobalStatementSyntax GlobalStatement(Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> attributeLists, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SyntaxToken> modifiers, StatementSyntax statement)
+        public static GlobalStatementSyntax GlobalStatement(CoreSyntax.SyntaxList<AttributeListSyntax> attributeLists, CoreSyntax.SyntaxList<SyntaxToken> modifiers, StatementSyntax statement)
         {
 #if DEBUG
             if (statement == null) throw new ArgumentNullException(nameof(statement));
@@ -43685,7 +35024,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return result;
         }
 
-        public static BlockSyntax Block(Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> attributeLists, SyntaxToken openBraceToken, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<StatementSyntax> statements, SyntaxToken closeBraceToken)
+        public static BlockSyntax Block(CoreSyntax.SyntaxList<AttributeListSyntax> attributeLists, SyntaxToken openBraceToken, CoreSyntax.SyntaxList<StatementSyntax> statements, SyntaxToken closeBraceToken)
         {
 #if DEBUG
             if (openBraceToken == null) throw new ArgumentNullException(nameof(openBraceToken));
@@ -43697,7 +35036,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return new BlockSyntax(SyntaxKind.Block, attributeLists.Node, openBraceToken, statements.Node, closeBraceToken);
         }
 
-        public static LocalFunctionStatementSyntax LocalFunctionStatement(Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> attributeLists, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SyntaxToken> modifiers, TypeSyntax returnType, SyntaxToken identifier, TypeParameterListSyntax? typeParameterList, ParameterListSyntax parameterList, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<TypeParameterConstraintClauseSyntax> constraintClauses, BlockSyntax? body, ArrowExpressionClauseSyntax? expressionBody, SyntaxToken? semicolonToken)
+        public static LocalFunctionStatementSyntax LocalFunctionStatement(CoreSyntax.SyntaxList<AttributeListSyntax> attributeLists, CoreSyntax.SyntaxList<SyntaxToken> modifiers, TypeSyntax returnType, SyntaxToken identifier, TypeParameterListSyntax? typeParameterList, ParameterListSyntax parameterList, CoreSyntax.SyntaxList<TypeParameterConstraintClauseSyntax> constraintClauses, BlockSyntax? body, ArrowExpressionClauseSyntax? expressionBody, SyntaxToken? semicolonToken)
         {
 #if DEBUG
             if (returnType == null) throw new ArgumentNullException(nameof(returnType));
@@ -43718,7 +35057,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return new LocalFunctionStatementSyntax(SyntaxKind.LocalFunctionStatement, attributeLists.Node, modifiers.Node, returnType, identifier, typeParameterList, parameterList, constraintClauses.Node, body, expressionBody, semicolonToken);
         }
 
-        public static LocalDeclarationStatementSyntax LocalDeclarationStatement(Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> attributeLists, SyntaxToken? awaitKeyword, SyntaxToken? usingKeyword, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SyntaxToken> modifiers, VariableDeclarationSyntax declaration, SyntaxToken semicolonToken)
+        public static LocalDeclarationStatementSyntax LocalDeclarationStatement(CoreSyntax.SyntaxList<AttributeListSyntax> attributeLists, SyntaxToken? awaitKeyword, SyntaxToken? usingKeyword, CoreSyntax.SyntaxList<SyntaxToken> modifiers, VariableDeclarationSyntax declaration, SyntaxToken semicolonToken)
         {
 #if DEBUG
             if (awaitKeyword != null)
@@ -43747,7 +35086,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return new LocalDeclarationStatementSyntax(SyntaxKind.LocalDeclarationStatement, attributeLists.Node, awaitKeyword, usingKeyword, modifiers.Node, declaration, semicolonToken);
         }
 
-        public static VariableDeclarationSyntax VariableDeclaration(TypeSyntax type, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<VariableDeclaratorSyntax> variables)
+        public static VariableDeclarationSyntax VariableDeclaration(TypeSyntax type, CoreSyntax.SeparatedSyntaxList<VariableDeclaratorSyntax> variables)
         {
 #if DEBUG
             if (type == null) throw new ArgumentNullException(nameof(type));
@@ -43847,7 +35186,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return result;
         }
 
-        public static ParenthesizedVariableDesignationSyntax ParenthesizedVariableDesignation(SyntaxToken openParenToken, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<VariableDesignationSyntax> variables, SyntaxToken closeParenToken)
+        public static ParenthesizedVariableDesignationSyntax ParenthesizedVariableDesignation(SyntaxToken openParenToken, CoreSyntax.SeparatedSyntaxList<VariableDesignationSyntax> variables, SyntaxToken closeParenToken)
         {
 #if DEBUG
             if (openParenToken == null) throw new ArgumentNullException(nameof(openParenToken));
@@ -43869,7 +35208,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return result;
         }
 
-        public static ExpressionStatementSyntax ExpressionStatement(Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> attributeLists, ExpressionSyntax expression, SyntaxToken semicolonToken)
+        public static ExpressionStatementSyntax ExpressionStatement(CoreSyntax.SyntaxList<AttributeListSyntax> attributeLists, ExpressionSyntax expression, SyntaxToken semicolonToken)
         {
 #if DEBUG
             if (expression == null) throw new ArgumentNullException(nameof(expression));
@@ -43890,7 +35229,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return result;
         }
 
-        public static EmptyStatementSyntax EmptyStatement(Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> attributeLists, SyntaxToken semicolonToken)
+        public static EmptyStatementSyntax EmptyStatement(CoreSyntax.SyntaxList<AttributeListSyntax> attributeLists, SyntaxToken semicolonToken)
         {
 #if DEBUG
             if (semicolonToken == null) throw new ArgumentNullException(nameof(semicolonToken));
@@ -43910,7 +35249,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return result;
         }
 
-        public static LabeledStatementSyntax LabeledStatement(Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> attributeLists, SyntaxToken identifier, SyntaxToken colonToken, StatementSyntax statement)
+        public static LabeledStatementSyntax LabeledStatement(CoreSyntax.SyntaxList<AttributeListSyntax> attributeLists, SyntaxToken identifier, SyntaxToken colonToken, StatementSyntax statement)
         {
 #if DEBUG
             if (identifier == null) throw new ArgumentNullException(nameof(identifier));
@@ -43923,7 +35262,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return new LabeledStatementSyntax(SyntaxKind.LabeledStatement, attributeLists.Node, identifier, colonToken, statement);
         }
 
-        public static GotoStatementSyntax GotoStatement(SyntaxKind kind, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> attributeLists, SyntaxToken gotoKeyword, SyntaxToken? caseOrDefaultKeyword, ExpressionSyntax? expression, SyntaxToken semicolonToken)
+        public static GotoStatementSyntax GotoStatement(SyntaxKind kind, CoreSyntax.SyntaxList<AttributeListSyntax> attributeLists, SyntaxToken gotoKeyword, SyntaxToken? caseOrDefaultKeyword, ExpressionSyntax? expression, SyntaxToken semicolonToken)
         {
             switch (kind)
             {
@@ -43952,7 +35291,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return new GotoStatementSyntax(kind, attributeLists.Node, gotoKeyword, caseOrDefaultKeyword, expression, semicolonToken);
         }
 
-        public static BreakStatementSyntax BreakStatement(Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> attributeLists, SyntaxToken breakKeyword, SyntaxToken semicolonToken)
+        public static BreakStatementSyntax BreakStatement(CoreSyntax.SyntaxList<AttributeListSyntax> attributeLists, SyntaxToken breakKeyword, SyntaxToken semicolonToken)
         {
 #if DEBUG
             if (breakKeyword == null) throw new ArgumentNullException(nameof(breakKeyword));
@@ -43974,7 +35313,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return result;
         }
 
-        public static ContinueStatementSyntax ContinueStatement(Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> attributeLists, SyntaxToken continueKeyword, SyntaxToken semicolonToken)
+        public static ContinueStatementSyntax ContinueStatement(CoreSyntax.SyntaxList<AttributeListSyntax> attributeLists, SyntaxToken continueKeyword, SyntaxToken semicolonToken)
         {
 #if DEBUG
             if (continueKeyword == null) throw new ArgumentNullException(nameof(continueKeyword));
@@ -43996,7 +35335,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return result;
         }
 
-        public static ReturnStatementSyntax ReturnStatement(Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> attributeLists, SyntaxToken returnKeyword, ExpressionSyntax? expression, SyntaxToken semicolonToken)
+        public static ReturnStatementSyntax ReturnStatement(CoreSyntax.SyntaxList<AttributeListSyntax> attributeLists, SyntaxToken returnKeyword, ExpressionSyntax? expression, SyntaxToken semicolonToken)
         {
 #if DEBUG
             if (returnKeyword == null) throw new ArgumentNullException(nameof(returnKeyword));
@@ -44008,7 +35347,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return new ReturnStatementSyntax(SyntaxKind.ReturnStatement, attributeLists.Node, returnKeyword, expression, semicolonToken);
         }
 
-        public static ThrowStatementSyntax ThrowStatement(Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> attributeLists, SyntaxToken throwKeyword, ExpressionSyntax? expression, SyntaxToken semicolonToken)
+        public static ThrowStatementSyntax ThrowStatement(CoreSyntax.SyntaxList<AttributeListSyntax> attributeLists, SyntaxToken throwKeyword, ExpressionSyntax? expression, SyntaxToken semicolonToken)
         {
 #if DEBUG
             if (throwKeyword == null) throw new ArgumentNullException(nameof(throwKeyword));
@@ -44020,7 +35359,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return new ThrowStatementSyntax(SyntaxKind.ThrowStatement, attributeLists.Node, throwKeyword, expression, semicolonToken);
         }
 
-        public static YieldStatementSyntax YieldStatement(SyntaxKind kind, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> attributeLists, SyntaxToken yieldKeyword, SyntaxToken returnOrBreakKeyword, ExpressionSyntax? expression, SyntaxToken semicolonToken)
+        public static YieldStatementSyntax YieldStatement(SyntaxKind kind, CoreSyntax.SyntaxList<AttributeListSyntax> attributeLists, SyntaxToken yieldKeyword, SyntaxToken returnOrBreakKeyword, ExpressionSyntax? expression, SyntaxToken semicolonToken)
         {
             switch (kind)
             {
@@ -44045,7 +35384,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return new YieldStatementSyntax(kind, attributeLists.Node, yieldKeyword, returnOrBreakKeyword, expression, semicolonToken);
         }
 
-        public static WhileStatementSyntax WhileStatement(Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> attributeLists, SyntaxToken whileKeyword, SyntaxToken openParenToken, ExpressionSyntax condition, SyntaxToken closeParenToken, StatementSyntax statement)
+        public static WhileStatementSyntax WhileStatement(CoreSyntax.SyntaxList<AttributeListSyntax> attributeLists, SyntaxToken whileKeyword, SyntaxToken openParenToken, ExpressionSyntax condition, SyntaxToken closeParenToken, StatementSyntax statement)
         {
 #if DEBUG
             if (whileKeyword == null) throw new ArgumentNullException(nameof(whileKeyword));
@@ -44061,7 +35400,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return new WhileStatementSyntax(SyntaxKind.WhileStatement, attributeLists.Node, whileKeyword, openParenToken, condition, closeParenToken, statement);
         }
 
-        public static DoStatementSyntax DoStatement(Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> attributeLists, SyntaxToken doKeyword, StatementSyntax statement, SyntaxToken whileKeyword, SyntaxToken openParenToken, ExpressionSyntax condition, SyntaxToken closeParenToken, SyntaxToken semicolonToken)
+        public static DoStatementSyntax DoStatement(CoreSyntax.SyntaxList<AttributeListSyntax> attributeLists, SyntaxToken doKeyword, StatementSyntax statement, SyntaxToken whileKeyword, SyntaxToken openParenToken, ExpressionSyntax condition, SyntaxToken closeParenToken, SyntaxToken semicolonToken)
         {
 #if DEBUG
             if (doKeyword == null) throw new ArgumentNullException(nameof(doKeyword));
@@ -44081,7 +35420,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return new DoStatementSyntax(SyntaxKind.DoStatement, attributeLists.Node, doKeyword, statement, whileKeyword, openParenToken, condition, closeParenToken, semicolonToken);
         }
 
-        public static ForStatementSyntax ForStatement(Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> attributeLists, SyntaxToken forKeyword, SyntaxToken openParenToken, VariableDeclarationSyntax? declaration, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<ExpressionSyntax> initializers, SyntaxToken firstSemicolonToken, ExpressionSyntax? condition, SyntaxToken secondSemicolonToken, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<ExpressionSyntax> incrementors, SyntaxToken closeParenToken, StatementSyntax statement)
+        public static ForStatementSyntax ForStatement(CoreSyntax.SyntaxList<AttributeListSyntax> attributeLists, SyntaxToken forKeyword, SyntaxToken openParenToken, VariableDeclarationSyntax? declaration, CoreSyntax.SeparatedSyntaxList<ExpressionSyntax> initializers, SyntaxToken firstSemicolonToken, ExpressionSyntax? condition, SyntaxToken secondSemicolonToken, CoreSyntax.SeparatedSyntaxList<ExpressionSyntax> incrementors, SyntaxToken closeParenToken, StatementSyntax statement)
         {
 #if DEBUG
             if (forKeyword == null) throw new ArgumentNullException(nameof(forKeyword));
@@ -44100,7 +35439,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return new ForStatementSyntax(SyntaxKind.ForStatement, attributeLists.Node, forKeyword, openParenToken, declaration, initializers.Node, firstSemicolonToken, condition, secondSemicolonToken, incrementors.Node, closeParenToken, statement);
         }
 
-        public static ForEachStatementSyntax ForEachStatement(Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> attributeLists, SyntaxToken? awaitKeyword, SyntaxToken forEachKeyword, SyntaxToken openParenToken, TypeSyntax type, SyntaxToken identifier, SyntaxToken inKeyword, ExpressionSyntax expression, SyntaxToken closeParenToken, StatementSyntax statement)
+        public static ForEachStatementSyntax ForEachStatement(CoreSyntax.SyntaxList<AttributeListSyntax> attributeLists, SyntaxToken? awaitKeyword, SyntaxToken forEachKeyword, SyntaxToken openParenToken, TypeSyntax type, SyntaxToken identifier, SyntaxToken inKeyword, ExpressionSyntax expression, SyntaxToken closeParenToken, StatementSyntax statement)
         {
 #if DEBUG
             if (awaitKeyword != null)
@@ -44130,7 +35469,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return new ForEachStatementSyntax(SyntaxKind.ForEachStatement, attributeLists.Node, awaitKeyword, forEachKeyword, openParenToken, type, identifier, inKeyword, expression, closeParenToken, statement);
         }
 
-        public static ForEachVariableStatementSyntax ForEachVariableStatement(Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> attributeLists, SyntaxToken? awaitKeyword, SyntaxToken forEachKeyword, SyntaxToken openParenToken, ExpressionSyntax variable, SyntaxToken inKeyword, ExpressionSyntax expression, SyntaxToken closeParenToken, StatementSyntax statement)
+        public static ForEachVariableStatementSyntax ForEachVariableStatement(CoreSyntax.SyntaxList<AttributeListSyntax> attributeLists, SyntaxToken? awaitKeyword, SyntaxToken forEachKeyword, SyntaxToken openParenToken, ExpressionSyntax variable, SyntaxToken inKeyword, ExpressionSyntax expression, SyntaxToken closeParenToken, StatementSyntax statement)
         {
 #if DEBUG
             if (awaitKeyword != null)
@@ -44158,7 +35497,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return new ForEachVariableStatementSyntax(SyntaxKind.ForEachVariableStatement, attributeLists.Node, awaitKeyword, forEachKeyword, openParenToken, variable, inKeyword, expression, closeParenToken, statement);
         }
 
-        public static UsingStatementSyntax UsingStatement(Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> attributeLists, SyntaxToken? awaitKeyword, SyntaxToken usingKeyword, SyntaxToken openParenToken, VariableDeclarationSyntax? declaration, ExpressionSyntax? expression, SyntaxToken closeParenToken, StatementSyntax statement)
+        public static UsingStatementSyntax UsingStatement(CoreSyntax.SyntaxList<AttributeListSyntax> attributeLists, SyntaxToken? awaitKeyword, SyntaxToken usingKeyword, SyntaxToken openParenToken, VariableDeclarationSyntax? declaration, ExpressionSyntax? expression, SyntaxToken closeParenToken, StatementSyntax statement)
         {
 #if DEBUG
             if (awaitKeyword != null)
@@ -44182,7 +35521,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return new UsingStatementSyntax(SyntaxKind.UsingStatement, attributeLists.Node, awaitKeyword, usingKeyword, openParenToken, declaration, expression, closeParenToken, statement);
         }
 
-        public static FixedStatementSyntax FixedStatement(Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> attributeLists, SyntaxToken fixedKeyword, SyntaxToken openParenToken, VariableDeclarationSyntax declaration, SyntaxToken closeParenToken, StatementSyntax statement)
+        public static FixedStatementSyntax FixedStatement(CoreSyntax.SyntaxList<AttributeListSyntax> attributeLists, SyntaxToken fixedKeyword, SyntaxToken openParenToken, VariableDeclarationSyntax declaration, SyntaxToken closeParenToken, StatementSyntax statement)
         {
 #if DEBUG
             if (fixedKeyword == null) throw new ArgumentNullException(nameof(fixedKeyword));
@@ -44198,7 +35537,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return new FixedStatementSyntax(SyntaxKind.FixedStatement, attributeLists.Node, fixedKeyword, openParenToken, declaration, closeParenToken, statement);
         }
 
-        public static CheckedStatementSyntax CheckedStatement(SyntaxKind kind, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> attributeLists, SyntaxToken keyword, BlockSyntax block)
+        public static CheckedStatementSyntax CheckedStatement(SyntaxKind kind, CoreSyntax.SyntaxList<AttributeListSyntax> attributeLists, SyntaxToken keyword, BlockSyntax block)
         {
             switch (kind)
             {
@@ -44230,7 +35569,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return result;
         }
 
-        public static UnsafeStatementSyntax UnsafeStatement(Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> attributeLists, SyntaxToken unsafeKeyword, BlockSyntax block)
+        public static UnsafeStatementSyntax UnsafeStatement(CoreSyntax.SyntaxList<AttributeListSyntax> attributeLists, SyntaxToken unsafeKeyword, BlockSyntax block)
         {
 #if DEBUG
             if (unsafeKeyword == null) throw new ArgumentNullException(nameof(unsafeKeyword));
@@ -44251,7 +35590,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return result;
         }
 
-        public static LockStatementSyntax LockStatement(Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> attributeLists, SyntaxToken lockKeyword, SyntaxToken openParenToken, ExpressionSyntax expression, SyntaxToken closeParenToken, StatementSyntax statement)
+        public static LockStatementSyntax LockStatement(CoreSyntax.SyntaxList<AttributeListSyntax> attributeLists, SyntaxToken lockKeyword, SyntaxToken openParenToken, ExpressionSyntax expression, SyntaxToken closeParenToken, StatementSyntax statement)
         {
 #if DEBUG
             if (lockKeyword == null) throw new ArgumentNullException(nameof(lockKeyword));
@@ -44267,7 +35606,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return new LockStatementSyntax(SyntaxKind.LockStatement, attributeLists.Node, lockKeyword, openParenToken, expression, closeParenToken, statement);
         }
 
-        public static IfStatementSyntax IfStatement(Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> attributeLists, SyntaxToken ifKeyword, SyntaxToken openParenToken, ExpressionSyntax condition, SyntaxToken closeParenToken, StatementSyntax statement, ElseClauseSyntax? @else)
+        public static IfStatementSyntax IfStatement(CoreSyntax.SyntaxList<AttributeListSyntax> attributeLists, SyntaxToken ifKeyword, SyntaxToken openParenToken, ExpressionSyntax condition, SyntaxToken closeParenToken, StatementSyntax statement, ElseClauseSyntax? @else)
         {
 #if DEBUG
             if (ifKeyword == null) throw new ArgumentNullException(nameof(ifKeyword));
@@ -44304,7 +35643,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return result;
         }
 
-        public static SwitchStatementSyntax SwitchStatement(Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> attributeLists, SyntaxToken switchKeyword, SyntaxToken? openParenToken, ExpressionSyntax expression, SyntaxToken? closeParenToken, SyntaxToken openBraceToken, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SwitchSectionSyntax> sections, SyntaxToken closeBraceToken)
+        public static SwitchStatementSyntax SwitchStatement(CoreSyntax.SyntaxList<AttributeListSyntax> attributeLists, SyntaxToken switchKeyword, SyntaxToken? openParenToken, ExpressionSyntax expression, SyntaxToken? closeParenToken, SyntaxToken openBraceToken, CoreSyntax.SyntaxList<SwitchSectionSyntax> sections, SyntaxToken closeBraceToken)
         {
 #if DEBUG
             if (switchKeyword == null) throw new ArgumentNullException(nameof(switchKeyword));
@@ -44337,7 +35676,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return new SwitchStatementSyntax(SyntaxKind.SwitchStatement, attributeLists.Node, switchKeyword, openParenToken, expression, closeParenToken, openBraceToken, sections.Node, closeBraceToken);
         }
 
-        public static SwitchSectionSyntax SwitchSection(Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SwitchLabelSyntax> labels, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<StatementSyntax> statements)
+        public static SwitchSectionSyntax SwitchSection(CoreSyntax.SyntaxList<SwitchLabelSyntax> labels, CoreSyntax.SyntaxList<StatementSyntax> statements)
         {
 #if DEBUG
 #endif
@@ -44410,7 +35749,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return result;
         }
 
-        public static SwitchExpressionSyntax SwitchExpression(ExpressionSyntax governingExpression, SyntaxToken switchKeyword, SyntaxToken openBraceToken, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<SwitchExpressionArmSyntax> arms, SyntaxToken closeBraceToken)
+        public static SwitchExpressionSyntax SwitchExpression(ExpressionSyntax governingExpression, SyntaxToken switchKeyword, SyntaxToken openBraceToken, CoreSyntax.SeparatedSyntaxList<SwitchExpressionArmSyntax> arms, SyntaxToken closeBraceToken)
         {
 #if DEBUG
             if (governingExpression == null) throw new ArgumentNullException(nameof(governingExpression));
@@ -44437,7 +35776,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return new SwitchExpressionArmSyntax(SyntaxKind.SwitchExpressionArm, pattern, whenClause, equalsGreaterThanToken, expression);
         }
 
-        public static TryStatementSyntax TryStatement(Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> attributeLists, SyntaxToken tryKeyword, BlockSyntax block, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<CatchClauseSyntax> catches, FinallyClauseSyntax? @finally)
+        public static TryStatementSyntax TryStatement(CoreSyntax.SyntaxList<AttributeListSyntax> attributeLists, SyntaxToken tryKeyword, BlockSyntax block, CoreSyntax.SyntaxList<CatchClauseSyntax> catches, FinallyClauseSyntax? @finally)
         {
 #if DEBUG
             if (tryKeyword == null) throw new ArgumentNullException(nameof(tryKeyword));
@@ -44517,7 +35856,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return result;
         }
 
-        public static CompilationUnitSyntax CompilationUnit(Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<ExternAliasDirectiveSyntax> externs, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<UsingDirectiveSyntax> usings, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> attributeLists, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<MemberDeclarationSyntax> members, SyntaxToken endOfFileToken)
+        public static CompilationUnitSyntax CompilationUnit(CoreSyntax.SyntaxList<ExternAliasDirectiveSyntax> externs, CoreSyntax.SyntaxList<UsingDirectiveSyntax> usings, CoreSyntax.SyntaxList<AttributeListSyntax> attributeLists, CoreSyntax.SyntaxList<MemberDeclarationSyntax> members, SyntaxToken endOfFileToken)
         {
 #if DEBUG
             if (endOfFileToken == null) throw new ArgumentNullException(nameof(endOfFileToken));
@@ -44583,7 +35922,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return new UsingDirectiveSyntax(SyntaxKind.UsingDirective, globalKeyword, usingKeyword, staticKeyword, unsafeKeyword, alias, namespaceOrType, semicolonToken);
         }
 
-        public static NamespaceDeclarationSyntax NamespaceDeclaration(Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> attributeLists, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SyntaxToken> modifiers, SyntaxToken namespaceKeyword, NameSyntax name, SyntaxToken openBraceToken, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<ExternAliasDirectiveSyntax> externs, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<UsingDirectiveSyntax> usings, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<MemberDeclarationSyntax> members, SyntaxToken closeBraceToken, SyntaxToken? semicolonToken)
+        public static NamespaceDeclarationSyntax NamespaceDeclaration(CoreSyntax.SyntaxList<AttributeListSyntax> attributeLists, CoreSyntax.SyntaxList<SyntaxToken> modifiers, SyntaxToken namespaceKeyword, NameSyntax name, SyntaxToken openBraceToken, CoreSyntax.SyntaxList<ExternAliasDirectiveSyntax> externs, CoreSyntax.SyntaxList<UsingDirectiveSyntax> usings, CoreSyntax.SyntaxList<MemberDeclarationSyntax> members, SyntaxToken closeBraceToken, SyntaxToken? semicolonToken)
         {
 #if DEBUG
             if (namespaceKeyword == null) throw new ArgumentNullException(nameof(namespaceKeyword));
@@ -44607,7 +35946,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return new NamespaceDeclarationSyntax(SyntaxKind.NamespaceDeclaration, attributeLists.Node, modifiers.Node, namespaceKeyword, name, openBraceToken, externs.Node, usings.Node, members.Node, closeBraceToken, semicolonToken);
         }
 
-        public static FileScopedNamespaceDeclarationSyntax FileScopedNamespaceDeclaration(Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> attributeLists, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SyntaxToken> modifiers, SyntaxToken namespaceKeyword, NameSyntax name, SyntaxToken semicolonToken, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<ExternAliasDirectiveSyntax> externs, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<UsingDirectiveSyntax> usings, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<MemberDeclarationSyntax> members)
+        public static FileScopedNamespaceDeclarationSyntax FileScopedNamespaceDeclaration(CoreSyntax.SyntaxList<AttributeListSyntax> attributeLists, CoreSyntax.SyntaxList<SyntaxToken> modifiers, SyntaxToken namespaceKeyword, NameSyntax name, SyntaxToken semicolonToken, CoreSyntax.SyntaxList<ExternAliasDirectiveSyntax> externs, CoreSyntax.SyntaxList<UsingDirectiveSyntax> usings, CoreSyntax.SyntaxList<MemberDeclarationSyntax> members)
         {
 #if DEBUG
             if (namespaceKeyword == null) throw new ArgumentNullException(nameof(namespaceKeyword));
@@ -44620,7 +35959,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return new FileScopedNamespaceDeclarationSyntax(SyntaxKind.FileScopedNamespaceDeclaration, attributeLists.Node, modifiers.Node, namespaceKeyword, name, semicolonToken, externs.Node, usings.Node, members.Node);
         }
 
-        public static AttributeListSyntax AttributeList(SyntaxToken openBracketToken, AttributeTargetSpecifierSyntax? target, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<AttributeSyntax> attributes, SyntaxToken closeBracketToken)
+        public static AttributeListSyntax AttributeList(SyntaxToken openBracketToken, AttributeTargetSpecifierSyntax? target, CoreSyntax.SeparatedSyntaxList<AttributeSyntax> attributes, SyntaxToken closeBracketToken)
         {
 #if DEBUG
             if (openBracketToken == null) throw new ArgumentNullException(nameof(openBracketToken));
@@ -44672,7 +36011,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return result;
         }
 
-        public static AttributeArgumentListSyntax AttributeArgumentList(SyntaxToken openParenToken, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<AttributeArgumentSyntax> arguments, SyntaxToken closeParenToken)
+        public static AttributeArgumentListSyntax AttributeArgumentList(SyntaxToken openParenToken, CoreSyntax.SeparatedSyntaxList<AttributeArgumentSyntax> arguments, SyntaxToken closeParenToken)
         {
 #if DEBUG
             if (openParenToken == null) throw new ArgumentNullException(nameof(openParenToken));
@@ -44734,7 +36073,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return result;
         }
 
-        public static TypeParameterListSyntax TypeParameterList(SyntaxToken lessThanToken, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<TypeParameterSyntax> parameters, SyntaxToken greaterThanToken)
+        public static TypeParameterListSyntax TypeParameterList(SyntaxToken lessThanToken, CoreSyntax.SeparatedSyntaxList<TypeParameterSyntax> parameters, SyntaxToken greaterThanToken)
         {
 #if DEBUG
             if (lessThanToken == null) throw new ArgumentNullException(nameof(lessThanToken));
@@ -44756,7 +36095,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return result;
         }
 
-        public static TypeParameterSyntax TypeParameter(Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> attributeLists, SyntaxToken? varianceKeyword, SyntaxToken identifier)
+        public static TypeParameterSyntax TypeParameter(CoreSyntax.SyntaxList<AttributeListSyntax> attributeLists, SyntaxToken? varianceKeyword, SyntaxToken identifier)
         {
 #if DEBUG
             if (varianceKeyword != null)
@@ -44786,7 +36125,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return result;
         }
 
-        public static ClassDeclarationSyntax ClassDeclaration(Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> attributeLists, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SyntaxToken> modifiers, SyntaxToken keyword, SyntaxToken identifier, TypeParameterListSyntax? typeParameterList, ParameterListSyntax? parameterList, BaseListSyntax? baseList, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<TypeParameterConstraintClauseSyntax> constraintClauses, SyntaxToken? openBraceToken, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<MemberDeclarationSyntax> members, SyntaxToken? closeBraceToken, SyntaxToken? semicolonToken)
+        public static ClassDeclarationSyntax ClassDeclaration(CoreSyntax.SyntaxList<AttributeListSyntax> attributeLists, CoreSyntax.SyntaxList<SyntaxToken> modifiers, SyntaxToken keyword, SyntaxToken identifier, TypeParameterListSyntax? typeParameterList, ParameterListSyntax? parameterList, BaseListSyntax? baseList, CoreSyntax.SyntaxList<TypeParameterConstraintClauseSyntax> constraintClauses, SyntaxToken? openBraceToken, CoreSyntax.SyntaxList<MemberDeclarationSyntax> members, SyntaxToken? closeBraceToken, SyntaxToken? semicolonToken)
         {
 #if DEBUG
             if (keyword == null) throw new ArgumentNullException(nameof(keyword));
@@ -44825,7 +36164,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return new ClassDeclarationSyntax(SyntaxKind.ClassDeclaration, attributeLists.Node, modifiers.Node, keyword, identifier, typeParameterList, parameterList, baseList, constraintClauses.Node, openBraceToken, members.Node, closeBraceToken, semicolonToken);
         }
 
-        public static StructDeclarationSyntax StructDeclaration(Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> attributeLists, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SyntaxToken> modifiers, SyntaxToken keyword, SyntaxToken identifier, TypeParameterListSyntax? typeParameterList, ParameterListSyntax? parameterList, BaseListSyntax? baseList, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<TypeParameterConstraintClauseSyntax> constraintClauses, SyntaxToken? openBraceToken, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<MemberDeclarationSyntax> members, SyntaxToken? closeBraceToken, SyntaxToken? semicolonToken)
+        public static StructDeclarationSyntax StructDeclaration(CoreSyntax.SyntaxList<AttributeListSyntax> attributeLists, CoreSyntax.SyntaxList<SyntaxToken> modifiers, SyntaxToken keyword, SyntaxToken identifier, TypeParameterListSyntax? typeParameterList, ParameterListSyntax? parameterList, BaseListSyntax? baseList, CoreSyntax.SyntaxList<TypeParameterConstraintClauseSyntax> constraintClauses, SyntaxToken? openBraceToken, CoreSyntax.SyntaxList<MemberDeclarationSyntax> members, SyntaxToken? closeBraceToken, SyntaxToken? semicolonToken)
         {
 #if DEBUG
             if (keyword == null) throw new ArgumentNullException(nameof(keyword));
@@ -44864,7 +36203,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return new StructDeclarationSyntax(SyntaxKind.StructDeclaration, attributeLists.Node, modifiers.Node, keyword, identifier, typeParameterList, parameterList, baseList, constraintClauses.Node, openBraceToken, members.Node, closeBraceToken, semicolonToken);
         }
 
-        public static InterfaceDeclarationSyntax InterfaceDeclaration(Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> attributeLists, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SyntaxToken> modifiers, SyntaxToken keyword, SyntaxToken identifier, TypeParameterListSyntax? typeParameterList, ParameterListSyntax? parameterList, BaseListSyntax? baseList, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<TypeParameterConstraintClauseSyntax> constraintClauses, SyntaxToken? openBraceToken, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<MemberDeclarationSyntax> members, SyntaxToken? closeBraceToken, SyntaxToken? semicolonToken)
+        public static InterfaceDeclarationSyntax InterfaceDeclaration(CoreSyntax.SyntaxList<AttributeListSyntax> attributeLists, CoreSyntax.SyntaxList<SyntaxToken> modifiers, SyntaxToken keyword, SyntaxToken identifier, TypeParameterListSyntax? typeParameterList, ParameterListSyntax? parameterList, BaseListSyntax? baseList, CoreSyntax.SyntaxList<TypeParameterConstraintClauseSyntax> constraintClauses, SyntaxToken? openBraceToken, CoreSyntax.SyntaxList<MemberDeclarationSyntax> members, SyntaxToken? closeBraceToken, SyntaxToken? semicolonToken)
         {
 #if DEBUG
             if (keyword == null) throw new ArgumentNullException(nameof(keyword));
@@ -44903,7 +36242,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return new InterfaceDeclarationSyntax(SyntaxKind.InterfaceDeclaration, attributeLists.Node, modifiers.Node, keyword, identifier, typeParameterList, parameterList, baseList, constraintClauses.Node, openBraceToken, members.Node, closeBraceToken, semicolonToken);
         }
 
-        public static RecordDeclarationSyntax RecordDeclaration(SyntaxKind kind, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> attributeLists, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SyntaxToken> modifiers, SyntaxToken keyword, SyntaxToken? classOrStructKeyword, SyntaxToken identifier, TypeParameterListSyntax? typeParameterList, ParameterListSyntax? parameterList, BaseListSyntax? baseList, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<TypeParameterConstraintClauseSyntax> constraintClauses, SyntaxToken? openBraceToken, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<MemberDeclarationSyntax> members, SyntaxToken? closeBraceToken, SyntaxToken? semicolonToken)
+        public static RecordDeclarationSyntax RecordDeclaration(SyntaxKind kind, CoreSyntax.SyntaxList<AttributeListSyntax> attributeLists, CoreSyntax.SyntaxList<SyntaxToken> modifiers, SyntaxToken keyword, SyntaxToken? classOrStructKeyword, SyntaxToken identifier, TypeParameterListSyntax? typeParameterList, ParameterListSyntax? parameterList, BaseListSyntax? baseList, CoreSyntax.SyntaxList<TypeParameterConstraintClauseSyntax> constraintClauses, SyntaxToken? openBraceToken, CoreSyntax.SyntaxList<MemberDeclarationSyntax> members, SyntaxToken? closeBraceToken, SyntaxToken? semicolonToken)
         {
             switch (kind)
             {
@@ -44957,7 +36296,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return new RecordDeclarationSyntax(kind, attributeLists.Node, modifiers.Node, keyword, classOrStructKeyword, identifier, typeParameterList, parameterList, baseList, constraintClauses.Node, openBraceToken, members.Node, closeBraceToken, semicolonToken);
         }
 
-        public static EnumDeclarationSyntax EnumDeclaration(Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> attributeLists, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SyntaxToken> modifiers, SyntaxToken enumKeyword, SyntaxToken identifier, BaseListSyntax? baseList, SyntaxToken? openBraceToken, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<EnumMemberDeclarationSyntax> members, SyntaxToken? closeBraceToken, SyntaxToken? semicolonToken)
+        public static EnumDeclarationSyntax EnumDeclaration(CoreSyntax.SyntaxList<AttributeListSyntax> attributeLists, CoreSyntax.SyntaxList<SyntaxToken> modifiers, SyntaxToken enumKeyword, SyntaxToken identifier, BaseListSyntax? baseList, SyntaxToken? openBraceToken, CoreSyntax.SeparatedSyntaxList<EnumMemberDeclarationSyntax> members, SyntaxToken? closeBraceToken, SyntaxToken? semicolonToken)
         {
 #if DEBUG
             if (enumKeyword == null) throw new ArgumentNullException(nameof(enumKeyword));
@@ -44996,7 +36335,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return new EnumDeclarationSyntax(SyntaxKind.EnumDeclaration, attributeLists.Node, modifiers.Node, enumKeyword, identifier, baseList, openBraceToken, members.Node, closeBraceToken, semicolonToken);
         }
 
-        public static DelegateDeclarationSyntax DelegateDeclaration(Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> attributeLists, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SyntaxToken> modifiers, SyntaxToken delegateKeyword, TypeSyntax returnType, SyntaxToken identifier, TypeParameterListSyntax? typeParameterList, ParameterListSyntax parameterList, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<TypeParameterConstraintClauseSyntax> constraintClauses, SyntaxToken semicolonToken)
+        public static DelegateDeclarationSyntax DelegateDeclaration(CoreSyntax.SyntaxList<AttributeListSyntax> attributeLists, CoreSyntax.SyntaxList<SyntaxToken> modifiers, SyntaxToken delegateKeyword, TypeSyntax returnType, SyntaxToken identifier, TypeParameterListSyntax? typeParameterList, ParameterListSyntax parameterList, CoreSyntax.SyntaxList<TypeParameterConstraintClauseSyntax> constraintClauses, SyntaxToken semicolonToken)
         {
 #if DEBUG
             if (delegateKeyword == null) throw new ArgumentNullException(nameof(delegateKeyword));
@@ -45012,7 +36351,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return new DelegateDeclarationSyntax(SyntaxKind.DelegateDeclaration, attributeLists.Node, modifiers.Node, delegateKeyword, returnType, identifier, typeParameterList, parameterList, constraintClauses.Node, semicolonToken);
         }
 
-        public static EnumMemberDeclarationSyntax EnumMemberDeclaration(Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> attributeLists, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SyntaxToken> modifiers, SyntaxToken identifier, EqualsValueClauseSyntax? equalsValue)
+        public static EnumMemberDeclarationSyntax EnumMemberDeclaration(CoreSyntax.SyntaxList<AttributeListSyntax> attributeLists, CoreSyntax.SyntaxList<SyntaxToken> modifiers, SyntaxToken identifier, EqualsValueClauseSyntax? equalsValue)
         {
 #if DEBUG
             if (identifier == null) throw new ArgumentNullException(nameof(identifier));
@@ -45022,7 +36361,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return new EnumMemberDeclarationSyntax(SyntaxKind.EnumMemberDeclaration, attributeLists.Node, modifiers.Node, identifier, equalsValue);
         }
 
-        public static BaseListSyntax BaseList(SyntaxToken colonToken, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<BaseTypeSyntax> types)
+        public static BaseListSyntax BaseList(SyntaxToken colonToken, CoreSyntax.SeparatedSyntaxList<BaseTypeSyntax> types)
         {
 #if DEBUG
             if (colonToken == null) throw new ArgumentNullException(nameof(colonToken));
@@ -45081,7 +36420,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return result;
         }
 
-        public static TypeParameterConstraintClauseSyntax TypeParameterConstraintClause(SyntaxToken whereKeyword, IdentifierNameSyntax name, SyntaxToken colonToken, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<TypeParameterConstraintSyntax> constraints)
+        public static TypeParameterConstraintClauseSyntax TypeParameterConstraintClause(SyntaxToken whereKeyword, IdentifierNameSyntax name, SyntaxToken colonToken, CoreSyntax.SeparatedSyntaxList<TypeParameterConstraintSyntax> constraints)
         {
 #if DEBUG
             if (whereKeyword == null) throw new ArgumentNullException(nameof(whereKeyword));
@@ -45197,7 +36536,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return result;
         }
 
-        public static FieldDeclarationSyntax FieldDeclaration(Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> attributeLists, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SyntaxToken> modifiers, VariableDeclarationSyntax declaration, SyntaxToken semicolonToken)
+        public static FieldDeclarationSyntax FieldDeclaration(CoreSyntax.SyntaxList<AttributeListSyntax> attributeLists, CoreSyntax.SyntaxList<SyntaxToken> modifiers, VariableDeclarationSyntax declaration, SyntaxToken semicolonToken)
         {
 #if DEBUG
             if (declaration == null) throw new ArgumentNullException(nameof(declaration));
@@ -45208,7 +36547,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return new FieldDeclarationSyntax(SyntaxKind.FieldDeclaration, attributeLists.Node, modifiers.Node, declaration, semicolonToken);
         }
 
-        public static EventFieldDeclarationSyntax EventFieldDeclaration(Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> attributeLists, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SyntaxToken> modifiers, SyntaxToken eventKeyword, VariableDeclarationSyntax declaration, SyntaxToken semicolonToken)
+        public static EventFieldDeclarationSyntax EventFieldDeclaration(CoreSyntax.SyntaxList<AttributeListSyntax> attributeLists, CoreSyntax.SyntaxList<SyntaxToken> modifiers, SyntaxToken eventKeyword, VariableDeclarationSyntax declaration, SyntaxToken semicolonToken)
         {
 #if DEBUG
             if (eventKeyword == null) throw new ArgumentNullException(nameof(eventKeyword));
@@ -45242,7 +36581,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return result;
         }
 
-        public static MethodDeclarationSyntax MethodDeclaration(Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> attributeLists, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SyntaxToken> modifiers, TypeSyntax returnType, ExplicitInterfaceSpecifierSyntax? explicitInterfaceSpecifier, SyntaxToken identifier, TypeParameterListSyntax? typeParameterList, ParameterListSyntax parameterList, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<TypeParameterConstraintClauseSyntax> constraintClauses, BlockSyntax? body, ArrowExpressionClauseSyntax? expressionBody, SyntaxToken? semicolonToken)
+        public static MethodDeclarationSyntax MethodDeclaration(CoreSyntax.SyntaxList<AttributeListSyntax> attributeLists, CoreSyntax.SyntaxList<SyntaxToken> modifiers, TypeSyntax returnType, ExplicitInterfaceSpecifierSyntax? explicitInterfaceSpecifier, SyntaxToken identifier, TypeParameterListSyntax? typeParameterList, ParameterListSyntax parameterList, CoreSyntax.SyntaxList<TypeParameterConstraintClauseSyntax> constraintClauses, BlockSyntax? body, ArrowExpressionClauseSyntax? expressionBody, SyntaxToken? semicolonToken)
         {
 #if DEBUG
             if (returnType == null) throw new ArgumentNullException(nameof(returnType));
@@ -45263,7 +36602,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return new MethodDeclarationSyntax(SyntaxKind.MethodDeclaration, attributeLists.Node, modifiers.Node, returnType, explicitInterfaceSpecifier, identifier, typeParameterList, parameterList, constraintClauses.Node, body, expressionBody, semicolonToken);
         }
 
-        public static OperatorDeclarationSyntax OperatorDeclaration(Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> attributeLists, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SyntaxToken> modifiers, TypeSyntax returnType, ExplicitInterfaceSpecifierSyntax? explicitInterfaceSpecifier, SyntaxToken operatorKeyword, SyntaxToken? checkedKeyword, SyntaxToken operatorToken, ParameterListSyntax parameterList, BlockSyntax? body, ArrowExpressionClauseSyntax? expressionBody, SyntaxToken? semicolonToken)
+        public static OperatorDeclarationSyntax OperatorDeclaration(CoreSyntax.SyntaxList<AttributeListSyntax> attributeLists, CoreSyntax.SyntaxList<SyntaxToken> modifiers, TypeSyntax returnType, ExplicitInterfaceSpecifierSyntax? explicitInterfaceSpecifier, SyntaxToken operatorKeyword, SyntaxToken? checkedKeyword, SyntaxToken operatorToken, ParameterListSyntax parameterList, BlockSyntax? body, ArrowExpressionClauseSyntax? expressionBody, SyntaxToken? semicolonToken)
         {
 #if DEBUG
             if (returnType == null) throw new ArgumentNullException(nameof(returnType));
@@ -45322,7 +36661,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return new OperatorDeclarationSyntax(SyntaxKind.OperatorDeclaration, attributeLists.Node, modifiers.Node, returnType, explicitInterfaceSpecifier, operatorKeyword, checkedKeyword, operatorToken, parameterList, body, expressionBody, semicolonToken);
         }
 
-        public static ConversionOperatorDeclarationSyntax ConversionOperatorDeclaration(Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> attributeLists, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SyntaxToken> modifiers, SyntaxToken implicitOrExplicitKeyword, ExplicitInterfaceSpecifierSyntax? explicitInterfaceSpecifier, SyntaxToken operatorKeyword, SyntaxToken? checkedKeyword, TypeSyntax type, ParameterListSyntax parameterList, BlockSyntax? body, ArrowExpressionClauseSyntax? expressionBody, SyntaxToken? semicolonToken)
+        public static ConversionOperatorDeclarationSyntax ConversionOperatorDeclaration(CoreSyntax.SyntaxList<AttributeListSyntax> attributeLists, CoreSyntax.SyntaxList<SyntaxToken> modifiers, SyntaxToken implicitOrExplicitKeyword, ExplicitInterfaceSpecifierSyntax? explicitInterfaceSpecifier, SyntaxToken operatorKeyword, SyntaxToken? checkedKeyword, TypeSyntax type, ParameterListSyntax parameterList, BlockSyntax? body, ArrowExpressionClauseSyntax? expressionBody, SyntaxToken? semicolonToken)
         {
 #if DEBUG
             if (implicitOrExplicitKeyword == null) throw new ArgumentNullException(nameof(implicitOrExplicitKeyword));
@@ -45359,7 +36698,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return new ConversionOperatorDeclarationSyntax(SyntaxKind.ConversionOperatorDeclaration, attributeLists.Node, modifiers.Node, implicitOrExplicitKeyword, explicitInterfaceSpecifier, operatorKeyword, checkedKeyword, type, parameterList, body, expressionBody, semicolonToken);
         }
 
-        public static ConstructorDeclarationSyntax ConstructorDeclaration(Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> attributeLists, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SyntaxToken> modifiers, SyntaxToken identifier, ParameterListSyntax parameterList, ConstructorInitializerSyntax? initializer, BlockSyntax? body, ArrowExpressionClauseSyntax? expressionBody, SyntaxToken? semicolonToken)
+        public static ConstructorDeclarationSyntax ConstructorDeclaration(CoreSyntax.SyntaxList<AttributeListSyntax> attributeLists, CoreSyntax.SyntaxList<SyntaxToken> modifiers, SyntaxToken identifier, ParameterListSyntax parameterList, ConstructorInitializerSyntax? initializer, BlockSyntax? body, ArrowExpressionClauseSyntax? expressionBody, SyntaxToken? semicolonToken)
         {
 #if DEBUG
             if (identifier == null) throw new ArgumentNullException(nameof(identifier));
@@ -45413,7 +36752,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return result;
         }
 
-        public static DestructorDeclarationSyntax DestructorDeclaration(Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> attributeLists, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SyntaxToken> modifiers, SyntaxToken tildeToken, SyntaxToken identifier, ParameterListSyntax parameterList, BlockSyntax? body, ArrowExpressionClauseSyntax? expressionBody, SyntaxToken? semicolonToken)
+        public static DestructorDeclarationSyntax DestructorDeclaration(CoreSyntax.SyntaxList<AttributeListSyntax> attributeLists, CoreSyntax.SyntaxList<SyntaxToken> modifiers, SyntaxToken tildeToken, SyntaxToken identifier, ParameterListSyntax parameterList, BlockSyntax? body, ArrowExpressionClauseSyntax? expressionBody, SyntaxToken? semicolonToken)
         {
 #if DEBUG
             if (tildeToken == null) throw new ArgumentNullException(nameof(tildeToken));
@@ -45435,7 +36774,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return new DestructorDeclarationSyntax(SyntaxKind.DestructorDeclaration, attributeLists.Node, modifiers.Node, tildeToken, identifier, parameterList, body, expressionBody, semicolonToken);
         }
 
-        public static PropertyDeclarationSyntax PropertyDeclaration(Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> attributeLists, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SyntaxToken> modifiers, TypeSyntax type, ExplicitInterfaceSpecifierSyntax? explicitInterfaceSpecifier, SyntaxToken identifier, AccessorListSyntax? accessorList, ArrowExpressionClauseSyntax? expressionBody, EqualsValueClauseSyntax? initializer, SyntaxToken? semicolonToken)
+        public static PropertyDeclarationSyntax PropertyDeclaration(CoreSyntax.SyntaxList<AttributeListSyntax> attributeLists, CoreSyntax.SyntaxList<SyntaxToken> modifiers, TypeSyntax type, ExplicitInterfaceSpecifierSyntax? explicitInterfaceSpecifier, SyntaxToken identifier, AccessorListSyntax? accessorList, ArrowExpressionClauseSyntax? expressionBody, EqualsValueClauseSyntax? initializer, SyntaxToken? semicolonToken)
         {
 #if DEBUG
             if (type == null) throw new ArgumentNullException(nameof(type));
@@ -45476,7 +36815,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return result;
         }
 
-        public static EventDeclarationSyntax EventDeclaration(Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> attributeLists, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SyntaxToken> modifiers, SyntaxToken eventKeyword, TypeSyntax type, ExplicitInterfaceSpecifierSyntax? explicitInterfaceSpecifier, SyntaxToken identifier, AccessorListSyntax? accessorList, SyntaxToken? semicolonToken)
+        public static EventDeclarationSyntax EventDeclaration(CoreSyntax.SyntaxList<AttributeListSyntax> attributeLists, CoreSyntax.SyntaxList<SyntaxToken> modifiers, SyntaxToken eventKeyword, TypeSyntax type, ExplicitInterfaceSpecifierSyntax? explicitInterfaceSpecifier, SyntaxToken identifier, AccessorListSyntax? accessorList, SyntaxToken? semicolonToken)
         {
 #if DEBUG
             if (eventKeyword == null) throw new ArgumentNullException(nameof(eventKeyword));
@@ -45498,7 +36837,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return new EventDeclarationSyntax(SyntaxKind.EventDeclaration, attributeLists.Node, modifiers.Node, eventKeyword, type, explicitInterfaceSpecifier, identifier, accessorList, semicolonToken);
         }
 
-        public static IndexerDeclarationSyntax IndexerDeclaration(Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> attributeLists, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SyntaxToken> modifiers, TypeSyntax type, ExplicitInterfaceSpecifierSyntax? explicitInterfaceSpecifier, SyntaxToken thisKeyword, BracketedParameterListSyntax parameterList, AccessorListSyntax? accessorList, ArrowExpressionClauseSyntax? expressionBody, SyntaxToken? semicolonToken)
+        public static IndexerDeclarationSyntax IndexerDeclaration(CoreSyntax.SyntaxList<AttributeListSyntax> attributeLists, CoreSyntax.SyntaxList<SyntaxToken> modifiers, TypeSyntax type, ExplicitInterfaceSpecifierSyntax? explicitInterfaceSpecifier, SyntaxToken thisKeyword, BracketedParameterListSyntax parameterList, AccessorListSyntax? accessorList, ArrowExpressionClauseSyntax? expressionBody, SyntaxToken? semicolonToken)
         {
 #if DEBUG
             if (type == null) throw new ArgumentNullException(nameof(type));
@@ -45519,7 +36858,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return new IndexerDeclarationSyntax(SyntaxKind.IndexerDeclaration, attributeLists.Node, modifiers.Node, type, explicitInterfaceSpecifier, thisKeyword, parameterList, accessorList, expressionBody, semicolonToken);
         }
 
-        public static AccessorListSyntax AccessorList(SyntaxToken openBraceToken, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AccessorDeclarationSyntax> accessors, SyntaxToken closeBraceToken)
+        public static AccessorListSyntax AccessorList(SyntaxToken openBraceToken, CoreSyntax.SyntaxList<AccessorDeclarationSyntax> accessors, SyntaxToken closeBraceToken)
         {
 #if DEBUG
             if (openBraceToken == null) throw new ArgumentNullException(nameof(openBraceToken));
@@ -45541,7 +36880,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return result;
         }
 
-        public static AccessorDeclarationSyntax AccessorDeclaration(SyntaxKind kind, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> attributeLists, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SyntaxToken> modifiers, SyntaxToken keyword, BlockSyntax? body, ArrowExpressionClauseSyntax? expressionBody, SyntaxToken? semicolonToken)
+        public static AccessorDeclarationSyntax AccessorDeclaration(SyntaxKind kind, CoreSyntax.SyntaxList<AttributeListSyntax> attributeLists, CoreSyntax.SyntaxList<SyntaxToken> modifiers, SyntaxToken keyword, BlockSyntax? body, ArrowExpressionClauseSyntax? expressionBody, SyntaxToken? semicolonToken)
         {
             switch (kind)
             {
@@ -45579,7 +36918,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return new AccessorDeclarationSyntax(kind, attributeLists.Node, modifiers.Node, keyword, body, expressionBody, semicolonToken);
         }
 
-        public static ParameterListSyntax ParameterList(SyntaxToken openParenToken, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<ParameterSyntax> parameters, SyntaxToken closeParenToken)
+        public static ParameterListSyntax ParameterList(SyntaxToken openParenToken, CoreSyntax.SeparatedSyntaxList<ParameterSyntax> parameters, SyntaxToken closeParenToken)
         {
 #if DEBUG
             if (openParenToken == null) throw new ArgumentNullException(nameof(openParenToken));
@@ -45601,7 +36940,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return result;
         }
 
-        public static BracketedParameterListSyntax BracketedParameterList(SyntaxToken openBracketToken, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<ParameterSyntax> parameters, SyntaxToken closeBracketToken)
+        public static BracketedParameterListSyntax BracketedParameterList(SyntaxToken openBracketToken, CoreSyntax.SeparatedSyntaxList<ParameterSyntax> parameters, SyntaxToken closeBracketToken)
         {
 #if DEBUG
             if (openBracketToken == null) throw new ArgumentNullException(nameof(openBracketToken));
@@ -45623,7 +36962,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return result;
         }
 
-        public static ParameterSyntax Parameter(Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> attributeLists, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SyntaxToken> modifiers, TypeSyntax? type, SyntaxToken identifier, EqualsValueClauseSyntax? @default)
+        public static ParameterSyntax Parameter(CoreSyntax.SyntaxList<AttributeListSyntax> attributeLists, CoreSyntax.SyntaxList<SyntaxToken> modifiers, TypeSyntax? type, SyntaxToken identifier, EqualsValueClauseSyntax? @default)
         {
 #if DEBUG
             if (identifier == null) throw new ArgumentNullException(nameof(identifier));
@@ -45638,7 +36977,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return new ParameterSyntax(SyntaxKind.Parameter, attributeLists.Node, modifiers.Node, type, identifier, @default);
         }
 
-        public static FunctionPointerParameterSyntax FunctionPointerParameter(Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> attributeLists, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SyntaxToken> modifiers, TypeSyntax type)
+        public static FunctionPointerParameterSyntax FunctionPointerParameter(CoreSyntax.SyntaxList<AttributeListSyntax> attributeLists, CoreSyntax.SyntaxList<SyntaxToken> modifiers, TypeSyntax type)
         {
 #if DEBUG
             if (type == null) throw new ArgumentNullException(nameof(type));
@@ -45657,7 +36996,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return result;
         }
 
-        public static IncompleteMemberSyntax IncompleteMember(Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<AttributeListSyntax> attributeLists, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SyntaxToken> modifiers, TypeSyntax? type)
+        public static IncompleteMemberSyntax IncompleteMember(CoreSyntax.SyntaxList<AttributeListSyntax> attributeLists, CoreSyntax.SyntaxList<SyntaxToken> modifiers, TypeSyntax? type)
         {
 #if DEBUG
 #endif
@@ -45665,7 +37004,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return new IncompleteMemberSyntax(SyntaxKind.IncompleteMember, attributeLists.Node, modifiers.Node, type);
         }
 
-        public static SkippedTokensTriviaSyntax SkippedTokensTrivia(Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SyntaxToken> tokens)
+        public static SkippedTokensTriviaSyntax SkippedTokensTrivia(CoreSyntax.SyntaxList<SyntaxToken> tokens)
         {
 #if DEBUG
 #endif
@@ -45673,7 +37012,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return new SkippedTokensTriviaSyntax(SyntaxKind.SkippedTokensTrivia, tokens.Node);
         }
 
-        public static DocumentationCommentTriviaSyntax DocumentationCommentTrivia(SyntaxKind kind, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<XmlNodeSyntax> content, SyntaxToken endOfComment)
+        public static DocumentationCommentTriviaSyntax DocumentationCommentTrivia(SyntaxKind kind, CoreSyntax.SyntaxList<XmlNodeSyntax> content, SyntaxToken endOfComment)
         {
             switch (kind)
             {
@@ -45843,7 +37182,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return new ConversionOperatorMemberCrefSyntax(SyntaxKind.ConversionOperatorMemberCref, implicitOrExplicitKeyword, operatorKeyword, checkedKeyword, type, parameters);
         }
 
-        public static CrefParameterListSyntax CrefParameterList(SyntaxToken openParenToken, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<CrefParameterSyntax> parameters, SyntaxToken closeParenToken)
+        public static CrefParameterListSyntax CrefParameterList(SyntaxToken openParenToken, CoreSyntax.SeparatedSyntaxList<CrefParameterSyntax> parameters, SyntaxToken closeParenToken)
         {
 #if DEBUG
             if (openParenToken == null) throw new ArgumentNullException(nameof(openParenToken));
@@ -45865,7 +37204,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return result;
         }
 
-        public static CrefBracketedParameterListSyntax CrefBracketedParameterList(SyntaxToken openBracketToken, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<CrefParameterSyntax> parameters, SyntaxToken closeBracketToken)
+        public static CrefBracketedParameterListSyntax CrefBracketedParameterList(SyntaxToken openBracketToken, CoreSyntax.SeparatedSyntaxList<CrefParameterSyntax> parameters, SyntaxToken closeBracketToken)
         {
 #if DEBUG
             if (openBracketToken == null) throw new ArgumentNullException(nameof(openBracketToken));
@@ -45926,7 +37265,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return result;
         }
 
-        public static XmlElementSyntax XmlElement(XmlElementStartTagSyntax startTag, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<XmlNodeSyntax> content, XmlElementEndTagSyntax endTag)
+        public static XmlElementSyntax XmlElement(XmlElementStartTagSyntax startTag, CoreSyntax.SyntaxList<XmlNodeSyntax> content, XmlElementEndTagSyntax endTag)
         {
 #if DEBUG
             if (startTag == null) throw new ArgumentNullException(nameof(startTag));
@@ -45946,7 +37285,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return result;
         }
 
-        public static XmlElementStartTagSyntax XmlElementStartTag(SyntaxToken lessThanToken, XmlNameSyntax name, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<XmlAttributeSyntax> attributes, SyntaxToken greaterThanToken)
+        public static XmlElementStartTagSyntax XmlElementStartTag(SyntaxToken lessThanToken, XmlNameSyntax name, CoreSyntax.SyntaxList<XmlAttributeSyntax> attributes, SyntaxToken greaterThanToken)
         {
 #if DEBUG
             if (lessThanToken == null) throw new ArgumentNullException(nameof(lessThanToken));
@@ -45982,7 +37321,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return result;
         }
 
-        public static XmlEmptyElementSyntax XmlEmptyElement(SyntaxToken lessThanToken, XmlNameSyntax name, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<XmlAttributeSyntax> attributes, SyntaxToken slashGreaterThanToken)
+        public static XmlEmptyElementSyntax XmlEmptyElement(SyntaxToken lessThanToken, XmlNameSyntax name, CoreSyntax.SyntaxList<XmlAttributeSyntax> attributes, SyntaxToken slashGreaterThanToken)
         {
 #if DEBUG
             if (lessThanToken == null) throw new ArgumentNullException(nameof(lessThanToken));
@@ -46037,7 +37376,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return result;
         }
 
-        public static XmlTextAttributeSyntax XmlTextAttribute(XmlNameSyntax name, SyntaxToken equalsToken, SyntaxToken startQuoteToken, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SyntaxToken> textTokens, SyntaxToken endQuoteToken)
+        public static XmlTextAttributeSyntax XmlTextAttribute(XmlNameSyntax name, SyntaxToken equalsToken, SyntaxToken startQuoteToken, CoreSyntax.SyntaxList<SyntaxToken> textTokens, SyntaxToken endQuoteToken)
         {
 #if DEBUG
             if (name == null) throw new ArgumentNullException(nameof(name));
@@ -46114,7 +37453,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return new XmlNameAttributeSyntax(SyntaxKind.XmlNameAttribute, name, equalsToken, startQuoteToken, identifier, endQuoteToken);
         }
 
-        public static XmlTextSyntax XmlText(Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SyntaxToken> textTokens)
+        public static XmlTextSyntax XmlText(CoreSyntax.SyntaxList<SyntaxToken> textTokens)
         {
 #if DEBUG
 #endif
@@ -46132,7 +37471,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return result;
         }
 
-        public static XmlCDataSectionSyntax XmlCDataSection(SyntaxToken startCDataToken, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SyntaxToken> textTokens, SyntaxToken endCDataToken)
+        public static XmlCDataSectionSyntax XmlCDataSection(SyntaxToken startCDataToken, CoreSyntax.SyntaxList<SyntaxToken> textTokens, SyntaxToken endCDataToken)
         {
 #if DEBUG
             if (startCDataToken == null) throw new ArgumentNullException(nameof(startCDataToken));
@@ -46154,7 +37493,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return result;
         }
 
-        public static XmlProcessingInstructionSyntax XmlProcessingInstruction(SyntaxToken startProcessingInstructionToken, XmlNameSyntax name, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SyntaxToken> textTokens, SyntaxToken endProcessingInstructionToken)
+        public static XmlProcessingInstructionSyntax XmlProcessingInstruction(SyntaxToken startProcessingInstructionToken, XmlNameSyntax name, CoreSyntax.SyntaxList<SyntaxToken> textTokens, SyntaxToken endProcessingInstructionToken)
         {
 #if DEBUG
             if (startProcessingInstructionToken == null) throw new ArgumentNullException(nameof(startProcessingInstructionToken));
@@ -46167,7 +37506,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return new XmlProcessingInstructionSyntax(SyntaxKind.XmlProcessingInstruction, startProcessingInstructionToken, name, textTokens.Node, endProcessingInstructionToken);
         }
 
-        public static XmlCommentSyntax XmlComment(SyntaxToken lessThanExclamationMinusMinusToken, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SyntaxList<SyntaxToken> textTokens, SyntaxToken minusMinusGreaterThanToken)
+        public static XmlCommentSyntax XmlComment(SyntaxToken lessThanExclamationMinusMinusToken, CoreSyntax.SyntaxList<SyntaxToken> textTokens, SyntaxToken minusMinusGreaterThanToken)
         {
 #if DEBUG
             if (lessThanExclamationMinusMinusToken == null) throw new ArgumentNullException(nameof(lessThanExclamationMinusMinusToken));
@@ -46426,7 +37765,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             return new LineSpanDirectiveTriviaSyntax(SyntaxKind.LineSpanDirectiveTrivia, hashToken, lineKeyword, start, minusToken, end, characterOffset, file, endOfDirectiveToken, isActive);
         }
 
-        public static PragmaWarningDirectiveTriviaSyntax PragmaWarningDirectiveTrivia(SyntaxToken hashToken, SyntaxToken pragmaKeyword, SyntaxToken warningKeyword, SyntaxToken disableOrRestoreKeyword, Microsoft.CodeAnalysis.Syntax.InternalSyntax.SeparatedSyntaxList<ExpressionSyntax> errorCodes, SyntaxToken endOfDirectiveToken, bool isActive)
+        public static PragmaWarningDirectiveTriviaSyntax PragmaWarningDirectiveTrivia(SyntaxToken hashToken, SyntaxToken pragmaKeyword, SyntaxToken warningKeyword, SyntaxToken disableOrRestoreKeyword, CoreSyntax.SeparatedSyntaxList<ExpressionSyntax> errorCodes, SyntaxToken endOfDirectiveToken, bool isActive)
         {
 #if DEBUG
             if (hashToken == null) throw new ArgumentNullException(nameof(hashToken));
